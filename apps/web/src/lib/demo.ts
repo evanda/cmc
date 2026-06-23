@@ -592,6 +592,11 @@ export const demoDataSource: DataSource = {
   },
 
   listUsers: async () => [...users].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '')),
+  updateUserRole: async (userId, role) => {
+    const u = users.find((x) => x.id === userId)!;
+    u.role = role;
+    return u;
+  },
 
   listAssetCategories: async () =>
     [...categories].sort((a, b) => a.name.localeCompare(b.name)),

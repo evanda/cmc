@@ -18,6 +18,7 @@ const navItems = [
 export function Layout() {
   const { role, signOut } = useAuth();
   const { data: org } = useOrgSettings();
+  const items = role === 'admin' ? [...navItems, { to: '/users', label: 'Users' }] : navItems;
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
@@ -26,7 +27,7 @@ export function Layout() {
           <div className="flex items-center gap-6">
             <span className="font-semibold">{org?.facility_name ?? 'CMC'}</span>
             <nav className="flex gap-1">
-              {navItems.map((item) => (
+              {items.map((item) => (
                 <NavLink
                   key={item.to}
                   to={item.to}

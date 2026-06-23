@@ -20,6 +20,7 @@ import type {
   ServiceContract,
   ServiceContractForm,
   User,
+  UserRole,
   Vendor,
   VendorForm,
   WorkLogForm,
@@ -50,6 +51,7 @@ export interface DataSource {
   updateLocation(id: string, input: LocationForm): Promise<Location>;
   deleteLocation(id: string): Promise<void>;
   listUsers(): Promise<User[]>;
+  updateUserRole(userId: string, role: UserRole): Promise<User>;
   listAssetCategories(): Promise<AssetCategory[]>;
   listAssets(): Promise<Asset[]>;
   getAsset(id: string): Promise<Asset | null>;
@@ -290,6 +292,10 @@ const supabaseDataSource: DataSource = {
   listUsers: async () =>
     unwrap<User[]>(
       await supabase.from('users').select('*').is('deleted_at', null).order('name'),
+    ),
+  updateUserRole: async (userId, role) =>
+    unwrap<User>(
+      await supabase.from('users').update({ role }).eq('id', userId).select().single(),
     ),
 
   listAssetCategories: async () =>
