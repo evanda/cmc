@@ -1,7 +1,5 @@
 #!/bin/bash
 # Trigger: if the user submits 'toil', inject the claude-async routine prompt.
-# Adapted from evanda/bub — only the injected file name changed
-# (claude-async-prompt.md -> cmc-async-prompt.md).
 input=$(cat)
 
 if echo "$input" | node -e "
@@ -14,6 +12,6 @@ if echo "$input" | node -e "
     } catch(e) { process.exit(1); }
   });
 " 2>/dev/null; then
-  echo "=== toil trigger: injecting cmc-async-prompt.md ==="
-  cat "$CLAUDE_PROJECT_DIR/cmc-async-prompt.md"
+  echo "=== toil trigger: injecting claude-async-prompt.md ==="
+  cat "$CLAUDE_PROJECT_DIR/claude-async-prompt.md"
 fi
