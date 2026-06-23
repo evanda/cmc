@@ -19,7 +19,8 @@ import { fileURLToPath } from 'node:url';
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const repoRoot = resolve(__dirname, '..');
 const distDir = join(repoRoot, 'apps/web/dist');
-const outDir = join(repoRoot, 'screenshots');
+const SHOT_SET = process.env.SHOT_SET || 'sample';
+const outDir = join(repoRoot, SHOT_SET === 'midway' ? 'screenshots/midway' : 'screenshots');
 const PORT = Number(process.env.SHOT_PORT || 4178);
 
 if (!existsSync(join(distDir, 'index.html'))) {
@@ -60,6 +61,8 @@ const server = http.createServer(async (req, res) => {
 
 // Screens to capture. `clicks` are button texts pressed (in order) before the shot.
 const shots = [
+  { name: '00-map-site', path: '/map', wait: 3000 },
+  { name: '00-map-basement', path: '/map', wait: 2500, clicks: ['B1'] },
   { name: '01-dashboard', path: '/' },
   { name: '02-requests', path: '/requests' },
   { name: '03-work-orders-board', path: '/work-orders' },
@@ -71,23 +74,50 @@ const shots = [
   { name: '09-qr-label', path: '/assets', clicks: ['RTU-1 Rooftop Unit', 'QR label'] },
 ];
 
+// Real-instance shots for VITE_DEMO=midway.
+const midwayShots = [
+  { name: '01-map-site', path: '/map', wait: 4000 },
+  { name: '02-map-basement', path: '/map', wait: 4500, clicks: ['B1'] },
+  { name: '03-dashboard', path: '/' },
+  { name: '04-assets', path: '/assets' },
+  { name: '05-buildings', path: '/buildings' },
+  { name: '06-asset-detail', path: '/assets', clicks: ['HP9'] },
+];
+
+const activeShots = SHOT_SET === 'midway' ? midwayShots : shots;
+
 async function clickByText(page, text) {
-  const clicked = await page.evaluate((t) => {
-    // Prefer a button/link; fall back to any element (e.g. a clickable table
-    // row cell) — a real DOM click bubbles to React's delegated handler.
-    const all = [...document.querySelectorAll('button, a, td, [role=button]')];
-    let el = all.find(
-      (e) => (e.tagName === 'BUTTON' || e.tagName === 'A') && (e.textContent || '').trim().includes(t),
-    );
-    if (!el) el = all.find((e) => (e.textContent || '').includes(t));
-    if (el) {
-      el.click();
-      return true;
-    }
-    return false;
-  }, text);
+  const tryClick = (t) =>
+    page.evaluate((t) => {
+      // Prefer a button/link; fall back to any element (e.g. a clickable table
+      // row cell) — a real DOM click bubbles to React's delegated handler.
+      const all = [...document.querySelectorAll('button, a, td, [role=button]')];
+      let el = all.find(
+        (e) =>
+          (e.tagName === 'BUTTON' || e.tagName === 'A') && (e.textContent || '').trim() === t,
+      );
+      if (!el)
+        el = all.find(
+          (e) =>
+            (e.tagName === 'BUTTON' || e.tagName === 'A') &&
+            (e.textContent || '').trim().includes(t),
+        );
+      if (!el) el = all.find((e) => (e.textContent || '').includes(t));
+      if (el) {
+        el.click();
+        return true;
+      }
+      return false;
+    }, t);
+
+  // Poll up to ~12s so async loads (e.g. the map's level buttons) can appear.
+  let clicked = false;
+  for (let i = 0; i < 48 && !clicked; i++) {
+    clicked = await tryClick(text);
+    if (!clicked) await new Promise((r) => setTimeout(r, 250));
+  }
   if (!clicked) throw new Error(`clickable "${text}" not found`);
-  await new Promise((r) => setTimeout(r, 450));
+  await new Promise((r) => setTimeout(r, 600));
 }
 
 async function main() {
@@ -95,24 +125,29 @@ async function main() {
   const base = `http://127.0.0.1:${PORT}`;
 
   const puppeteer = (await import('puppeteer-core')).default;
+  // WebGL flags so MapLibre renders headless (SwiftShader).
+  const webglArgs = ['--ignore-gpu-blocklist', '--enable-unsafe-swiftshader'];
   let executablePath = process.env.CHROMIUM_PATH;
-  let extraArgs = ['--no-sandbox'];
+  let extraArgs = ['--no-sandbox', ...webglArgs];
   if (!executablePath) {
     const chromium = (await import('@sparticuz/chromium')).default;
     executablePath = await chromium.executablePath();
-    extraArgs = [...chromium.args, '--no-sandbox'];
+    extraArgs = [...chromium.args, '--no-sandbox', ...webglArgs];
   }
 
   const browser = await puppeteer.launch({ executablePath, args: extraArgs, headless: true });
-  const page = await browser.newPage();
-  await page.setViewport({ width: 1440, height: 1000, deviceScaleFactor: 3 });
 
-  for (const shot of shots) {
+  // Fresh page per shot — a MapLibre WebGL context per page avoids SwiftShader
+  // context exhaustion across repeated map loads.
+  for (const shot of activeShots) {
+    const page = await browser.newPage();
+    await page.setViewport({ width: 1440, height: 1000, deviceScaleFactor: 3 });
     await page.goto(base + shot.path, { waitUntil: 'networkidle0' });
-    await new Promise((r) => setTimeout(r, 400)); // let React Query settle
+    await new Promise((r) => setTimeout(r, shot.wait ?? 400)); // settle (maps need longer)
     for (const text of shot.clicks || []) await clickByText(page, text);
     const file = join(outDir, `${shot.name}.png`);
     await page.screenshot({ path: file });
+    await page.close();
     console.log(`✓ ${shot.name}.png`);
   }
 

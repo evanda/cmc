@@ -1,0 +1,141 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "feature_type": "playground",
+        "name": "Nursery Playground (example \u2014 reposition)"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -84.68845,
+              33.94315
+            ],
+            [
+              -84.6881,
+              33.94315
+            ],
+            [
+              -84.6881,
+              33.943400000000004
+            ],
+            [
+              -84.68845,
+              33.943400000000004
+            ],
+            [
+              -84.68845,
+              33.94315
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "feature_type": "cemetery",
+        "name": "Cemetery (example \u2014 reposition)"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -84.6868,
+              33.94325
+            ],
+            [
+              -84.6863,
+              33.94325
+            ],
+            [
+              -84.6863,
+              33.9437
+            ],
+            [
+              -84.6868,
+              33.9437
+            ],
+            [
+              -84.6868,
+              33.94325
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "feature_type": "garden",
+        "name": "Memorial Garden (example \u2014 reposition)"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -84.6887,
+              33.94375
+            ],
+            [
+              -84.68845,
+              33.94375
+            ],
+            [
+              -84.68845,
+              33.94397
+            ],
+            [
+              -84.6887,
+              33.94397
+            ],
+            [
+              -84.6887,
+              33.94375
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "feature_type": "carport",
+        "name": "Carport (example \u2014 reposition)"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -84.68795,
+              33.94405
+            ],
+            [
+              -84.68765,
+              33.94405
+            ],
+            [
+              -84.68765,
+              33.94417
+            ],
+            [
+              -84.68795,
+              33.94417
+            ],
+            [
+              -84.68795,
+              33.94405
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}
