@@ -3,6 +3,7 @@ import { useAuth } from './auth/AuthProvider';
 import { Layout } from './components/Layout';
 import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
+import { AssetsPage } from './pages/AssetsPage';
 import { BuildingsPage } from './pages/BuildingsPage';
 import { FloorsPage } from './pages/FloorsPage';
 import { LocationsPage } from './pages/LocationsPage';
@@ -26,6 +27,7 @@ export function App() {
     <Routes>
       <Route element={<Layout />}>
         <Route index element={<DashboardPage />} />
+        <Route path="assets" element={<AssetsPage />} />
         <Route path="buildings" element={<BuildingsPage />} />
         <Route path="floors" element={<FloorsPage />} />
         <Route path="locations" element={<LocationsPage />} />

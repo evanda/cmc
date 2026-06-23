@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { useBuildings, useFloors, useLocations, useOrgSettings } from '../lib/queries';
+import { useAssets, useBuildings, useFloors, useLocations, useOrgSettings } from '../lib/queries';
 
 function StatCard({ label, value, to }: { label: string; value: number | string; to: string }) {
   return (
@@ -15,6 +15,7 @@ function StatCard({ label, value, to }: { label: string; value: number | string;
 
 export function DashboardPage() {
   const { data: org } = useOrgSettings();
+  const assets = useAssets();
   const buildings = useBuildings();
   const floors = useFloors();
   const locations = useLocations();
@@ -25,10 +26,11 @@ export function DashboardPage() {
         {org?.facility_name ?? 'Campus'} — Overview
       </h1>
       <p className="mb-6 text-sm text-slate-500">
-        Phase 0 foundation: buildings, floors, and locations. Assets, work orders, and the map
-        arrive in later phases.
+        Asset registry and campus structure. Work orders, vendors, and the map arrive in later
+        Phase 1–2 work.
       </p>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <StatCard label="Assets" value={assets.data?.length ?? '—'} to="/assets" />
         <StatCard label="Buildings" value={buildings.data?.length ?? '—'} to="/buildings" />
         <StatCard label="Floors" value={floors.data?.length ?? '—'} to="/floors" />
         <StatCard label="Locations" value={locations.data?.length ?? '—'} to="/locations" />

@@ -61,11 +61,12 @@ const server = http.createServer(async (req, res) => {
 // Screens to capture. `clicks` are button texts pressed (in order) before the shot.
 const shots = [
   { name: '01-dashboard', path: '/' },
-  { name: '02-buildings', path: '/buildings' },
-  { name: '03-building-new-modal', path: '/buildings', clicks: ['New building'] },
-  { name: '04-floors', path: '/floors' },
-  { name: '05-floor-new-modal', path: '/floors', clicks: ['New floor'] },
-  { name: '06-locations', path: '/locations' },
+  { name: '02-assets', path: '/assets' },
+  { name: '03-asset-new-modal', path: '/assets', clicks: ['New asset'] },
+  { name: '04-buildings', path: '/buildings' },
+  { name: '05-building-new-modal', path: '/buildings', clicks: ['New building'] },
+  { name: '06-floors', path: '/floors' },
+  { name: '07-locations', path: '/locations' },
 ];
 
 async function clickByText(page, text) {

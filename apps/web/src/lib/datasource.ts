@@ -4,6 +4,9 @@
 // React Query hooks in queries.ts call `ds` and stay agnostic to which is live.
 
 import type {
+  Asset,
+  AssetCategory,
+  AssetForm,
   Building,
   BuildingForm,
   Floor,
@@ -29,6 +32,26 @@ export interface DataSource {
   createLocation(input: LocationForm): Promise<Location>;
   updateLocation(id: string, input: LocationForm): Promise<Location>;
   deleteLocation(id: string): Promise<void>;
+  listAssetCategories(): Promise<AssetCategory[]>;
+  listAssets(): Promise<Asset[]>;
+  createAsset(input: AssetForm): Promise<Asset>;
+  updateAsset(id: string, input: AssetForm): Promise<Asset>;
+  deleteAsset(id: string): Promise<void>;
+}
+
+// Normalize the nullable FK / optional fields an AssetForm carries into a row patch.
+function assetPatch(input: AssetForm) {
+  return {
+    name: input.name,
+    category_id: input.category_id ?? null,
+    location_id: input.location_id ?? null,
+    make: input.make ?? null,
+    model: input.model ?? null,
+    serial: input.serial ?? null,
+    criticality: input.criticality,
+    status: input.status,
+    notes: input.notes ?? null,
+  };
 }
 
 function unwrap<T>(res: { data: T | null; error: { message: string } | null }): T {
@@ -105,6 +128,31 @@ const supabaseDataSource: DataSource = {
     unwrap(
       await supabase
         .from('locations')
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', id)
+        .select()
+        .single(),
+    );
+  },
+
+  listAssetCategories: async () =>
+    unwrap<AssetCategory[]>(
+      await supabase.from('asset_categories').select('*').is('deleted_at', null).order('name'),
+    ),
+  listAssets: async () =>
+    unwrap<Asset[]>(
+      await supabase.from('assets').select('*').is('deleted_at', null).order('name'),
+    ),
+  createAsset: async (input) =>
+    unwrap<Asset>(await supabase.from('assets').insert(assetPatch(input)).select().single()),
+  updateAsset: async (id, input) =>
+    unwrap<Asset>(
+      await supabase.from('assets').update(assetPatch(input)).eq('id', id).select().single(),
+    ),
+  deleteAsset: async (id) => {
+    unwrap(
+      await supabase
+        .from('assets')
         .update({ deleted_at: new Date().toISOString() })
         .eq('id', id)
         .select()

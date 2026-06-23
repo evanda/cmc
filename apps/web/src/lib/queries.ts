@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { BuildingForm, FloorForm, LocationForm } from '@cmc/shared';
+import type { AssetForm, BuildingForm, FloorForm, LocationForm } from '@cmc/shared';
 import { ds } from './datasource';
 
 // ── org_settings (single row, plan §7.6) ─────────────────────────────────────
@@ -101,5 +101,38 @@ export function useDeleteLocation() {
   return useMutation({
     mutationFn: (id: string) => ds.deleteLocation(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['locations'] }),
+  });
+}
+
+// ── asset registry (plan §4.1) ───────────────────────────────────────────────
+export function useAssetCategories() {
+  return useQuery({ queryKey: ['asset_categories'], queryFn: () => ds.listAssetCategories() });
+}
+
+export function useAssets() {
+  return useQuery({ queryKey: ['assets'], queryFn: () => ds.listAssets() });
+}
+
+export function useCreateAsset() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: AssetForm) => ds.createAsset(input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['assets'] }),
+  });
+}
+
+export function useUpdateAsset() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...input }: AssetForm & { id: string }) => ds.updateAsset(id, input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['assets'] }),
+  });
+}
+
+export function useDeleteAsset() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => ds.deleteAsset(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['assets'] }),
   });
 }

@@ -3,6 +3,9 @@
 // Mutations update the in-memory store so create/edit/delete flows also work.
 
 import type {
+  Asset,
+  AssetCategory,
+  AssetForm,
   Building,
   BuildingForm,
   Floor,
@@ -132,6 +135,72 @@ seedBuilding(
   ],
 );
 
+// Default asset categories (mirrors the 0003 seed migration, plan §4.1).
+const categories: AssetCategory[] = [
+  'HVAC',
+  'Roofing',
+  'Plumbing',
+  'Electrical',
+  'Doors/Access',
+  'Windows',
+  'Lighting',
+  'Fixtures',
+  'Flooring/Carpet',
+  'Paint/Walls',
+  'Restrooms',
+  'Network/IT',
+  'Sound/AV',
+  'Grounds/Playground',
+  'Vehicles/Fleet',
+  'Tools/Equipment',
+  'Utility/Infrastructure',
+  'Cemetery',
+].map((name) => ({ id: id(), ...base(), name, parent_id: null }));
+
+const catId = (name: string) => categories.find((c) => c.name === name)!.id;
+const locId = (name: string) => locations.find((l) => l.name === name)?.id ?? null;
+
+const assets: Asset[] = [];
+function seedAsset(name: string, category: string, location: string | null, fields: Partial<Asset> = {}) {
+  assets.push({
+    id: id(),
+    ...base(),
+    name,
+    category_id: catId(category),
+    parent_asset_id: null,
+    location_id: location ? locId(location) : null,
+    make: null,
+    model: null,
+    serial: null,
+    install_date: null,
+    purchase_cost: null,
+    expected_life_years: null,
+    replacement_cost: null,
+    warranty_expiry: null,
+    criticality: 'low',
+    status: 'active',
+    qr_token: null,
+    notes: null,
+    ...fields,
+  });
+}
+
+seedAsset('RTU-1 Rooftop Unit', 'HVAC', 'Sanctuary', {
+  make: 'Carrier',
+  model: '48TC',
+  serial: 'C1234',
+  criticality: 'high',
+});
+seedAsset('Main Water Shutoff', 'Utility/Infrastructure', 'Boiler Room', { criticality: 'high' });
+seedAsset('Boiler', 'HVAC', 'Boiler Room', { make: 'Weil-McLain', criticality: 'high' });
+seedAsset('Sanctuary Sound Board', 'Sound/AV', 'Sanctuary', { make: 'Yamaha', model: 'TF5' });
+seedAsset('Network Rack', 'Network/IT', 'Church Office', { criticality: 'medium' });
+seedAsset('Gym Scoreboard', 'Sound/AV', 'Main Court', {});
+seedAsset('Leaf Blower', 'Tools/Equipment', null, { make: 'Stihl', model: 'BR700' });
+seedAsset('Extension Ladder (24ft)', 'Tools/Equipment', null, {});
+seedAsset('Playground Structure', 'Grounds/Playground', 'Playground', { criticality: 'medium' });
+seedAsset('Walk-in Cooler', 'Fixtures', 'Cafeteria', { status: 'retired' });
+
 const live = (rows: { deleted_at: string | null }[]) => rows.filter((r) => r.deleted_at === null);
 
 export const demoDataSource: DataSource = {
@@ -222,5 +291,54 @@ export const demoDataSource: DataSource = {
   deleteLocation: async (lid) => {
     const l = locations.find((x) => x.id === lid);
     if (l) l.deleted_at = now;
+  },
+
+  listAssetCategories: async () =>
+    [...categories].sort((a, b) => a.name.localeCompare(b.name)),
+
+  listAssets: async () =>
+    (live(assets) as Asset[]).sort((a, b) => a.name.localeCompare(b.name)),
+  createAsset: async (input: AssetForm) => {
+    const a: Asset = {
+      id: id(),
+      ...base(),
+      name: input.name,
+      category_id: input.category_id ?? null,
+      parent_asset_id: null,
+      location_id: input.location_id ?? null,
+      make: input.make ?? null,
+      model: input.model ?? null,
+      serial: input.serial ?? null,
+      install_date: null,
+      purchase_cost: null,
+      expected_life_years: null,
+      replacement_cost: null,
+      warranty_expiry: null,
+      criticality: input.criticality,
+      status: input.status,
+      qr_token: null,
+      notes: input.notes ?? null,
+    };
+    assets.push(a);
+    return a;
+  },
+  updateAsset: async (aid, input: AssetForm) => {
+    const a = assets.find((x) => x.id === aid)!;
+    Object.assign(a, {
+      name: input.name,
+      category_id: input.category_id ?? null,
+      location_id: input.location_id ?? null,
+      make: input.make ?? null,
+      model: input.model ?? null,
+      serial: input.serial ?? null,
+      criticality: input.criticality,
+      status: input.status,
+      notes: input.notes ?? null,
+    });
+    return a;
+  },
+  deleteAsset: async (aid) => {
+    const a = assets.find((x) => x.id === aid);
+    if (a) a.deleted_at = now;
   },
 };

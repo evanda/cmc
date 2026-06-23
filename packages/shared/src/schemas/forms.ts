@@ -2,6 +2,7 @@
 // Shared by web forms now and mobile/loader later. Inferred types feed the UI.
 
 import { z } from 'zod';
+import { ASSET_STATUSES, CRITICALITIES } from '../types/enums.js';
 
 const optionalText = z
   .string()
@@ -32,6 +33,20 @@ export const locationFormSchema = z.object({
   type: optionalText,
 });
 export type LocationForm = z.infer<typeof locationFormSchema>;
+
+// ── Asset Registry (plan §4.1, Phase 1) ──────────────────────────────────────
+export const assetFormSchema = z.object({
+  name: z.string().trim().min(1, 'Name is required').max(200),
+  category_id: z.string().uuid().nullish(),
+  location_id: z.string().uuid().nullish(),
+  make: optionalText,
+  model: optionalText,
+  serial: optionalText,
+  criticality: z.enum(CRITICALITIES),
+  status: z.enum(ASSET_STATUSES),
+  notes: optionalText,
+});
+export type AssetForm = z.infer<typeof assetFormSchema>;
 
 export const orgSettingsFormSchema = z.object({
   facility_name: z.string().trim().min(1, 'Facility name is required').max(200),
