@@ -27,7 +27,8 @@ def ring(pts):
 
 # ── Buildings (footprints in local meters, matching satellite arrangement) ────
 # 09 = 2009 church (L-shaped, gabled sanctuary). Fellowship Hall bridges toward
-# the 1987 school (87). Gym / middle school sits separately to the east.
+# the 1987 school (87). Gym / middle school sits separately to the WEST (left,
+# north up) — see MIRROR_X below.
 buildings = [
     {"code": "09", "name": "2009 Building (Church)",
      "description": "Sanctuary, narthex/front lobby, nurseries & children's ministry, choir/music offices.",
@@ -53,6 +54,16 @@ buildings = [
      "footprint": [(64,-30),(116,-30),(116,22),(64,22)],
      "label": (90, 26)},
 ]
+
+# Mirror the whole campus left↔right (north stays up) so the gym reads as WEST.
+# Reflect about the campus x-midpoint so the overall bounds are preserved.
+MIRROR_X = True
+_MID_X = 17.0  # midpoint of the campus x-extent (-82 … 116)
+def _mx(x):
+    return 2 * _MID_X - x if MIRROR_X else x
+for _b in buildings:
+    _b["footprint"] = [(_mx(x), y) for (x, y) in _b["footprint"]][::-1]  # keep ring orientation
+    _b["label"] = (_mx(_b["label"][0]), _b["label"][1])
 
 def bbox(fp):
     xs = [p[0] for p in fp]; ys = [p[1] for p in fp]

@@ -42,8 +42,8 @@ wall unit / boiler).
 The footprints and POI points are a **self-consistent local layout anchored at an
 arbitrary lat/lng (35.0, -80.0)** — they reproduce the *relative* arrangement from
 the satellite (church/school complex with the gym to the east) but are **not the
-campus's real location**, and POI positions within each building are a tidy grid,
-not surveyed spots. Per plan §5.3 these overlays are navigational aids ("where's
+campus's real location** (the gym is placed to the west / left with north up),
+and POI positions within each building are a tidy grid, not surveyed spots. Per plan §5.3 these overlays are navigational aids ("where's
 the unit?"), not engineering drawings.
 
 To make them real: drop a georeferenced satellite base and the floorplan drawings
