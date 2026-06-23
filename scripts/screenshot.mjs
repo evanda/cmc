@@ -67,11 +67,13 @@ const shots = [
   { name: '05-building-new-modal', path: '/buildings', clicks: ['New building'] },
   { name: '06-floors', path: '/floors' },
   { name: '07-locations', path: '/locations' },
+  { name: '08-asset-detail', path: '/assets', clicks: ['RTU-1 Rooftop Unit'] },
+  { name: '09-asset-log-work', path: '/assets', clicks: ['RTU-1 Rooftop Unit', 'Log work'] },
 ];
 
 async function clickByText(page, text) {
   const clicked = await page.evaluate((t) => {
-    const el = [...document.querySelectorAll('button')].find((b) =>
+    const el = [...document.querySelectorAll('button, a')].find((b) =>
       (b.textContent || '').trim().includes(t),
     );
     if (el) {
@@ -80,8 +82,8 @@ async function clickByText(page, text) {
     }
     return false;
   }, text);
-  if (!clicked) throw new Error(`button "${text}" not found`);
-  await new Promise((r) => setTimeout(r, 350));
+  if (!clicked) throw new Error(`clickable "${text}" not found`);
+  await new Promise((r) => setTimeout(r, 450));
 }
 
 async function main() {

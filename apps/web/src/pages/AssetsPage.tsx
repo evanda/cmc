@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   ASSET_STATUSES,
   CRITICALITIES,
@@ -115,7 +116,12 @@ export function AssetsPage() {
               {rows.map((a) => (
                 <tr key={a.id} className="hover:bg-slate-50">
                   <td className="px-4 py-2.5">
-                    <div className="font-medium text-slate-800">{a.name}</div>
+                    <Link
+                      to={`/assets/${a.id}`}
+                      className="font-medium text-slate-800 hover:text-blue-600 hover:underline"
+                    >
+                      {a.name}
+                    </Link>
                     {(a.make || a.model) && (
                       <div className="text-xs text-slate-400">
                         {[a.make, a.model].filter(Boolean).join(' ')}
@@ -207,6 +213,8 @@ function AssetForm({
   const [model, setModel] = useState(initial?.model ?? '');
   const [serial, setSerial] = useState(initial?.serial ?? '');
   const [notes, setNotes] = useState(initial?.notes ?? '');
+  const [contactName, setContactName] = useState(initial?.contact_name ?? '');
+  const [contactEmail, setContactEmail] = useState(initial?.contact_email ?? '');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
 
@@ -226,6 +234,8 @@ function AssetForm({
             model,
             serial,
             notes,
+            contact_name: contactName,
+            contact_email: contactEmail,
           });
           if (!parsed.success) {
             setErrors(
@@ -306,6 +316,23 @@ function AssetForm({
         <Field label="Serial">
           <input className={inputClass} value={serial} onChange={(e) => setSerial(e.target.value)} />
         </Field>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Contact name">
+            <input
+              className={inputClass}
+              value={contactName}
+              onChange={(e) => setContactName(e.target.value)}
+            />
+          </Field>
+          <Field label="Contact email" error={errors.contact_email}>
+            <input
+              className={inputClass}
+              value={contactEmail}
+              onChange={(e) => setContactEmail(e.target.value)}
+              placeholder="maintenance@…"
+            />
+          </Field>
+        </div>
         <Field label="Notes">
           <textarea
             className={inputClass}

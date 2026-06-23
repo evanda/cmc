@@ -6,11 +6,13 @@
 import type {
   Asset,
   AssetCategory,
+  AssetPhoto,
   Building,
   Floor,
   Location,
   OrgSettings,
   User,
+  WorkOrder,
 } from './domain.js';
 
 /** Columns the database fills in itself; optional on insert/update. */
@@ -38,6 +40,8 @@ export interface Database {
       locations: TableShape<Location>;
       asset_categories: TableShape<AssetCategory>;
       assets: TableShape<Asset>;
+      asset_photos: TableShape<AssetPhoto>;
+      work_orders: TableShape<WorkOrder>;
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
@@ -45,6 +49,16 @@ export interface Database {
       user_role: 'admin' | 'technician' | 'requester' | 'trustee' | 'vendor';
       criticality: 'low' | 'medium' | 'high';
       asset_status: 'active' | 'retired';
+      work_order_type: 'reactive' | 'preventive' | 'inspection';
+      work_order_priority: 'low' | 'medium' | 'high' | 'urgent';
+      work_order_status:
+        | 'requested'
+        | 'open'
+        | 'in_progress'
+        | 'on_hold'
+        | 'completed'
+        | 'closed'
+        | 'cancelled';
     };
   };
 }

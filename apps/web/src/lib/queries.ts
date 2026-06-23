@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { AssetForm, BuildingForm, FloorForm, LocationForm } from '@cmc/shared';
+import type { AssetForm, BuildingForm, FloorForm, LocationForm, WorkLogForm } from '@cmc/shared';
 import { ds } from './datasource';
 
 // ── org_settings (single row, plan §7.6) ─────────────────────────────────────
@@ -134,5 +134,55 @@ export function useDeleteAsset() {
   return useMutation({
     mutationFn: (id: string) => ds.deleteAsset(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['assets'] }),
+  });
+}
+
+export function useUsers() {
+  return useQuery({ queryKey: ['users'], queryFn: () => ds.listUsers() });
+}
+
+export function useAsset(id: string) {
+  return useQuery({ queryKey: ['asset', id], queryFn: () => ds.getAsset(id) });
+}
+
+// ── asset photos (plan §4.1) ─────────────────────────────────────────────────
+export function useAssetPhotos(assetId: string) {
+  return useQuery({ queryKey: ['asset_photos', assetId], queryFn: () => ds.listAssetPhotos(assetId) });
+}
+
+export function useAddAssetPhoto(assetId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (file: File) => ds.addAssetPhoto(assetId, file),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['asset_photos', assetId] }),
+  });
+}
+
+export function useSetPrimaryPhoto(assetId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (photoId: string) => ds.setPrimaryPhoto(assetId, photoId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['asset_photos', assetId] }),
+  });
+}
+
+export function useDeleteAssetPhoto(assetId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (photoId: string) => ds.deleteAssetPhoto(photoId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['asset_photos', assetId] }),
+  });
+}
+
+// ── work orders / asset history (plan §4.2) ──────────────────────────────────
+export function useWorkOrders(assetId: string) {
+  return useQuery({ queryKey: ['work_orders', assetId], queryFn: () => ds.listWorkOrders(assetId) });
+}
+
+export function useCreateWorkOrder(assetId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: WorkLogForm) => ds.createWorkOrder(assetId, input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['work_orders', assetId] }),
   });
 }

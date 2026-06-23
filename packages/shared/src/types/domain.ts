@@ -6,7 +6,14 @@
 // typed client constrains table rows to `Record<string, unknown>`, which object
 // `type` literals satisfy but interfaces do not (no implicit index signature).
 
-import type { AssetStatus, Criticality, UserRole } from './enums.js';
+import type {
+  AssetStatus,
+  Criticality,
+  UserRole,
+  WorkOrderPriority,
+  WorkOrderStatus,
+  WorkOrderType,
+} from './enums.js';
 
 /** Columns every table carries (plan §6 preamble). */
 export type BaseRow = {
@@ -28,6 +35,8 @@ export type OrgSettings = BaseRow & {
   currency: string;
   timezone: string;
   theme: Record<string, unknown> | null;
+  /** Org-wide maintenance contact (a mail list); per-asset contact overrides it. */
+  maintenance_contact_email: string | null;
 };
 
 /** App users + their role (plan §6 users, §7.5). Mirrors auth.users by id. */
@@ -85,6 +94,47 @@ export type Asset = BaseRow & {
   /** Stable unguessable slug for QR deep links; null until tagged (plan §3). */
   qr_token: string | null;
   notes: string | null;
+  /** Per-asset point of contact (plan §4.5); falls back to org maintenance email. */
+  contact_name: string | null;
+  contact_email: string | null;
+};
+
+/** One photo of an asset; multiple per asset, one primary (plan §4.1, §6). */
+export type AssetPhoto = BaseRow & {
+  asset_id: string;
+  url: string;
+  caption: string | null;
+  is_primary: boolean;
+  taken_at: string | null;
+};
+
+/** A work order — also the asset's service-history record (plan §4.2). */
+export type WorkOrder = BaseRow & {
+  title: string;
+  description: string | null;
+  type: WorkOrderType;
+  priority: WorkOrderPriority;
+  status: WorkOrderStatus;
+  linked_asset_id: string | null;
+  location_id: string | null;
+  requested_by: string | null;
+  assignee_user_id: string | null;
+  coordinated_by_user_id: string | null;
+  authorized_by_user_id: string | null;
+  vendor_name: string | null;
+  estimate_cost: number | null;
+  actual_parts_cost: number | null;
+  actual_labor_cost: number | null;
+  actual_vendor_cost: number | null;
+  labor_hours: number | null;
+  invoice_number: string | null;
+  invoice_url: string | null;
+  /** Check / payment number. */
+  payment_reference: string | null;
+  scheduled_date: string | null;
+  due_date: string | null;
+  completed_date: string | null;
+  completion_notes: string | null;
 };
 
 // Minimal GeoJSON shapes used by the spatial schema (full system: Phase 2).

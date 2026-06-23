@@ -15,3 +15,21 @@ export type AssetStatus = (typeof ASSET_STATUSES)[number];
 
 /** Roles that may see cost/financial data (plan §7.5). */
 export const COST_VISIBLE_ROLES: readonly UserRole[] = ['admin', 'technician', 'trustee'];
+
+/** Work-order type / priority / status (plan §4.2). */
+export const WORK_ORDER_TYPES = ['reactive', 'preventive', 'inspection'] as const;
+export type WorkOrderType = (typeof WORK_ORDER_TYPES)[number];
+
+export const WORK_ORDER_PRIORITIES = ['low', 'medium', 'high', 'urgent'] as const;
+export type WorkOrderPriority = (typeof WORK_ORDER_PRIORITIES)[number];
+
+export const WORK_ORDER_STATUSES = [
+  'requested',
+  'open',
+  'in_progress',
+  'on_hold',
+  'completed',
+  'closed',
+  'cancelled',
+] as const;
+export type WorkOrderStatus = (typeof WORK_ORDER_STATUSES)[number];

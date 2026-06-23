@@ -6,6 +6,7 @@ import type {
   Asset,
   AssetCategory,
   AssetForm,
+  AssetPhoto,
   Building,
   BuildingForm,
   Floor,
@@ -13,6 +14,9 @@ import type {
   Location,
   LocationForm,
   OrgSettings,
+  User,
+  WorkLogForm,
+  WorkOrder,
 } from '@cmc/shared';
 import type { DataSource } from './datasource';
 
@@ -34,7 +38,16 @@ const org: OrgSettings = {
   currency: 'USD',
   timezone: 'America/New_York',
   theme: null,
+  maintenance_contact_email: 'maintenance@midwaypca.org',
 };
+
+// Demo users for assignee / coordinator / authorizer pickers.
+const users: User[] = [
+  { id: 'demo-admin', ...base(), name: 'Pat Director', email: 'admin@demo.test', role: 'admin' },
+  { id: id(), ...base(), name: 'Sam Tech', email: 'sam@demo.test', role: 'technician' },
+  { id: id(), ...base(), name: 'Trustee Lee', email: 'lee@demo.test', role: 'trustee' },
+];
+const userId = (name: string) => users.find((u) => u.name === name)!.id;
 
 const buildings: Building[] = [];
 const floors: Floor[] = [];
@@ -181,6 +194,8 @@ function seedAsset(name: string, category: string, location: string | null, fiel
     status: 'active',
     qr_token: null,
     notes: null,
+    contact_name: null,
+    contact_email: null,
     ...fields,
   });
 }
@@ -190,6 +205,8 @@ seedAsset('RTU-1 Rooftop Unit', 'HVAC', 'Sanctuary', {
   model: '48TC',
   serial: 'C1234',
   criticality: 'high',
+  contact_name: 'HVAC Systems Lead',
+  contact_email: 'hvac@midwaypca.org',
 });
 seedAsset('Main Water Shutoff', 'Utility/Infrastructure', 'Boiler Room', { criticality: 'high' });
 seedAsset('Boiler', 'HVAC', 'Boiler Room', { make: 'Weil-McLain', criticality: 'high' });
@@ -200,6 +217,110 @@ seedAsset('Leaf Blower', 'Tools/Equipment', null, { make: 'Stihl', model: 'BR700
 seedAsset('Extension Ladder (24ft)', 'Tools/Equipment', null, {});
 seedAsset('Playground Structure', 'Grounds/Playground', 'Playground', { criticality: 'medium' });
 seedAsset('Walk-in Cooler', 'Fixtures', 'Cafeteria', { status: 'retired' });
+
+// Simple labeled-rectangle SVG "photos" so the demo gallery shows something.
+const svgPhoto = (label: string, color: string) =>
+  'data:image/svg+xml;utf8,' +
+  encodeURIComponent(
+    `<svg xmlns='http://www.w3.org/2000/svg' width='480' height='320'>` +
+      `<rect width='100%' height='100%' fill='${color}'/>` +
+      `<text x='50%' y='50%' font-family='sans-serif' font-size='26' fill='white' ` +
+      `text-anchor='middle' dominant-baseline='middle'>${label}</text></svg>`,
+  );
+
+const assetByName = (name: string) => assets.find((a) => a.name === name)!;
+
+const photos: AssetPhoto[] = [];
+function seedPhoto(assetName: string, label: string, color: string, primary = false) {
+  photos.push({
+    id: id(),
+    ...base(),
+    asset_id: assetByName(assetName).id,
+    url: svgPhoto(label, color),
+    caption: label,
+    is_primary: primary,
+    taken_at: now,
+  });
+}
+seedPhoto('RTU-1 Rooftop Unit', 'RTU-1 — nameplate', '#0f766e', true);
+seedPhoto('RTU-1 Rooftop Unit', 'RTU-1 — install', '#334155');
+seedPhoto('Playground Structure', 'Playground — overview', '#9333ea', true);
+
+const workOrders: WorkOrder[] = [];
+function seedWO(assetName: string, wo: Partial<WorkOrder> & { title: string }) {
+  workOrders.push({
+    id: id(),
+    ...base(),
+    description: null,
+    type: 'reactive',
+    priority: 'medium',
+    status: 'completed',
+    linked_asset_id: assetByName(assetName).id,
+    location_id: null,
+    requested_by: null,
+    assignee_user_id: null,
+    coordinated_by_user_id: null,
+    authorized_by_user_id: null,
+    vendor_name: null,
+    estimate_cost: null,
+    actual_parts_cost: null,
+    actual_labor_cost: null,
+    actual_vendor_cost: null,
+    labor_hours: null,
+    invoice_number: null,
+    invoice_url: null,
+    payment_reference: null,
+    scheduled_date: null,
+    due_date: null,
+    completed_date: null,
+    completion_notes: null,
+    ...wo,
+  });
+}
+seedWO('RTU-1 Rooftop Unit', {
+  title: 'Annual HVAC service + filter',
+  type: 'preventive',
+  completed_date: '2026-04-12',
+  vendor_name: 'Acme Mechanical',
+  coordinated_by_user_id: userId('Sam Tech'),
+  authorized_by_user_id: userId('Pat Director'),
+  actual_vendor_cost: 480,
+  actual_parts_cost: 65,
+  labor_hours: 2.5,
+  invoice_number: 'ACM-10482',
+  payment_reference: 'Check #2041',
+  completion_notes: 'Replaced filters, checked refrigerant charge, cleaned coils.',
+});
+seedWO('RTU-1 Rooftop Unit', {
+  title: 'Compressor capacitor replacement',
+  completed_date: '2026-02-03',
+  vendor_name: 'Acme Mechanical',
+  coordinated_by_user_id: userId('Sam Tech'),
+  authorized_by_user_id: userId('Pat Director'),
+  actual_vendor_cost: 220,
+  actual_parts_cost: 38,
+  invoice_number: 'ACM-10110',
+  payment_reference: 'Check #1998',
+  completion_notes: 'No-cool call; capacitor failed. Replaced and verified operation.',
+});
+seedWO('Boiler', {
+  title: 'Boiler inspection & low-water cutoff test',
+  type: 'inspection',
+  completed_date: '2026-03-20',
+  assignee_user_id: userId('Sam Tech'),
+  authorized_by_user_id: userId('Pat Director'),
+  actual_labor_cost: 0,
+  labor_hours: 1,
+  completion_notes: 'Passed. Next test due in 6 months.',
+});
+seedWO('Playground Structure', {
+  title: 'Replace cracked slide bolt set',
+  completed_date: '2026-05-09',
+  assignee_user_id: userId('Sam Tech'),
+  actual_parts_cost: 24.5,
+  labor_hours: 0.75,
+  payment_reference: 'Card ****1234',
+});
 
 const live = (rows: { deleted_at: string | null }[]) => rows.filter((r) => r.deleted_at === null);
 
@@ -293,11 +414,14 @@ export const demoDataSource: DataSource = {
     if (l) l.deleted_at = now;
   },
 
+  listUsers: async () => [...users].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '')),
+
   listAssetCategories: async () =>
     [...categories].sort((a, b) => a.name.localeCompare(b.name)),
 
   listAssets: async () =>
     (live(assets) as Asset[]).sort((a, b) => a.name.localeCompare(b.name)),
+  getAsset: async (aid) => assets.find((a) => a.id === aid && a.deleted_at === null) ?? null,
   createAsset: async (input: AssetForm) => {
     const a: Asset = {
       id: id(),
@@ -318,6 +442,8 @@ export const demoDataSource: DataSource = {
       status: input.status,
       qr_token: null,
       notes: input.notes ?? null,
+      contact_name: input.contact_name ?? null,
+      contact_email: input.contact_email ?? null,
     };
     assets.push(a);
     return a;
@@ -334,11 +460,81 @@ export const demoDataSource: DataSource = {
       criticality: input.criticality,
       status: input.status,
       notes: input.notes ?? null,
+      contact_name: input.contact_name ?? null,
+      contact_email: input.contact_email ?? null,
     });
     return a;
   },
   deleteAsset: async (aid) => {
     const a = assets.find((x) => x.id === aid);
     if (a) a.deleted_at = now;
+  },
+
+  listAssetPhotos: async (assetId) =>
+    (live(photos) as AssetPhoto[])
+      .filter((p) => p.asset_id === assetId)
+      .sort((a, b) => Number(b.is_primary) - Number(a.is_primary)),
+  addAssetPhoto: async (assetId, file) => {
+    const url = await new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.readAsDataURL(file);
+    });
+    const first = !photos.some((p) => p.asset_id === assetId && p.deleted_at === null);
+    const p: AssetPhoto = {
+      id: id(),
+      ...base(),
+      asset_id: assetId,
+      url,
+      caption: file.name,
+      is_primary: first,
+      taken_at: now,
+    };
+    photos.push(p);
+    return p;
+  },
+  setPrimaryPhoto: async (assetId, photoId) => {
+    for (const p of photos) if (p.asset_id === assetId) p.is_primary = p.id === photoId;
+  },
+  deleteAssetPhoto: async (photoId) => {
+    const p = photos.find((x) => x.id === photoId);
+    if (p) p.deleted_at = now;
+  },
+
+  listWorkOrders: async (assetId) =>
+    (live(workOrders) as WorkOrder[])
+      .filter((w) => w.linked_asset_id === assetId)
+      .sort((a, b) => (b.completed_date ?? '').localeCompare(a.completed_date ?? '')),
+  createWorkOrder: async (assetId, input: WorkLogForm) => {
+    const w: WorkOrder = {
+      id: id(),
+      ...base(),
+      title: input.title,
+      description: null,
+      type: input.type,
+      priority: 'medium',
+      status: 'completed',
+      linked_asset_id: assetId,
+      location_id: null,
+      requested_by: null,
+      assignee_user_id: input.assignee_user_id ?? null,
+      coordinated_by_user_id: input.coordinated_by_user_id ?? null,
+      authorized_by_user_id: input.authorized_by_user_id ?? null,
+      vendor_name: input.vendor_name ?? null,
+      estimate_cost: null,
+      actual_parts_cost: input.actual_parts_cost ?? null,
+      actual_labor_cost: input.actual_labor_cost ?? null,
+      actual_vendor_cost: input.actual_vendor_cost ?? null,
+      labor_hours: input.labor_hours ?? null,
+      invoice_number: input.invoice_number ?? null,
+      invoice_url: null,
+      payment_reference: input.payment_reference ?? null,
+      scheduled_date: null,
+      due_date: null,
+      completed_date: input.completed_date ?? null,
+      completion_notes: input.completion_notes ?? null,
+    };
+    workOrders.push(w);
+    return w;
   },
 };

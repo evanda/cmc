@@ -2,7 +2,7 @@
 // Shared by web forms now and mobile/loader later. Inferred types feed the UI.
 
 import { z } from 'zod';
-import { ASSET_STATUSES, CRITICALITIES } from '../types/enums.js';
+import { ASSET_STATUSES, CRITICALITIES, WORK_ORDER_TYPES } from '../types/enums.js';
 
 const optionalText = z
   .string()
@@ -10,6 +10,20 @@ const optionalText = z
   .max(2000)
   .optional()
   .transform((v) => (v === '' ? undefined : v));
+
+/** Optional email: accepts '' (→ undefined) or a valid address. */
+const optionalEmail = z
+  .string()
+  .trim()
+  .optional()
+  .transform((v) => (v === '' ? undefined : v))
+  .refine((v) => v === undefined || z.string().email().safeParse(v).success, 'Invalid email');
+
+/** Optional non-negative money/number from a text input ('' → undefined). */
+const optionalNumber = z.preprocess(
+  (v) => (v === '' || v === null || v === undefined ? undefined : v),
+  z.coerce.number().nonnegative('Must be ≥ 0').optional(),
+);
 
 export const buildingFormSchema = z.object({
   name: z.string().trim().min(1, 'Name is required').max(200),
@@ -45,8 +59,34 @@ export const assetFormSchema = z.object({
   criticality: z.enum(CRITICALITIES),
   status: z.enum(ASSET_STATUSES),
   notes: optionalText,
+  contact_name: optionalText,
+  contact_email: optionalEmail,
 });
 export type AssetForm = z.infer<typeof assetFormSchema>;
+
+// ── Log work / service-history entry (plan §4.2, §4.7) ───────────────────────
+// Captures a completed unit of work against an asset: what/when/cost, who did
+// it, who coordinated/authorized, invoice, and check/payment #.
+export const workLogFormSchema = z.object({
+  title: z.string().trim().min(1, 'Title is required').max(200),
+  type: z.enum(WORK_ORDER_TYPES).default('reactive'),
+  completed_date: z
+    .string()
+    .optional()
+    .transform((v) => (v === '' ? undefined : v)),
+  assignee_user_id: z.string().uuid().nullish(),
+  coordinated_by_user_id: z.string().uuid().nullish(),
+  authorized_by_user_id: z.string().uuid().nullish(),
+  vendor_name: optionalText,
+  actual_parts_cost: optionalNumber,
+  actual_labor_cost: optionalNumber,
+  actual_vendor_cost: optionalNumber,
+  labor_hours: optionalNumber,
+  invoice_number: optionalText,
+  payment_reference: optionalText,
+  completion_notes: optionalText,
+});
+export type WorkLogForm = z.infer<typeof workLogFormSchema>;
 
 export const orgSettingsFormSchema = z.object({
   facility_name: z.string().trim().min(1, 'Facility name is required').max(200),
