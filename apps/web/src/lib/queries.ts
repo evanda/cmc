@@ -1,51 +1,21 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type {
-  Building,
-  BuildingForm,
-  Floor,
-  FloorForm,
-  Location,
-  LocationForm,
-  OrgSettings,
-} from '@cmc/shared';
-import { supabase } from './supabase';
-
-function unwrap<T>(res: { data: T | null; error: { message: string } | null }): T {
-  if (res.error) throw new Error(res.error.message);
-  return res.data as T;
-}
+import type { BuildingForm, FloorForm, LocationForm } from '@cmc/shared';
+import { ds } from './datasource';
 
 // ── org_settings (single row, plan §7.6) ─────────────────────────────────────
 export function useOrgSettings() {
-  return useQuery({
-    queryKey: ['org_settings'],
-    queryFn: async () =>
-      unwrap<OrgSettings | null>(
-        await supabase.from('org_settings').select('*').maybeSingle(),
-      ),
-  });
+  return useQuery({ queryKey: ['org_settings'], queryFn: () => ds.getOrgSettings() });
 }
 
 // ── buildings ────────────────────────────────────────────────────────────────
 export function useBuildings() {
-  return useQuery({
-    queryKey: ['buildings'],
-    queryFn: async () =>
-      unwrap<Building[]>(
-        await supabase
-          .from('buildings')
-          .select('*')
-          .is('deleted_at', null)
-          .order('name'),
-      ),
-  });
+  return useQuery({ queryKey: ['buildings'], queryFn: () => ds.listBuildings() });
 }
 
 export function useCreateBuilding() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: BuildingForm) =>
-      unwrap<Building>(await supabase.from('buildings').insert(input).select().single()),
+    mutationFn: (input: BuildingForm) => ds.createBuilding(input),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['buildings'] }),
   });
 }
@@ -53,10 +23,7 @@ export function useCreateBuilding() {
 export function useUpdateBuilding() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...input }: BuildingForm & { id: string }) =>
-      unwrap<Building>(
-        await supabase.from('buildings').update(input).eq('id', id).select().single(),
-      ),
+    mutationFn: ({ id, ...input }: BuildingForm & { id: string }) => ds.updateBuilding(id, input),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['buildings'] }),
   });
 }
@@ -64,16 +31,7 @@ export function useUpdateBuilding() {
 export function useDeleteBuilding() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (id: string) => {
-      unwrap(
-        await supabase
-          .from('buildings')
-          .update({ deleted_at: new Date().toISOString() })
-          .eq('id', id)
-          .select()
-          .single(),
-      );
-    },
+    mutationFn: (id: string) => ds.deleteBuilding(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['buildings'] });
       qc.invalidateQueries({ queryKey: ['floors'] });
@@ -86,19 +44,14 @@ export function useDeleteBuilding() {
 export function useFloors(buildingId?: string) {
   return useQuery({
     queryKey: ['floors', buildingId ?? 'all'],
-    queryFn: async () => {
-      let q = supabase.from('floors').select('*').is('deleted_at', null);
-      if (buildingId) q = q.eq('building_id', buildingId);
-      return unwrap<Floor[]>(await q.order('level'));
-    },
+    queryFn: () => ds.listFloors(buildingId),
   });
 }
 
 export function useCreateFloor() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: FloorForm) =>
-      unwrap<Floor>(await supabase.from('floors').insert(input).select().single()),
+    mutationFn: (input: FloorForm) => ds.createFloor(input),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['floors'] }),
   });
 }
@@ -106,8 +59,7 @@ export function useCreateFloor() {
 export function useUpdateFloor() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...input }: FloorForm & { id: string }) =>
-      unwrap<Floor>(await supabase.from('floors').update(input).eq('id', id).select().single()),
+    mutationFn: ({ id, ...input }: FloorForm & { id: string }) => ds.updateFloor(id, input),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['floors'] }),
   });
 }
@@ -115,16 +67,7 @@ export function useUpdateFloor() {
 export function useDeleteFloor() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (id: string) => {
-      unwrap(
-        await supabase
-          .from('floors')
-          .update({ deleted_at: new Date().toISOString() })
-          .eq('id', id)
-          .select()
-          .single(),
-      );
-    },
+    mutationFn: (id: string) => ds.deleteFloor(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['floors'] }),
   });
 }
@@ -133,25 +76,14 @@ export function useDeleteFloor() {
 export function useLocations(buildingId?: string) {
   return useQuery({
     queryKey: ['locations', buildingId ?? 'all'],
-    queryFn: async () => {
-      let q = supabase.from('locations').select('*').is('deleted_at', null);
-      if (buildingId) q = q.eq('building_id', buildingId);
-      return unwrap<Location[]>(await q.order('name'));
-    },
+    queryFn: () => ds.listLocations(buildingId),
   });
 }
 
 export function useCreateLocation() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: LocationForm) =>
-      unwrap<Location>(
-        await supabase
-          .from('locations')
-          .insert({ ...input, floor_id: input.floor_id ?? null })
-          .select()
-          .single(),
-      ),
+    mutationFn: (input: LocationForm) => ds.createLocation(input),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['locations'] }),
   });
 }
@@ -159,15 +91,7 @@ export function useCreateLocation() {
 export function useUpdateLocation() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...input }: LocationForm & { id: string }) =>
-      unwrap<Location>(
-        await supabase
-          .from('locations')
-          .update({ ...input, floor_id: input.floor_id ?? null })
-          .eq('id', id)
-          .select()
-          .single(),
-      ),
+    mutationFn: ({ id, ...input }: LocationForm & { id: string }) => ds.updateLocation(id, input),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['locations'] }),
   });
 }
@@ -175,16 +99,7 @@ export function useUpdateLocation() {
 export function useDeleteLocation() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (id: string) => {
-      unwrap(
-        await supabase
-          .from('locations')
-          .update({ deleted_at: new Date().toISOString() })
-          .eq('id', id)
-          .select()
-          .single(),
-      );
-    },
+    mutationFn: (id: string) => ds.deleteLocation(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['locations'] }),
   });
 }

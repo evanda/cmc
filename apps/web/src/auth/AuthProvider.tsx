@@ -1,7 +1,12 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import type { UserRole } from '@cmc/shared';
-import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { supabase, isSupabaseConfigured, isDemo } from '../lib/supabase';
+
+// A fake signed-in admin used only in offline demo mode (screenshots).
+const DEMO_SESSION = {
+  user: { id: 'demo-admin', email: 'admin@demo.test' },
+} as unknown as Session;
 
 interface AuthState {
   session: Session | null;
@@ -19,6 +24,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (isDemo) {
+      setSession(DEMO_SESSION);
+      setRole('admin');
+      setLoading(false);
+      return;
+    }
     if (!isSupabaseConfigured) {
       setLoading(false);
       return;
@@ -35,6 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Load the app role from public.users once we have a session.
   useEffect(() => {
+    if (isDemo) return; // role is fixed to 'admin' in demo mode
     if (!session) {
       setRole(null);
       return;
@@ -57,6 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { error: error?.message ?? null };
       },
       signOut: async () => {
+        if (isDemo) return;
         await supabase.auth.signOut();
       },
     }),
