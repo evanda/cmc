@@ -1,0 +1,11 @@
+{
+  "name": "@cmc/loader",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "exit 0"
+  }
+}
