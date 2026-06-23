@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  verify:
+    name: lint · typecheck · test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm verify
+
+  migrations:
+    name: migrations apply (Postgres 16)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v4
+      # Apply the Supabase auth shim, then every migration in order, against a
+      # clean DB — catches schema drift without the full Supabase stack.
+      - name: Apply migrations to a clean Postgres
+        run: |
+          psql -v ON_ERROR_STOP=1 -c "CREATE DATABASE cmc_ci;"
+          psql -v ON_ERROR_STOP=1 -d cmc_ci -f scripts/_local-pg-auth-shim.sql
+          for f in supabase/migrations/*.sql; do
+            echo "→ applying $f"
+            psql -v ON_ERROR_STOP=1 -d cmc_ci -f "$f"
+          done
+          echo "✓ all migrations applied cleanly"
