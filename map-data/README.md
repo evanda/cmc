@@ -14,6 +14,7 @@ loader tool exists. It does not change any existing code.
 | `pois.geojson` | 52 HVAC POIs (Point features) tagged with `level`, `poi_type:"hvac"`, `kind`, `label`, `notes` (plan §5.4). |
 | `floors.json` | 7 floor records (building × level) with a `geo_corners_geojson` quad placeholder (plan §6 `floors`). |
 | `viewer.html` | Standalone MapLibre GL JS viewer with a **level switcher** (Site · 2 · 1 · B1). |
+| `authoring/` | Tools to redraw this accurately at real coordinates — QGIS bootstrap, geojson.io template, field reference, and a 52-unit CSV checklist. See `authoring/README.md`. |
 
 ## View it
 
