@@ -125,6 +125,12 @@ async function load() {
     poiMarkers.push({ marker, level: p.level });
   });
 
+  // auto-fit to the data so the viewer works at any (real or placeholder) coords
+  const bounds = new maplibregl.LngLatBounds();
+  buildings.features.forEach(f => f.geometry.coordinates[0].forEach(c => bounds.extend(c)));
+  pois.features.forEach(f => bounds.extend(f.geometry.coordinates));
+  if (!bounds.isEmpty()) map.fitBounds(bounds, { padding: 90, duration: 0 });
+
   buildLevelSwitcher();
   buildLegend();
   applyLevel(1, 'main');
