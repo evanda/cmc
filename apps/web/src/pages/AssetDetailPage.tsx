@@ -6,7 +6,10 @@ import {
   type Criticality,
   type User,
   type WorkOrder,
+  type WorkOrderPhotoKind,
 } from '@cmc/shared';
+import { ds } from '../lib/datasource';
+import { WorkOrderModal } from './WorkOrderModal';
 import {
   useAddAssetPhoto,
   useAsset,
@@ -59,6 +62,7 @@ export function AssetDetailPage() {
   const deletePhoto = useDeleteAssetPhoto(id);
   const fileRef = useRef<HTMLInputElement>(null);
   const [showLog, setShowLog] = useState(false);
+  const [viewWo, setViewWo] = useState<WorkOrder | null>(null);
 
   const userName = (uid: string | null) =>
     uid ? (users.data?.find((u) => u.id === uid)?.name ?? '—') : null;
@@ -216,11 +220,17 @@ export function AssetDetailPage() {
                   <th className="px-3 py-2 font-medium">By / coordinated / authorized</th>
                   <th className="px-3 py-2 font-medium">Cost</th>
                   <th className="px-3 py-2 font-medium">Invoice / payment</th>
+                  <th className="px-3 py-2 font-medium">Photos</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {workOrders.data.map((w) => (
-                  <tr key={w.id} className="align-top hover:bg-slate-50">
+                  <tr
+                    key={w.id}
+                    className="cursor-pointer align-top hover:bg-slate-50"
+                    onClick={() => setViewWo(w)}
+                    title="Open work order (before/after photos)"
+                  >
                     <td className="whitespace-nowrap px-3 py-2.5 text-slate-600">
                       {w.completed_date ?? '—'}
                     </td>
@@ -255,6 +265,7 @@ export function AssetDetailPage() {
                       {w.payment_reference && <div className="text-slate-400">{w.payment_reference}</div>}
                       {!w.invoice_number && !w.payment_reference && '—'}
                     </td>
+                    <td className="px-3 py-2.5 text-blue-600">📷 view</td>
                   </tr>
                 ))}
               </tbody>
@@ -270,6 +281,15 @@ export function AssetDetailPage() {
           users={users.data ?? []}
           onClose={() => setShowLog(false)}
           assetId={id}
+        />
+      )}
+      {viewWo && (
+        <WorkOrderModal
+          wo={viewWo}
+          users={users.data ?? []}
+          currency={currency}
+          canEdit={canEdit}
+          onClose={() => setViewWo(null)}
         />
       )}
     </div>
@@ -313,8 +333,13 @@ function LogWorkModal({
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
+  const [pending, setPending] = useState<{ file: File; kind: WorkOrderPhotoKind; url: string }[]>([]);
+  const beforeRef = useRef<HTMLInputElement>(null);
+  const afterRef = useRef<HTMLInputElement>(null);
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) =>
     setF((prev) => ({ ...prev, [k]: e.target.value }));
+  const addPending = (file: File, kind: WorkOrderPhotoKind) =>
+    setPending((p) => [...p, { file, kind, url: URL.createObjectURL(file) }]);
 
   const userOpts = (label: string) => (
     <>
@@ -346,7 +371,9 @@ function LogWorkModal({
             return;
           }
           setBusy(true);
-          await create.mutateAsync(parsed.data);
+          const wo = await create.mutateAsync(parsed.data);
+          // Upload any before/after photos against the newly created work order.
+          for (const p of pending) await ds.addWorkOrderPhoto(wo.id, p.file, p.kind);
           setBusy(false);
           onClose();
         }}
@@ -415,6 +442,60 @@ function LogWorkModal({
         <Field label="Notes">
           <textarea className={inputClass} rows={2} value={f.completion_notes} onChange={set('completion_notes')} />
         </Field>
+
+        <div>
+          <div className="mb-1.5 flex items-center gap-3">
+            <span className="text-sm font-medium text-slate-700">Photos</span>
+            <input
+              ref={beforeRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) addPending(file, 'before');
+                e.target.value = '';
+              }}
+            />
+            <input
+              ref={afterRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) addPending(file, 'after');
+                e.target.value = '';
+              }}
+            />
+            <button type="button" className="text-xs text-blue-600 hover:underline" onClick={() => beforeRef.current?.click()}>
+              + Before (damage)
+            </button>
+            <button type="button" className="text-xs text-blue-600 hover:underline" onClick={() => afterRef.current?.click()}>
+              + After (repair)
+            </button>
+          </div>
+          {pending.length > 0 && (
+            <div className="grid grid-cols-4 gap-2">
+              {pending.map((p, i) => (
+                <figure key={i} className="relative overflow-hidden rounded border border-slate-200">
+                  <img src={p.url} alt="" className="h-16 w-full object-cover" />
+                  <span className="absolute left-1 top-1 rounded bg-black/50 px-1 text-[10px] text-white">
+                    {p.kind}
+                  </span>
+                  <button
+                    type="button"
+                    className="absolute right-1 top-1 rounded bg-black/50 px-1 text-[10px] text-white"
+                    onClick={() => setPending((prev) => prev.filter((_, j) => j !== i))}
+                  >
+                    ✕
+                  </button>
+                </figure>
+              ))}
+            </div>
+          )}
+        </div>
+
         <div className="flex justify-end gap-2 pt-1">
           <Button type="button" variant="ghost" onClick={onClose}>
             Cancel

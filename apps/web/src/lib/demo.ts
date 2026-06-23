@@ -17,6 +17,8 @@ import type {
   User,
   WorkLogForm,
   WorkOrder,
+  WorkOrderAttachment,
+  WorkOrderPhotoKind,
 } from '@cmc/shared';
 import type { DataSource } from './datasource';
 
@@ -247,8 +249,8 @@ seedPhoto('RTU-1 Rooftop Unit', 'RTU-1 — install', '#334155');
 seedPhoto('Playground Structure', 'Playground — overview', '#9333ea', true);
 
 const workOrders: WorkOrder[] = [];
-function seedWO(assetName: string, wo: Partial<WorkOrder> & { title: string }) {
-  workOrders.push({
+function seedWO(assetName: string, wo: Partial<WorkOrder> & { title: string }): WorkOrder {
+  const w: WorkOrder = {
     id: id(),
     ...base(),
     description: null,
@@ -275,9 +277,11 @@ function seedWO(assetName: string, wo: Partial<WorkOrder> & { title: string }) {
     completed_date: null,
     completion_notes: null,
     ...wo,
-  });
+  };
+  workOrders.push(w);
+  return w;
 }
-seedWO('RTU-1 Rooftop Unit', {
+const hvacWO = seedWO('RTU-1 Rooftop Unit', {
   title: 'Annual HVAC service + filter',
   type: 'preventive',
   completed_date: '2026-04-12',
@@ -321,6 +325,22 @@ seedWO('Playground Structure', {
   labor_hours: 0.75,
   payment_reference: 'Card ****1234',
 });
+
+// Before/after photos on a work order (damage vs proof of repair).
+const woPhotos: WorkOrderAttachment[] = [];
+function seedWOPhoto(wo: WorkOrder, kind: WorkOrderPhotoKind, label: string, color: string) {
+  woPhotos.push({
+    id: id(),
+    ...base(),
+    work_order_id: wo.id,
+    url: svgPhoto(label, color),
+    kind,
+    caption: label,
+    taken_at: now,
+  });
+}
+seedWOPhoto(hvacWO, 'before', 'Before — clogged filter', '#b45309');
+seedWOPhoto(hvacWO, 'after', 'After — new filter', '#15803d');
 
 const live = (rows: { deleted_at: string | null }[]) => rows.filter((r) => r.deleted_at === null);
 
@@ -536,5 +556,32 @@ export const demoDataSource: DataSource = {
     };
     workOrders.push(w);
     return w;
+  },
+
+  listWorkOrderPhotos: async (workOrderId) =>
+    (live(woPhotos) as WorkOrderAttachment[])
+      .filter((p) => p.work_order_id === workOrderId)
+      .sort((a, b) => a.kind.localeCompare(b.kind)),
+  addWorkOrderPhoto: async (workOrderId, file, kind) => {
+    const url = await new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.readAsDataURL(file);
+    });
+    const p: WorkOrderAttachment = {
+      id: id(),
+      ...base(),
+      work_order_id: workOrderId,
+      url,
+      kind,
+      caption: file.name,
+      taken_at: now,
+    };
+    woPhotos.push(p);
+    return p;
+  },
+  deleteWorkOrderPhoto: async (photoId) => {
+    const p = woPhotos.find((x) => x.id === photoId);
+    if (p) p.deleted_at = now;
   },
 };

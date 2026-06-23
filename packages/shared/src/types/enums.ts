@@ -33,3 +33,7 @@ export const WORK_ORDER_STATUSES = [
   'cancelled',
 ] as const;
 export type WorkOrderStatus = (typeof WORK_ORDER_STATUSES)[number];
+
+/** Work-order photo kind: 'before' (damage) vs 'after' (proof of repair). */
+export const WORK_ORDER_PHOTO_KINDS = ['before', 'after'] as const;
+export type WorkOrderPhotoKind = (typeof WORK_ORDER_PHOTO_KINDS)[number];

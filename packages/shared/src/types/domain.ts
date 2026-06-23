@@ -10,6 +10,7 @@ import type {
   AssetStatus,
   Criticality,
   UserRole,
+  WorkOrderPhotoKind,
   WorkOrderPriority,
   WorkOrderStatus,
   WorkOrderType,
@@ -135,6 +136,15 @@ export type WorkOrder = BaseRow & {
   due_date: string | null;
   completed_date: string | null;
   completion_notes: string | null;
+};
+
+/** A photo/attachment on a work order; `kind` = before | after (plan §4.2, §6). */
+export type WorkOrderAttachment = BaseRow & {
+  work_order_id: string;
+  url: string;
+  kind: WorkOrderPhotoKind;
+  caption: string | null;
+  taken_at: string | null;
 };
 
 // Minimal GeoJSON shapes used by the spatial schema (full system: Phase 2).

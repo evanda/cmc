@@ -1,5 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { AssetForm, BuildingForm, FloorForm, LocationForm, WorkLogForm } from '@cmc/shared';
+import type {
+  AssetForm,
+  BuildingForm,
+  FloorForm,
+  LocationForm,
+  WorkLogForm,
+  WorkOrderPhotoKind,
+} from '@cmc/shared';
 import { ds } from './datasource';
 
 // ── org_settings (single row, plan §7.6) ─────────────────────────────────────
@@ -184,5 +191,30 @@ export function useCreateWorkOrder(assetId: string) {
   return useMutation({
     mutationFn: (input: WorkLogForm) => ds.createWorkOrder(assetId, input),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['work_orders', assetId] }),
+  });
+}
+
+// ── work-order photos: before (damage) / after (proof) (plan §4.2) ───────────
+export function useWorkOrderPhotos(workOrderId: string) {
+  return useQuery({
+    queryKey: ['work_order_photos', workOrderId],
+    queryFn: () => ds.listWorkOrderPhotos(workOrderId),
+  });
+}
+
+export function useAddWorkOrderPhoto(workOrderId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ file, kind }: { file: File; kind: WorkOrderPhotoKind }) =>
+      ds.addWorkOrderPhoto(workOrderId, file, kind),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['work_order_photos', workOrderId] }),
+  });
+}
+
+export function useDeleteWorkOrderPhoto(workOrderId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (photoId: string) => ds.deleteWorkOrderPhoto(photoId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['work_order_photos', workOrderId] }),
   });
 }

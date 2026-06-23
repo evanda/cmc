@@ -18,6 +18,8 @@ import type {
   User,
   WorkLogForm,
   WorkOrder,
+  WorkOrderAttachment,
+  WorkOrderPhotoKind,
 } from '@cmc/shared';
 import { supabase, isDemo } from './supabase';
 import { demoDataSource } from './demo';
@@ -49,6 +51,13 @@ export interface DataSource {
   deleteAssetPhoto(photoId: string): Promise<void>;
   listWorkOrders(assetId: string): Promise<WorkOrder[]>;
   createWorkOrder(assetId: string, input: WorkLogForm): Promise<WorkOrder>;
+  listWorkOrderPhotos(workOrderId: string): Promise<WorkOrderAttachment[]>;
+  addWorkOrderPhoto(
+    workOrderId: string,
+    file: File,
+    kind: WorkOrderPhotoKind,
+  ): Promise<WorkOrderAttachment>;
+  deleteWorkOrderPhoto(photoId: string): Promise<void>;
 }
 
 // Map a "log work" form to a completed work_orders row (history entry).
@@ -281,6 +290,40 @@ const supabaseDataSource: DataSource = {
     unwrap<WorkOrder>(
       await supabase.from('work_orders').insert(workLogPatch(assetId, input)).select().single(),
     ),
+
+  listWorkOrderPhotos: async (workOrderId) =>
+    unwrap<WorkOrderAttachment[]>(
+      await supabase
+        .from('work_order_attachments')
+        .select('*')
+        .eq('work_order_id', workOrderId)
+        .is('deleted_at', null)
+        .order('kind')
+        .order('created_at'),
+    ),
+  addWorkOrderPhoto: async (workOrderId, file, kind) => {
+    const path = `${workOrderId}/${kind}-${crypto.randomUUID()}-${file.name}`;
+    const up = await supabase.storage.from('work-order-photos').upload(path, file);
+    if (up.error) throw new Error(up.error.message);
+    const { data } = supabase.storage.from('work-order-photos').getPublicUrl(path);
+    return unwrap<WorkOrderAttachment>(
+      await supabase
+        .from('work_order_attachments')
+        .insert({ work_order_id: workOrderId, url: data.publicUrl, kind, caption: file.name })
+        .select()
+        .single(),
+    );
+  },
+  deleteWorkOrderPhoto: async (photoId) => {
+    unwrap(
+      await supabase
+        .from('work_order_attachments')
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', photoId)
+        .select()
+        .single(),
+    );
+  },
 };
 
 export const ds: DataSource = isDemo ? demoDataSource : supabaseDataSource;

@@ -69,13 +69,22 @@ const shots = [
   { name: '07-locations', path: '/locations' },
   { name: '08-asset-detail', path: '/assets', clicks: ['RTU-1 Rooftop Unit'] },
   { name: '09-asset-log-work', path: '/assets', clicks: ['RTU-1 Rooftop Unit', 'Log work'] },
+  {
+    name: '10-work-order-photos',
+    path: '/assets',
+    clicks: ['RTU-1 Rooftop Unit', 'Annual HVAC service'],
+  },
 ];
 
 async function clickByText(page, text) {
   const clicked = await page.evaluate((t) => {
-    const el = [...document.querySelectorAll('button, a')].find((b) =>
-      (b.textContent || '').trim().includes(t),
+    // Prefer a button/link; fall back to any element (e.g. a clickable table
+    // row cell) — a real DOM click bubbles to React's delegated handler.
+    const all = [...document.querySelectorAll('button, a, td, [role=button]')];
+    let el = all.find(
+      (e) => (e.tagName === 'BUTTON' || e.tagName === 'A') && (e.textContent || '').trim().includes(t),
     );
+    if (!el) el = all.find((e) => (e.textContent || '').includes(t));
     if (el) {
       el.click();
       return true;

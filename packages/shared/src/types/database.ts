@@ -13,6 +13,7 @@ import type {
   OrgSettings,
   User,
   WorkOrder,
+  WorkOrderAttachment,
 } from './domain.js';
 
 /** Columns the database fills in itself; optional on insert/update. */
@@ -42,6 +43,7 @@ export interface Database {
       assets: TableShape<Asset>;
       asset_photos: TableShape<AssetPhoto>;
       work_orders: TableShape<WorkOrder>;
+      work_order_attachments: TableShape<WorkOrderAttachment>;
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
