@@ -11,9 +11,13 @@ import type {
   Contact,
   Floor,
   Location,
+  Meter,
+  MeterReading,
   OrgSettings,
+  PmSchedule,
   Poi,
   ServiceContract,
+  TaskTemplate,
   User,
   Vendor,
   WorkOrder,
@@ -54,6 +58,10 @@ export interface Database {
       service_contracts: TableShape<ServiceContract>;
       contacts: TableShape<Contact>;
       pois: TableShape<Poi>;
+      pm_schedules: TableShape<PmSchedule>;
+      task_templates: TableShape<TaskTemplate>;
+      meters: TableShape<Meter>;
+      meter_readings: TableShape<MeterReading>;
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
@@ -72,6 +80,9 @@ export interface Database {
         | 'closed'
         | 'cancelled';
       work_request_status: 'open' | 'converted' | 'declined';
+      pm_trigger_type: 'calendar' | 'meter' | 'fixed_date';
+      pm_interval_unit: 'day' | 'week' | 'month' | 'year';
+      pm_advance_from: 'completion' | 'scheduled';
     };
   };
 }

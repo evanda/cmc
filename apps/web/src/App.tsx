@@ -11,6 +11,7 @@ import { WorkRequestsPage } from './pages/WorkRequestsPage';
 import { VendorsPage } from './pages/VendorsPage';
 import { MapPage } from './pages/MapPage';
 import { UsersPage } from './pages/UsersPage';
+import { PmSchedulesPage } from './pages/PmSchedulesPage';
 import { BuildingsPage } from './pages/BuildingsPage';
 import { FloorsPage } from './pages/FloorsPage';
 import { LocationsPage } from './pages/LocationsPage';
@@ -37,6 +38,7 @@ export function App() {
         <Route path="map" element={<MapPage />} />
         <Route path="requests" element={<WorkRequestsPage />} />
         <Route path="work-orders" element={<WorkOrdersPage />} />
+        <Route path="pm" element={<PmSchedulesPage />} />
         <Route path="assets" element={<AssetsPage />} />
         <Route path="assets/:id" element={<AssetDetailPage />} />
         <Route path="a/:token" element={<AssetByTokenPage />} />

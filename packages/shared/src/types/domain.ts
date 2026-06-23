@@ -9,6 +9,9 @@
 import type {
   AssetStatus,
   Criticality,
+  PmAdvanceFrom,
+  PmIntervalUnit,
+  PmTriggerType,
   UserRole,
   WorkOrderPhotoKind,
   WorkOrderPriority,
@@ -140,6 +143,50 @@ export type WorkOrder = BaseRow & {
   completion_notes: string | null;
   /** The work request this WO was triaged from, if any (plan §6). */
   source_request_id: string | null;
+  /** The PM schedule that generated this WO, if any (plan §6). */
+  source_pm_id: string | null;
+};
+
+/** A preventive-maintenance schedule (plan §4.3, §6). */
+export type PmSchedule = BaseRow & {
+  name: string;
+  asset_id: string | null;
+  location_id: string | null;
+  task_template_id: string | null;
+  trigger_type: PmTriggerType;
+  interval_value: number | null;
+  interval_unit: PmIntervalUnit | null;
+  fixed_month: number | null;
+  fixed_day: number | null;
+  meter_id: string | null;
+  meter_threshold: number | null;
+  anchor_date: string;
+  advance_from: PmAdvanceFrom;
+  lead_time_days: number;
+  assignee_user_id: string | null;
+  vendor_id: string | null;
+  is_compliance: boolean;
+  category: string | null;
+  active: boolean;
+};
+
+export type TaskTemplate = BaseRow & {
+  name: string;
+  instructions: string | null;
+  checklist_template_id: string | null;
+};
+
+export type Meter = BaseRow & {
+  asset_id: string;
+  type: string;
+  unit: string;
+};
+
+export type MeterReading = BaseRow & {
+  meter_id: string;
+  value: number;
+  reading_date: string;
+  recorded_by: string | null;
 };
 
 /** A raw work request before triage into a WO (plan §3.1, §4.2). */

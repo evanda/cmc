@@ -16,6 +16,8 @@ import type {
   Location,
   LocationForm,
   OrgSettings,
+  PmSchedule,
+  PmScheduleForm,
   ServiceContract,
   ServiceContractForm,
   User,
@@ -290,6 +292,7 @@ function buildWO(partial: Partial<WorkOrder> & { title: string }): WorkOrder {
     completed_date: null,
     completion_notes: null,
     source_request_id: null,
+    source_pm_id: null,
     ...partial,
   };
 }
@@ -498,6 +501,78 @@ if (import.meta.env.VITE_DEMO === 'midway') {
     });
   }
 }
+
+// PM schedules (plan §4.3). Mostly campus-wide compliance/inspection so they
+// hold in both the sample and Midway datasets; one ties to the first HVAC asset.
+const pmSchedules: PmSchedule[] = [];
+function seedPm(partial: Partial<PmSchedule> & { name: string }) {
+  pmSchedules.push({
+    id: id(),
+    ...base(),
+    asset_id: null,
+    location_id: null,
+    task_template_id: null,
+    trigger_type: 'calendar',
+    interval_value: null,
+    interval_unit: null,
+    fixed_month: null,
+    fixed_day: null,
+    meter_id: null,
+    meter_threshold: null,
+    anchor_date: '2026-04-01',
+    advance_from: 'completion',
+    lead_time_days: 14,
+    assignee_user_id: null,
+    vendor_id: null,
+    is_compliance: false,
+    category: null,
+    active: true,
+    ...partial,
+  });
+}
+const firstHvac = assets.find(
+  (a) => categories.find((c) => c.id === a.category_id)?.name === 'HVAC',
+);
+seedPm({
+  name: 'HVAC filter swap',
+  interval_value: 3,
+  interval_unit: 'month',
+  category: 'HVAC',
+  anchor_date: '2026-04-01',
+  asset_id: firstHvac?.id ?? null,
+  assignee_user_id: userId('Sam Tech'),
+});
+seedPm({
+  name: 'Fire-extinguisher check',
+  interval_value: 1,
+  interval_unit: 'month',
+  is_compliance: true,
+  category: 'Compliance',
+  anchor_date: '2026-06-01',
+});
+seedPm({
+  name: 'Backflow preventer test',
+  trigger_type: 'fixed_date',
+  fixed_month: 4,
+  fixed_day: 15,
+  is_compliance: true,
+  category: 'Compliance',
+  anchor_date: '2026-01-01',
+});
+seedPm({
+  name: 'Roof inspection',
+  interval_value: 1,
+  interval_unit: 'year',
+  anchor_date: '2025-09-15',
+  category: 'Roofing',
+});
+seedPm({
+  name: 'Playground safety inspection',
+  interval_value: 1,
+  interval_unit: 'month',
+  is_compliance: true,
+  anchor_date: '2026-06-10',
+});
 
 const live = (rows: { deleted_at: string | null }[]) => rows.filter((r) => r.deleted_at === null);
 
@@ -724,6 +799,7 @@ export const demoDataSource: DataSource = {
       completed_date: input.completed_date ?? null,
       completion_notes: input.completion_notes ?? null,
       source_request_id: null,
+      source_pm_id: null,
     };
     workOrders.push(w);
     return w;
@@ -925,5 +1001,39 @@ export const demoDataSource: DataSource = {
   deleteContact: async (cid) => {
     const c = contacts.find((x) => x.id === cid);
     if (c) c.deleted_at = now;
+  },
+
+  listPmSchedules: async () =>
+    (live(pmSchedules) as PmSchedule[]).sort((a, b) => a.name.localeCompare(b.name)),
+  createPmSchedule: async (input: PmScheduleForm) => {
+    const s: PmSchedule = {
+      id: id(),
+      ...base(),
+      name: input.name,
+      asset_id: input.asset_id ?? null,
+      location_id: null,
+      task_template_id: null,
+      trigger_type: input.trigger_type,
+      interval_value: input.interval_value ?? null,
+      interval_unit: input.interval_unit ?? null,
+      fixed_month: input.fixed_month ?? null,
+      fixed_day: input.fixed_day ?? null,
+      meter_id: null,
+      meter_threshold: input.meter_threshold ?? null,
+      anchor_date: input.anchor_date,
+      advance_from: 'completion',
+      lead_time_days: input.lead_time_days,
+      assignee_user_id: input.assignee_user_id ?? null,
+      vendor_id: null,
+      is_compliance: input.is_compliance,
+      category: input.category ?? null,
+      active: true,
+    };
+    pmSchedules.push(s);
+    return s;
+  },
+  deletePmSchedule: async (sid) => {
+    const s = pmSchedules.find((x) => x.id === sid);
+    if (s) s.deleted_at = now;
   },
 };

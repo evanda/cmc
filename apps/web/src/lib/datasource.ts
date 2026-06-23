@@ -17,6 +17,8 @@ import type {
   Location,
   LocationForm,
   OrgSettings,
+  PmSchedule,
+  PmScheduleForm,
   ServiceContract,
   ServiceContractForm,
   User,
@@ -95,6 +97,30 @@ export interface DataSource {
   createContact(input: ContactForm): Promise<Contact>;
   updateContact(id: string, input: ContactForm): Promise<Contact>;
   deleteContact(id: string): Promise<void>;
+  // Preventive maintenance (plan §4.3).
+  listPmSchedules(): Promise<PmSchedule[]>;
+  createPmSchedule(input: PmScheduleForm): Promise<PmSchedule>;
+  deletePmSchedule(id: string): Promise<void>;
+}
+
+function pmSchedulePatch(input: PmScheduleForm) {
+  return {
+    name: input.name,
+    asset_id: input.asset_id ?? null,
+    trigger_type: input.trigger_type,
+    interval_value: input.interval_value ?? null,
+    interval_unit: input.interval_unit ?? null,
+    fixed_month: input.fixed_month ?? null,
+    fixed_day: input.fixed_day ?? null,
+    meter_threshold: input.meter_threshold ?? null,
+    anchor_date: input.anchor_date,
+    advance_from: 'completion' as const,
+    lead_time_days: input.lead_time_days,
+    assignee_user_id: input.assignee_user_id ?? null,
+    is_compliance: input.is_compliance,
+    category: input.category ?? null,
+    active: true,
+  };
 }
 
 function vendorPatch(input: VendorForm) {
@@ -594,6 +620,25 @@ const supabaseDataSource: DataSource = {
     unwrap(
       await supabase
         .from('contacts')
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', id)
+        .select()
+        .single(),
+    );
+  },
+
+  listPmSchedules: async () =>
+    unwrap<PmSchedule[]>(
+      await supabase.from('pm_schedules').select('*').is('deleted_at', null).order('name'),
+    ),
+  createPmSchedule: async (input) =>
+    unwrap<PmSchedule>(
+      await supabase.from('pm_schedules').insert(pmSchedulePatch(input)).select().single(),
+    ),
+  deletePmSchedule: async (id) => {
+    unwrap(
+      await supabase
+        .from('pm_schedules')
         .update({ deleted_at: new Date().toISOString() })
         .eq('id', id)
         .select()

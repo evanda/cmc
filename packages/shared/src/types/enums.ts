@@ -49,3 +49,13 @@ export const ACTIVE_WORK_ORDER_STATUSES: readonly WorkOrderStatus[] = [
   'in_progress',
   'on_hold',
 ];
+
+/** Preventive-maintenance trigger / interval / anchor enums (plan §4.3). */
+export const PM_TRIGGER_TYPES = ['calendar', 'meter', 'fixed_date'] as const;
+export type PmTriggerType = (typeof PM_TRIGGER_TYPES)[number];
+
+export const PM_INTERVAL_UNITS = ['day', 'week', 'month', 'year'] as const;
+export type PmIntervalUnit = (typeof PM_INTERVAL_UNITS)[number];
+
+export const PM_ADVANCE_FROM = ['completion', 'scheduled'] as const;
+export type PmAdvanceFrom = (typeof PM_ADVANCE_FROM)[number];
