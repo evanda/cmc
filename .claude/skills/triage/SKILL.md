@@ -1,173 +1,108 @@
 ---
 name: triage
-description: Reviews open issues on evanda/cmc, filters and groups them against the phase plan and design rules, asks for judgment calls, and ensures every actionable item has a clear phase label and structured body.
+description: Reviews open issues on evanda/cmc, consolidates duplicates/fragments, fleshes out thin issues with structured bodies, and applies phase + type labels so the backlog stays clean and phase-ordered.
 triggers:
   - triage
 ---
 # Triage Skill
 
-Guides the AI assistant in triaging open issues against the facility-maintenance
-app phase plan (§11 of `facility-maintenance-app-plan.md`), aligning requests
-with architecture and design rules, and producing well-structured internal issues
-so the backlog stays clean and phase-ordered.
+Grooms the `evanda/cmc` backlog: reads every open issue, consolidates overlapping
+ones, fleshes out vague or thin issues with structured bodies, and ensures each
+has the right phase label. The output is a clean, actionable backlog where every
+issue clearly belongs to a phase and has enough detail to be picked up by `toil`.
 
 ---
 
-## Workflow Overview
-
-```mermaid
-graph TD
-    A[Fetch Open Issues] --> B[Triage & Weed Out]
-    B --> C[Deduplicate & Group]
-    C --> D[Align with Phase Plan & Rules]
-    D --> E[Draft / Update Issue Body]
-    E --> F[Confirm with User]
-    F --> G[Apply Labels & Update Issues]
-```
-
----
-
-## Step 1: Fetch Issues
-
-Use the GitHub MCP tool to list open issues on `evanda/cmc`:
+## Step 1: Fetch issues and read the plan
 
 ```
 mcp__github__list_issues(owner="evanda", repo="cmc", state="OPEN")
-```
-
-Also fetch the phase plan for reference:
-
-```
-Read facility-maintenance-app-plan.md   # §11 is the phase order
+Read facility-maintenance-app-plan.md   # §11 = phase order; §6 = schema
 ```
 
 ---
 
-## Step 2: Triage & Weeding Out
+## Step 2: Group and flag
 
-Evaluate each issue against these constraints. Flag (don't silently drop) items
-that violate them — explain the violation so the user can make the call:
+Scan all open issues and produce a short internal inventory:
 
-1. **Phase alignment (plan §11).** Every actionable issue belongs to one of the
-   defined phases (0–4). Out-of-phase work that would block a lower-phase
-   deliverable is a scope risk — flag it.
+- **Duplicates / fragments** — issues that cover the same ground or together form
+  one coherent task. Note which to consolidate and which to close as duplicates.
+- **Already covered by the plan** — if the plan's deliverable for a phase already
+  implies this work, note it so the issue body can reference the right section.
+- **Scope concerns** — issues that conflict with a key design rule (see below);
+  flag with a brief note rather than silently closing.
 
-2. **Single-tenant, church-agnostic design (plan §7.6).** Anything that
-   hardcodes a church name, address, or other instance-specific value in code
-   (rather than in `org_settings` or seed data) violates the design contract.
-   Reject or rework such requests.
-
-3. **Schema contract (plan §6).** Issues that propose schema changes
-   inconsistent with the data model (e.g. adding `org_id` to every table, which
-   would push the project toward multi-tenancy) need explicit discussion before
-   acceptance.
-
-4. **Out-of-scope domains (plan §13).** Room booking / event scheduling, full
-   accounting / GL / payroll, IoT sensor ingestion — flag these as explicitly
-   out of scope for v1.
+Key design rules to check against:
+- **Phase order (§11):** work that skips ahead and would block a lower-phase
+  deliverable is a scope risk — flag it.
+- **Single-tenant / church-agnostic (§7.6):** anything that would hardcode
+  church-specific values in code (vs. `org_settings`) — flag it.
+- **Schema contract (§6):** changes inconsistent with the data model — flag it.
+- **Out-of-scope domains (§13):** room booking, full GL/accounting, IoT sensors —
+  flag as out-of-scope for v1.
 
 ---
 
-## Step 3: Check for Duplicate Coverage
+## Step 3: Confirm with the user
 
-Before grouping or drafting, cross-check each issue against the others and
-against the phase plan deliverables. If two issues address the same problem,
-note which should be the canonical one and which should be closed as a
-duplicate.
+Before making any changes, show a brief summary:
 
----
+- Issues you'll consolidate (which survive, which close as duplicates)
+- Issues you'll flesh out (currently thin/vague)
+- Issues you're flagging for scope concerns, with a one-line reason
 
-## Step 4: Confirm Judgment Calls with User
-
-**Before making any changes**, present a triage summary:
-
-1. **Clear bugs / clear phase work** — state these as "will label + update."
-2. **Deferred items** — briefly explain why each was deferred.
-3. **Issues requiring judgment** — use `AskUserQuestion` for borderline items.
-   Group related questions to keep it concise.
-
-Only proceed to Step 5 after the user confirms.
+Use `AskUserQuestion` for anything genuinely ambiguous. Then proceed.
 
 ---
 
-## Step 5: Deduplication & Design Coherence
+## Step 4: Consolidate duplicates
 
-Merge related issues into a single cohesive proposal rather than tracking
-fragmented one-offs.
-
-Examples:
-- Combine "add buildings CRUD" + "add floors CRUD" + "add locations CRUD" →
-  **Phase 0: Buildings / Floors / Locations CRUD**
-- Group "show asset on map" + "click POI to open asset" →
-  **Phase 2: Map ↔ Asset linkage**
-
----
-
-## Step 6: Codebase Alignment & Technical Guidance
-
-Before drafting or updating an issue, check it against current architecture:
-
-- **Monorepo layout:** changes touching shared types/logic go in
-  `packages/shared`; web-only UI in `apps/web`; mobile in `apps/mobile`;
-  map-authoring in `apps/loader`.
-- **Backend:** schema changes require a Supabase migration file in
-  `supabase/migrations/`; RLS policies must be updated alongside.
-- **No church-specific constants in code.** Church name, logo, address, locale
-  → `org_settings` table. Campus data (buildings, floors, assets) → per-instance
-  seed content, never hardcoded.
+For issues being merged into a canonical one:
+1. Update the canonical issue body to incorporate any useful detail from the others.
+2. Close the duplicates with a comment:
+   ```
+   mcp__github__add_issue_comment(owner="evanda", repo="cmc", issue_number=N,
+     body="Closing as duplicate of #M.")
+   mcp__github__issue_write(owner="evanda", repo="cmc", issue_number=N,
+     state="closed")
+   ```
 
 ---
 
-## Step 7: Draft or Update the Issue Body
+## Step 5: Flesh out thin issues
 
-Use the template below. When updating an existing issue that already has a body,
-preserve any content that's still accurate and add/replace only what needs
-changing.
+For each issue that lacks a structured body, update it using this template.
+When an issue already has a good body, only fill in the missing sections.
 
-### Issue Template
-
-````markdown
-# feat/fix: [Descriptive Title]
-
+```markdown
 **Phase:** [0 / 1 / 2 / 3 / 4 — per plan §11]
 
-## 1. Product & Design Spec
-Describe the user-facing goal. Tied to the CMMS domain vocabulary from the plan
-(work order, asset, PM schedule, etc.).
+## What & why
+[One paragraph: what this delivers and why it matters at this phase.]
 
-## 2. Proposed Technical Architecture
-Specify exactly which files/packages to touch and what new files to create.
+## Technical notes
+- **Schema / migration:** [tables or columns affected; `supabase/migrations/`]
+- **Shared (`packages/shared`):** [types, validation, or business logic]
+- **Web (`apps/web`):** [components, routes, query hooks]
+- **Mobile / Loader:** [only if this phase touches those apps]
 
-- **Schema / Migration:**
-  List any new tables, columns, or RLS changes needed in `supabase/migrations/`.
-- **Shared package (`packages/shared`):**
-  Types, validation schemas, or business-logic utilities (e.g. PM next-due
-  calculator) that belong here.
-- **Web (`apps/web`):**
-  Components, routes, TanStack Query hooks.
-- **Mobile (`apps/mobile`) / Loader (`apps/loader`):**
-  Only if this phase touches those apps.
-
-## 3. Implementation Checklist
-- [ ] Migration file in `supabase/migrations/`
+## Checklist
+- [ ] Migration in `supabase/migrations/`
 - [ ] Types in `packages/shared/src/types/`
 - [ ] RLS policies updated
-- [ ] API / query hooks in `apps/web/`
-- [ ] UI component(s)
+- [ ] Web UI / query hooks
 - [ ] Unit tests
+```
 
-## 4. Release Notes Draft
-<!-- Pre-written so release notes can be assembled without re-reading the issue -->
-**User-facing summary** (for changelog):
-> [One sentence describing what this adds or fixes for the operator/user]
-````
+Omit sections that don't apply (e.g. no migration needed → drop that line).
 
 ---
 
-## Step 8: Apply Labels & Update Issues
+## Step 6: Apply labels
 
-### Available labels
-Create these if they don't exist yet:
+Create labels if they don't exist yet (`gh label create … --repo evanda/cmc`),
+then apply the right ones to each issue:
 
 | Label | Color | Meaning |
 |-------|-------|---------|
@@ -182,43 +117,16 @@ Create these if they don't exist yet:
 | `architecture` | `#f9d0c4` | Structural / cross-cutting |
 | `future` | `#cfd3d7` | Deferred — not in current phases |
 
-### For each confirmed issue
-
-Update the issue body with the structured template (if it lacks one), and apply
-the correct phase label. Use the GitHub MCP tools:
-
 ```
 mcp__github__issue_write(owner="evanda", repo="cmc", issue_number=N,
   body="<updated body>", labels=["phase-0", "feature"])
 ```
 
-Create missing labels first if needed:
-```
-gh label create phase-0 --repo evanda/cmc --color 0075ca --description "Phase 0: Foundation"
-```
-
 ---
 
-## Step 9: Report
+## Step 7: Report
 
-After applying all updates, post a brief summary:
-- Issues updated / labelled
-- Issues flagged for deferral (and why)
-- Any judgment calls still open
-
----
-
-## Execution Guide for Agents
-
-**Trigger:** the user saying "triage" (alone or with context like "triage the
-backlog") should invoke this skill automatically.
-
-When running:
-1. Fetch open issues via GitHub MCP.
-2. Read `facility-maintenance-app-plan.md` §11 for phase context.
-3. Triage: identify clear work items, duplicates, scope violations, and
-   judgment-call features.
-4. Present the triage summary; use `AskUserQuestion` for any borderline items.
-5. For confirmed items: draft/update the issue body with the template above.
-6. Apply phase + type labels.
-7. Report the changes made.
+Post a brief summary of what was done:
+- Issues consolidated (which survived, which were closed as duplicates)
+- Issues fleshed out
+- Issues flagged (and why — awaiting user decision)
