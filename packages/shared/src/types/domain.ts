@@ -190,6 +190,19 @@ export type Contact = BaseRow & {
   notes: string | null;
 };
 
+/** A clickable map marker linked to a domain object (plan §5.4). */
+export type Poi = BaseRow & {
+  building_id: string | null;
+  floor_id: string | null;
+  level: number | null;
+  geometry_geojson: { type: 'Point'; coordinates: number[] };
+  poi_type: string;
+  linked_asset_id: string | null;
+  label: string | null;
+  icon: string | null;
+  notes: string | null;
+};
+
 /** A photo/attachment on a work order; `kind` = before | after (plan §4.2, §6). */
 export type WorkOrderAttachment = BaseRow & {
   work_order_id: string;

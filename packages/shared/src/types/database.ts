@@ -12,6 +12,7 @@ import type {
   Floor,
   Location,
   OrgSettings,
+  Poi,
   ServiceContract,
   User,
   Vendor,
@@ -52,6 +53,7 @@ export interface Database {
       vendors: TableShape<Vendor>;
       service_contracts: TableShape<ServiceContract>;
       contacts: TableShape<Contact>;
+      pois: TableShape<Poi>;
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

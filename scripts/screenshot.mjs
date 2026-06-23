@@ -78,6 +78,7 @@ const shots = [
 const midwayShots = [
   { name: '01-map-site', path: '/map', wait: 4000 },
   { name: '02-map-basement', path: '/map', wait: 4500, clicks: ['B1'] },
+  { name: '03-map-poi-card', path: '/map', wait: 4500, clicks: ['B1'], mapPoiLevel: -1 },
   { name: '03-dashboard', path: '/' },
   { name: '04-assets', path: '/assets' },
   { name: '05-buildings', path: '/buildings' },
@@ -146,6 +147,24 @@ async function main() {
     await page.goto(base + shot.path, { waitUntil: 'networkidle0' });
     await new Promise((r) => setTimeout(r, shot.wait ?? 400)); // settle (maps need longer)
     for (const text of shot.clicks || []) await clickByText(page, text);
+    if (shot.mapPoiLevel !== undefined) {
+      await new Promise((r) => setTimeout(r, 600));
+      const pt = await page.evaluate((lvl) => {
+        const w = window;
+        const map = w.__cmcMap;
+        const pois = w.__cmcPois;
+        if (!map || !pois) return null;
+        const f = pois.features.find((x) => x.properties.level === lvl);
+        if (!f) return null;
+        const p = map.project(f.geometry.coordinates);
+        const r = map.getCanvas().getBoundingClientRect();
+        return { x: r.left + p.x, y: r.top + p.y };
+      }, shot.mapPoiLevel);
+      if (pt) {
+        await page.mouse.click(pt.x, pt.y);
+        await new Promise((r) => setTimeout(r, 500));
+      }
+    }
     const file = join(outDir, `${shot.name}.png`);
     await page.screenshot({ path: file });
     await page.close();
