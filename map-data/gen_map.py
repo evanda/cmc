@@ -224,9 +224,12 @@ def write(name, obj):
         json.dump(obj, f, indent=2)
     print("wrote", name)
 
-write("buildings.geojson", {"type": "FeatureCollection", "features": bldg_features})
-write("pois.geojson", {"type": "FeatureCollection", "features": poi_features})
-write("floors.json", floors)
-
-print(f"buildings={len(bldg_features)} pois={len(poi_features)} floors={len(floors)}")
-print("center:", ll(15, -5))
+# Only (re)write the PLACEHOLDER dataset when run directly. Importing this module
+# (e.g. from gen_pois.py) just exposes the slide POI data (P, kind, by_code) and
+# must NOT clobber buildings.geojson once it holds real, traced footprints.
+if __name__ == "__main__":
+    write("buildings.geojson", {"type": "FeatureCollection", "features": bldg_features})
+    write("pois.geojson", {"type": "FeatureCollection", "features": poi_features})
+    write("floors.json", floors)
+    print(f"buildings={len(bldg_features)} pois={len(poi_features)} floors={len(floors)}")
+    print("center:", ll(15, -5))

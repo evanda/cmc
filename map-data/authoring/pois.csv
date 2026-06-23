@@ -1,53 +1,53 @@
 id,label,kind,poi_type,building_code,building,level,level_name,linked_asset_id,notes,lng,lat
-poi-001,AC16A,air_conditioner,hvac,09,2009 Building (Church),-1,Basement,,Sanctuary control (basement). In big white fencing outside the emergency-exit stairwell behind the 2009 pulpit.,-79.9992762,35.0003246
-poi-002,AC16B,air_conditioner,hvac,09,2009 Building (Church),-1,Basement,,Sanctuary control (basement). In big white fencing outside the emergency-exit stairwell behind the 2009 pulpit.,-79.999024,35.0003246
-poi-003,HP9,heat_pump,hvac,09,2009 Building (Church),-1,Basement,,"Narthex / front-lobby control. Basement: nursery playground, unit closest to the nursery entry.",-79.9987718,35.0003246
-poi-004,HP11,heat_pump,hvac,09,2009 Building (Church),-1,Basement,,"Narthex / front-lobby control. Basement: nursery playground, unit closest to the nursery entry.",-79.9992762,34.9998106
-poi-005,HP5,heat_pump,hvac,09,2009 Building (Church),-1,Basement,,"Children's ministry room & hallway control. Basement: nursery playground, unit closest to the main-level lobby entry.",-79.999024,34.9998106
-poi-006,AC5,air_conditioner,hvac,09,2009 Building (Church),-1,Basement,,"Children's ministry room & hallway control. Basement: mechanical room, end of hall near the concession-style kitchen.",-79.9987718,34.9998106
-poi-007,AC1,air_conditioner,hvac,09,2009 Building (Church),1,Main,,Special-needs nursery 1 control. Main level: catwalk behind the 2009 sanctuary pulpit.,-79.9992762,35.0003246
-poi-008,AC2,air_conditioner,hvac,09,2009 Building (Church),1,Main,,Infant nursery 2 control. Main level: catwalk behind the 2009 sanctuary pulpit.,-79.999024,35.0003246
-poi-009,AC3,air_conditioner,hvac,09,2009 Building (Church),1,Main,,Children nursery 3 control. Main level: catwalk behind the 2009 sanctuary pulpit.,-79.9987718,35.0003246
-poi-010,AC4,air_conditioner,hvac,09,2009 Building (Church),1,Main,,Youth ministry room 4 control. Main level: catwalk behind the 2009 sanctuary pulpit.,-79.9992762,34.9998106
-poi-011,AC15,air_conditioner,hvac,09,2009 Building (Church),1,Main,,Long hallway connecting church with school. Main level: in ceiling in front of the men's restroom by the 2009 sanctuary.,-79.999024,34.9998106
-poi-012,HP15,heat_pump,hvac,09,2009 Building (Church),1,Main,,Long hallway connecting church with school. Main level: outside the southern lobby entrance toward the nursery entrance.,-79.9987718,34.9998106
-poi-013,HP12,heat_pump,hvac,09,2009 Building (Church),2,Upper,,Choir practice room & music-ministry offices control. Upper level: roof access off the stairwell by the elevator.,-79.9992762,35.0003246
-poi-014,HP13,heat_pump,hvac,09,2009 Building (Church),2,Upper,,Choir practice room & music-ministry offices control. Upper level: roof access off the stairwell by the elevator.,-79.999024,35.0003246
-poi-015,AC12,air_conditioner,hvac,09,2009 Building (Church),2,Upper,,Choir practice room & music-ministry offices. Upper level: above the men's robing room (ladder entry).,-79.9987718,35.0003246
-poi-016,AC13,air_conditioner,hvac,09,2009 Building (Church),2,Upper,,Choir practice room & music-ministry offices. Upper level: above the men's robing room (ladder entry).,-79.9992762,35.0000676
-poi-017,AC9,air_conditioner,hvac,09,2009 Building (Church),2,Upper,,Narthex / front-lobby control. Upper level: above the women's robing room in the choir practice room (ladder entry).,-79.999024,35.0000676
-poi-018,AC11,air_conditioner,hvac,09,2009 Building (Church),2,Upper,,Narthex / front-lobby control. Upper level: above the women's robing room in the choir practice room (ladder entry).,-79.9987718,35.0000676
-poi-019,AH16A,air_handler,hvac,09,2009 Building (Church),2,Upper,,"Sanctuary air handler. Upper level: behind mechanical-room doors on the balcony, either side of the 2009 pulpit.",-79.9992762,34.9998106
-poi-020,AH16B,air_handler,hvac,09,2009 Building (Church),2,Upper,,"Sanctuary air handler. Upper level: behind mechanical-room doors on the balcony, either side of the 2009 pulpit.",-79.999024,34.9998106
-poi-021,HP7,heat_pump,hvac,FH,Fellowship Hall,1,Main,,"Fellowship-hall classrooms. Main level: outside, next to the head pastor's office.",-79.9995613,34.9997115
-poi-022,HP8,heat_pump,hvac,FH,Fellowship Hall,1,Main,,"Fellowship-hall classrooms. Main level: outside, next to the head pastor's office.",-79.999364,34.9997115
-poi-023,HP10,heat_pump,hvac,FH,Fellowship Hall,1,Main,,"Back-hallway access to Explorers/Harvesters/Light classrooms. Main level: outside, next to the head pastor's office.",-79.9991666,34.9997115
-poi-024,HP14A,heat_pump,hvac,FH,Fellowship Hall,1,Main,,"Pastors' offices — Marc's office. Main level: outside, next to the head pastor's office.",-79.9995613,34.9996393
-poi-025,HP14B,heat_pump,hvac,FH,Fellowship Hall,1,Main,,"Pastors' offices — David's office. Main level: outside, next to the head pastor's office.",-79.999364,34.9996393
-poi-026,AC7,air_conditioner,hvac,FH,Fellowship Hall,1,Main,,"Fellowship-hall classrooms. Main level: in ceiling, long drop tiles in the pastor-offices hallway.",-79.9991666,34.9996393
-poi-027,AC8,air_conditioner,hvac,FH,Fellowship Hall,1,Main,,"Fellowship-hall classrooms. Main level: in ceiling, long drop tiles in the pastor-offices hallway.",-79.9995613,34.9995672
-poi-028,AC10,air_conditioner,hvac,FH,Fellowship Hall,1,Main,,"Explorers/Harvesters/Light classrooms. Main level: Light classroom storage closet, back-left corner.",-79.999364,34.9995672
-poi-029,AC6,air_conditioner,hvac,FH,Fellowship Hall,1,Main,,Fellowship-hall center. Roof unit: on the roof over the cafeteria kitchen.,-79.9991666,34.9995672
-poi-030,BG,packaged_unit,hvac,87,1987 Building (School),1,Main,,"Kitchen, cafeteria, Latin room, computer lab, library, (main) music room, intern office, Sheri Purdue's office. Outside, behind the kitchen and dumpster.",-80.0001097,34.9998918
-poi-031,AC17,air_conditioner,hvac,87,1987 Building (School),1,Main,,Beverage station / pantry hallway. Roof unit: on the roof over the cafeteria kitchen.,-79.9996929,34.9998918
-poi-032,BG2,packaged_unit,hvac,87,1987 Building (School),1,Main,,1987 sanctuary. Fenced-in elementary playground; air handler in the boiler room.,-80.0001097,34.9995131
-poi-033,BGF4,packaged_unit,hvac,87,1987 Building (School),1,Main,,Matt Ross office (main level). Unit in the elementary-playground corner behind some bushes; AC in the Matt Ross office.,-79.9996929,34.9995131
-poi-034,BGF1,packaged_unit,hvac,87,1987 Building (School),-1,Lower,,"Lower-level music room. Outside, behind the kitchen and dumpster (smaller than BG).",-80.0001097,34.9998918
-poi-035,BGF2,packaged_unit,hvac,87,1987 Building (School),-1,Lower,,"Lower-level classrooms, kindergarten–3rd grade. Outside, behind the kitchen and dumpster.",-79.9999013,34.9998918
-poi-036,BGF3,packaged_unit,hvac,87,1987 Building (School),-1,Lower,,"Lower-level classrooms, kindergarten–3rd grade. Outside, behind the kitchen and dumpster.",-79.9996929,34.9998918
-poi-037,BGF5,packaged_unit,hvac,87,1987 Building (School),-1,Lower,,Stairway & teachers'-lounge rooms (lower level). Fenced-in elementary playground.,-80.0001097,34.9997024
-poi-038,BGF6,packaged_unit,hvac,87,1987 Building (School),-1,Lower,,"Lower-level classrooms: kindergarten, 4th & 5th grade. North side, just past the elementary playground; AC in ceiling of the school hallway (sticker-labeled tiles).",-79.9999013,34.9997024
-poi-039,BGF7,packaged_unit,hvac,87,1987 Building (School),-1,Lower,,"Lower-level classrooms: kindergarten, 4th & 5th grade. North side, just past the elementary playground; AC in ceiling of the school hallway (sticker-labeled tiles).",-79.9996929,34.9997024
-poi-040,BGF8,packaged_unit,hvac,87,1987 Building (School),-1,Lower,,"Lower-level classrooms: kindergarten, 4th & 5th grade. North side, just past the elementary playground; AC in ceiling of the school hallway (sticker-labeled tiles).",-80.0001097,34.9995131
-poi-041,Boiler,boiler,hvac,87,1987 Building (School),-1,Lower,,Boiler. In the boiler room (serves the BG2 air handler).,-79.9999013,34.9995131
-poi-042,HPG1,heat_pump,hvac,GYM,Gym / Middle School,1,Main,,"Middle-school gym, locker rooms, concession stand. Outside, farthest side of the building from the church.",-80.0008554,35.0001623
-poi-043,HPG2,heat_pump,hvac,GYM,Gym / Middle School,1,Main,,"Middle-school gym, locker rooms, concession stand. Outside, farthest side of the building from the church.",-80.0006945,35.0001623
-poi-044,HPG3,heat_pump,hvac,GYM,Gym / Middle School,1,Main,,"Middle-school gym, locker rooms, concession stand. Outside, farthest side of the building from the church.",-80.0005337,35.0001623
-poi-045,HPG4,heat_pump,hvac,GYM,Gym / Middle School,1,Main,,"Gym / locker rooms / concession. Outside, corner closest to the church nursery.",-80.0003729,35.0001623
-poi-046,ACG1,air_conditioner,hvac,GYM,Gym / Middle School,1,Main,,Locker room 1. In ceiling.,-80.0008554,34.9999639
-poi-047,ACG2,air_conditioner,hvac,GYM,Gym / Middle School,1,Main,,Locker room 2. In ceiling.,-80.0006945,34.9999639
-poi-048,ACG4,air_conditioner,hvac,GYM,Gym / Middle School,1,Main,,Above the concession room. In ceiling.,-80.0005337,34.9999639
-poi-049,MHPG1,heat_pump,hvac,GYM,Gym / Middle School,1,Main,,"All classrooms except the far end of the building. Outside, side closest to the pavilion and field.",-80.0003729,34.9999639
-poi-050,MHPG2,heat_pump,hvac,GYM,Gym / Middle School,1,Main,,"All classrooms except the far end of the building. Outside, side closest to the pavilion and field.",-80.0008554,34.9997656
-poi-051,MHPG3,heat_pump,hvac,GYM,Gym / Middle School,1,Main,,"All classrooms except the far end of the building. Outside, side closest to the pavilion and field.",-80.0006945,34.9997656
-poi-052,WU1,wall_unit,hvac,GYM,Gym / Middle School,1,Main,,Colloquium classroom. Wall unit attached to the wall closest to the church.,-80.0005337,34.9997656
+poi-001,AC16A,air_conditioner,hvac,09,2009 Building (Church),-1,Basement,,Sanctuary control (basement). In big white fencing outside the emergency-exit stairwell behind the 2009 pulpit.,-84.6881526,33.9441116
+poi-002,AC16B,air_conditioner,hvac,09,2009 Building (Church),-1,Basement,,Sanctuary control (basement). In big white fencing outside the emergency-exit stairwell behind the 2009 pulpit.,-84.687981,33.9441116
+poi-003,HP9,heat_pump,hvac,09,2009 Building (Church),-1,Basement,,"Narthex / front-lobby control. Basement: nursery playground, unit closest to the nursery entry.",-84.6878094,33.9441116
+poi-004,HP11,heat_pump,hvac,09,2009 Building (Church),-1,Basement,,"Narthex / front-lobby control. Basement: nursery playground, unit closest to the nursery entry.",-84.6881526,33.9439034
+poi-005,HP5,heat_pump,hvac,09,2009 Building (Church),-1,Basement,,"Children's ministry room & hallway control. Basement: nursery playground, unit closest to the main-level lobby entry.",-84.687981,33.9439034
+poi-006,AC5,air_conditioner,hvac,09,2009 Building (Church),-1,Basement,,"Children's ministry room & hallway control. Basement: mechanical room, end of hall near the concession-style kitchen.",-84.6878094,33.9439034
+poi-007,AC1,air_conditioner,hvac,09,2009 Building (Church),1,Main,,Special-needs nursery 1 control. Main level: catwalk behind the 2009 sanctuary pulpit.,-84.6881526,33.9441116
+poi-008,AC2,air_conditioner,hvac,09,2009 Building (Church),1,Main,,Infant nursery 2 control. Main level: catwalk behind the 2009 sanctuary pulpit.,-84.687981,33.9441116
+poi-009,AC3,air_conditioner,hvac,09,2009 Building (Church),1,Main,,Children nursery 3 control. Main level: catwalk behind the 2009 sanctuary pulpit.,-84.6878094,33.9441116
+poi-010,AC4,air_conditioner,hvac,09,2009 Building (Church),1,Main,,Youth ministry room 4 control. Main level: catwalk behind the 2009 sanctuary pulpit.,-84.6881526,33.9439034
+poi-011,AC15,air_conditioner,hvac,09,2009 Building (Church),1,Main,,Long hallway connecting church with school. Main level: in ceiling in front of the men's restroom by the 2009 sanctuary.,-84.687981,33.9439034
+poi-012,HP15,heat_pump,hvac,09,2009 Building (Church),1,Main,,Long hallway connecting church with school. Main level: outside the southern lobby entrance toward the nursery entrance.,-84.6878094,33.9439034
+poi-013,HP12,heat_pump,hvac,09,2009 Building (Church),2,Upper,,Choir practice room & music-ministry offices control. Upper level: roof access off the stairwell by the elevator.,-84.6881526,33.9441116
+poi-014,HP13,heat_pump,hvac,09,2009 Building (Church),2,Upper,,Choir practice room & music-ministry offices control. Upper level: roof access off the stairwell by the elevator.,-84.687981,33.9441116
+poi-015,AC12,air_conditioner,hvac,09,2009 Building (Church),2,Upper,,Choir practice room & music-ministry offices. Upper level: above the men's robing room (ladder entry).,-84.6878094,33.9441116
+poi-016,AC13,air_conditioner,hvac,09,2009 Building (Church),2,Upper,,Choir practice room & music-ministry offices. Upper level: above the men's robing room (ladder entry).,-84.6881526,33.9440075
+poi-017,AC9,air_conditioner,hvac,09,2009 Building (Church),2,Upper,,Narthex / front-lobby control. Upper level: above the women's robing room in the choir practice room (ladder entry).,-84.687981,33.9440075
+poi-018,AC11,air_conditioner,hvac,09,2009 Building (Church),2,Upper,,Narthex / front-lobby control. Upper level: above the women's robing room in the choir practice room (ladder entry).,-84.6878094,33.9440075
+poi-019,AH16A,air_handler,hvac,09,2009 Building (Church),2,Upper,,"Sanctuary air handler. Upper level: behind mechanical-room doors on the balcony, either side of the 2009 pulpit.",-84.6881526,33.9439034
+poi-020,AH16B,air_handler,hvac,09,2009 Building (Church),2,Upper,,"Sanctuary air handler. Upper level: behind mechanical-room doors on the balcony, either side of the 2009 pulpit.",-84.687981,33.9439034
+poi-021,HP7,heat_pump,hvac,FH,Fellowship Hall,1,Main,,"Fellowship-hall classrooms. Main level: outside, next to the head pastor's office.",-84.6878028,33.9437686
+poi-022,HP8,heat_pump,hvac,FH,Fellowship Hall,1,Main,,"Fellowship-hall classrooms. Main level: outside, next to the head pastor's office.",-84.687648,33.9437686
+poi-023,HP10,heat_pump,hvac,FH,Fellowship Hall,1,Main,,"Back-hallway access to Explorers/Harvesters/Light classrooms. Main level: outside, next to the head pastor's office.",-84.6874932,33.9437686
+poi-024,HP14A,heat_pump,hvac,FH,Fellowship Hall,1,Main,,"Pastors' offices — Marc's office. Main level: outside, next to the head pastor's office.",-84.6878028,33.94366
+poi-025,HP14B,heat_pump,hvac,FH,Fellowship Hall,1,Main,,"Pastors' offices — David's office. Main level: outside, next to the head pastor's office.",-84.687648,33.94366
+poi-026,AC7,air_conditioner,hvac,FH,Fellowship Hall,1,Main,,"Fellowship-hall classrooms. Main level: in ceiling, long drop tiles in the pastor-offices hallway.",-84.6874932,33.94366
+poi-027,AC8,air_conditioner,hvac,FH,Fellowship Hall,1,Main,,"Fellowship-hall classrooms. Main level: in ceiling, long drop tiles in the pastor-offices hallway.",-84.6878028,33.9435514
+poi-028,AC10,air_conditioner,hvac,FH,Fellowship Hall,1,Main,,"Explorers/Harvesters/Light classrooms. Main level: Light classroom storage closet, back-left corner.",-84.687648,33.9435514
+poi-029,AC6,air_conditioner,hvac,FH,Fellowship Hall,1,Main,,Fellowship-hall center. Roof unit: on the roof over the cafeteria kitchen.,-84.6874932,33.9435514
+poi-030,BG,packaged_unit,hvac,87,1987 Building (School),1,Main,,"Kitchen, cafeteria, Latin room, computer lab, library, (main) music room, intern office, Sheri Purdue's office. Outside, behind the kitchen and dumpster.",-84.687373,33.9438982
+poi-031,AC17,air_conditioner,hvac,87,1987 Building (School),1,Main,,Beverage station / pantry hallway. Roof unit: on the roof over the cafeteria kitchen.,-84.687079,33.9438982
+poi-032,BG2,packaged_unit,hvac,87,1987 Building (School),1,Main,,1987 sanctuary. Fenced-in elementary playground; air handler in the boiler room.,-84.687373,33.9435298
+poi-033,BGF4,packaged_unit,hvac,87,1987 Building (School),1,Main,,Matt Ross office (main level). Unit in the elementary-playground corner behind some bushes; AC in the Matt Ross office.,-84.687079,33.9435298
+poi-034,BGF1,packaged_unit,hvac,87,1987 Building (School),-1,Lower,,"Lower-level music room. Outside, behind the kitchen and dumpster (smaller than BG).",-84.687373,33.9438982
+poi-035,BGF2,packaged_unit,hvac,87,1987 Building (School),-1,Lower,,"Lower-level classrooms, kindergarten–3rd grade. Outside, behind the kitchen and dumpster.",-84.687226,33.9438982
+poi-036,BGF3,packaged_unit,hvac,87,1987 Building (School),-1,Lower,,"Lower-level classrooms, kindergarten–3rd grade. Outside, behind the kitchen and dumpster.",-84.687079,33.9438982
+poi-037,BGF5,packaged_unit,hvac,87,1987 Building (School),-1,Lower,,Stairway & teachers'-lounge rooms (lower level). Fenced-in elementary playground.,-84.687373,33.943714
+poi-038,BGF6,packaged_unit,hvac,87,1987 Building (School),-1,Lower,,"Lower-level classrooms: kindergarten, 4th & 5th grade. North side, just past the elementary playground; AC in ceiling of the school hallway (sticker-labeled tiles).",-84.687226,33.943714
+poi-039,BGF7,packaged_unit,hvac,87,1987 Building (School),-1,Lower,,"Lower-level classrooms: kindergarten, 4th & 5th grade. North side, just past the elementary playground; AC in ceiling of the school hallway (sticker-labeled tiles).",-84.687079,33.943714
+poi-040,BGF8,packaged_unit,hvac,87,1987 Building (School),-1,Lower,,"Lower-level classrooms: kindergarten, 4th & 5th grade. North side, just past the elementary playground; AC in ceiling of the school hallway (sticker-labeled tiles).",-84.687373,33.9435298
+poi-041,Boiler,boiler,hvac,87,1987 Building (School),-1,Lower,,Boiler. In the boiler room (serves the BG2 air handler).,-84.687226,33.9435298
+poi-042,HPG1,heat_pump,hvac,GYM,Gym / Middle School,1,Main,,"Middle-school gym, locker rooms, concession stand. Outside, farthest side of the building from the church.",-84.688866,33.9438542
+poi-043,HPG2,heat_pump,hvac,GYM,Gym / Middle School,1,Main,,"Middle-school gym, locker rooms, concession stand. Outside, farthest side of the building from the church.",-84.68878,33.9438542
+poi-044,HPG3,heat_pump,hvac,GYM,Gym / Middle School,1,Main,,"Middle-school gym, locker rooms, concession stand. Outside, farthest side of the building from the church.",-84.688694,33.9438542
+poi-045,HPG4,heat_pump,hvac,GYM,Gym / Middle School,1,Main,,"Gym / locker rooms / concession. Outside, corner closest to the church nursery.",-84.688608,33.9438542
+poi-046,ACG1,air_conditioner,hvac,GYM,Gym / Middle School,1,Main,,Locker room 1. In ceiling.,-84.688866,33.943733
+poi-047,ACG2,air_conditioner,hvac,GYM,Gym / Middle School,1,Main,,Locker room 2. In ceiling.,-84.68878,33.943733
+poi-048,ACG4,air_conditioner,hvac,GYM,Gym / Middle School,1,Main,,Above the concession room. In ceiling.,-84.688694,33.943733
+poi-049,MHPG1,heat_pump,hvac,GYM,Gym / Middle School,1,Main,,"All classrooms except the far end of the building. Outside, side closest to the pavilion and field.",-84.688608,33.943733
+poi-050,MHPG2,heat_pump,hvac,GYM,Gym / Middle School,1,Main,,"All classrooms except the far end of the building. Outside, side closest to the pavilion and field.",-84.688866,33.9436118
+poi-051,MHPG3,heat_pump,hvac,GYM,Gym / Middle School,1,Main,,"All classrooms except the far end of the building. Outside, side closest to the pavilion and field.",-84.68878,33.9436118
+poi-052,WU1,wall_unit,hvac,GYM,Gym / Middle School,1,Main,,Colloquium classroom. Wall unit attached to the wall closest to the church.,-84.688694,33.9436118

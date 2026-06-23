@@ -38,18 +38,17 @@ wall unit / boiler).
 - **1987 Building (School)** — Lower (-1), Main (1)
 - **Gym / Middle School** — Main (1)
 
-## ⚠️ Coordinates are placeholder
+## Coordinate status
 
-The footprints and POI points are a **self-consistent local layout anchored at an
-arbitrary lat/lng (35.0, -80.0)** — they reproduce the *relative* arrangement from
-the satellite (church/school complex with the gym to the east) but are **not the
-campus's real location** (the gym is placed to the west / left with north up),
-and POI positions within each building are a tidy grid, not surveyed spots. Per plan §5.3 these overlays are navigational aids ("where's
-the unit?"), not engineering drawings.
-
-To make them real: drop a georeferenced satellite base and the floorplan drawings
-into the **loader tool** (plan §10) and drag/rotate each footprint + POI onto its
-true position; that captures the real `geo_corners_geojson` and lng/lat.
+- **Building footprints — REAL.** Traced on satellite imagery in geojson.io and
+  imported via `authoring/import_buildings.py`. The viewer auto-fits to them.
+- **HVAC POI points — APPROXIMATE.** Auto-distributed as a tidy per-floor grid
+  *inside* each real footprint by `gen_pois.py`; they are not yet surveyed spots.
+  Per plan §5.3 these are navigational aids ("where's the unit?"), not drawings —
+  nudge each to its true position next (geojson.io, or the Phase 2 loader §10).
+- **Floor overlays (`floors.json`) — placeholder quad** = each building's bbox.
+  Replace `geo_corners_geojson` by georeferencing the floorplan drawings
+  (QGIS Georeferencer / Allmaps — see `authoring/README.md`).
 
 ## Regenerate
 
