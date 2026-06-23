@@ -1,51 +1,70 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
-  Building,
+  AssetForm,
   BuildingForm,
-  Floor,
+  ContactForm,
   FloorForm,
-  Location,
   LocationForm,
-  OrgSettings,
+  ServiceContractForm,
+  VendorForm,
+  WorkLogForm,
+  WorkOrderForm,
+  WorkOrderPhotoKind,
+  WorkOrderUpdate,
+  WorkRequestForm,
 } from '@cmc/shared';
-import { supabase } from './supabase';
+import { ds } from './datasource';
 
-function unwrap<T>(res: { data: T | null; error: { message: string } | null }): T {
-  if (res.error) throw new Error(res.error.message);
-  return res.data as T;
+// Generic CRUD-hook factory to cut boilerplate for the directory entities.
+function crudHooks<TRow, TForm>(
+  key: string,
+  ops: {
+    list: () => Promise<TRow[]>;
+    create: (input: TForm) => Promise<TRow>;
+    update: (id: string, input: TForm) => Promise<TRow>;
+    remove: (id: string) => Promise<void>;
+  },
+) {
+  return {
+    useList: () => useQuery({ queryKey: [key], queryFn: ops.list }),
+    useCreate: () => {
+      const qc = useQueryClient();
+      return useMutation({
+        mutationFn: (input: TForm) => ops.create(input),
+        onSuccess: () => qc.invalidateQueries({ queryKey: [key] }),
+      });
+    },
+    useUpdate: () => {
+      const qc = useQueryClient();
+      return useMutation({
+        mutationFn: ({ id, ...input }: TForm & { id: string }) => ops.update(id, input as TForm),
+        onSuccess: () => qc.invalidateQueries({ queryKey: [key] }),
+      });
+    },
+    useDelete: () => {
+      const qc = useQueryClient();
+      return useMutation({
+        mutationFn: (id: string) => ops.remove(id),
+        onSuccess: () => qc.invalidateQueries({ queryKey: [key] }),
+      });
+    },
+  };
 }
 
 // ── org_settings (single row, plan §7.6) ─────────────────────────────────────
 export function useOrgSettings() {
-  return useQuery({
-    queryKey: ['org_settings'],
-    queryFn: async () =>
-      unwrap<OrgSettings | null>(
-        await supabase.from('org_settings').select('*').maybeSingle(),
-      ),
-  });
+  return useQuery({ queryKey: ['org_settings'], queryFn: () => ds.getOrgSettings() });
 }
 
 // ── buildings ────────────────────────────────────────────────────────────────
 export function useBuildings() {
-  return useQuery({
-    queryKey: ['buildings'],
-    queryFn: async () =>
-      unwrap<Building[]>(
-        await supabase
-          .from('buildings')
-          .select('*')
-          .is('deleted_at', null)
-          .order('name'),
-      ),
-  });
+  return useQuery({ queryKey: ['buildings'], queryFn: () => ds.listBuildings() });
 }
 
 export function useCreateBuilding() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: BuildingForm) =>
-      unwrap<Building>(await supabase.from('buildings').insert(input).select().single()),
+    mutationFn: (input: BuildingForm) => ds.createBuilding(input),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['buildings'] }),
   });
 }
@@ -53,10 +72,7 @@ export function useCreateBuilding() {
 export function useUpdateBuilding() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...input }: BuildingForm & { id: string }) =>
-      unwrap<Building>(
-        await supabase.from('buildings').update(input).eq('id', id).select().single(),
-      ),
+    mutationFn: ({ id, ...input }: BuildingForm & { id: string }) => ds.updateBuilding(id, input),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['buildings'] }),
   });
 }
@@ -64,16 +80,7 @@ export function useUpdateBuilding() {
 export function useDeleteBuilding() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (id: string) => {
-      unwrap(
-        await supabase
-          .from('buildings')
-          .update({ deleted_at: new Date().toISOString() })
-          .eq('id', id)
-          .select()
-          .single(),
-      );
-    },
+    mutationFn: (id: string) => ds.deleteBuilding(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['buildings'] });
       qc.invalidateQueries({ queryKey: ['floors'] });
@@ -86,19 +93,14 @@ export function useDeleteBuilding() {
 export function useFloors(buildingId?: string) {
   return useQuery({
     queryKey: ['floors', buildingId ?? 'all'],
-    queryFn: async () => {
-      let q = supabase.from('floors').select('*').is('deleted_at', null);
-      if (buildingId) q = q.eq('building_id', buildingId);
-      return unwrap<Floor[]>(await q.order('level'));
-    },
+    queryFn: () => ds.listFloors(buildingId),
   });
 }
 
 export function useCreateFloor() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: FloorForm) =>
-      unwrap<Floor>(await supabase.from('floors').insert(input).select().single()),
+    mutationFn: (input: FloorForm) => ds.createFloor(input),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['floors'] }),
   });
 }
@@ -106,8 +108,7 @@ export function useCreateFloor() {
 export function useUpdateFloor() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...input }: FloorForm & { id: string }) =>
-      unwrap<Floor>(await supabase.from('floors').update(input).eq('id', id).select().single()),
+    mutationFn: ({ id, ...input }: FloorForm & { id: string }) => ds.updateFloor(id, input),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['floors'] }),
   });
 }
@@ -115,16 +116,7 @@ export function useUpdateFloor() {
 export function useDeleteFloor() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (id: string) => {
-      unwrap(
-        await supabase
-          .from('floors')
-          .update({ deleted_at: new Date().toISOString() })
-          .eq('id', id)
-          .select()
-          .single(),
-      );
-    },
+    mutationFn: (id: string) => ds.deleteFloor(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['floors'] }),
   });
 }
@@ -133,25 +125,14 @@ export function useDeleteFloor() {
 export function useLocations(buildingId?: string) {
   return useQuery({
     queryKey: ['locations', buildingId ?? 'all'],
-    queryFn: async () => {
-      let q = supabase.from('locations').select('*').is('deleted_at', null);
-      if (buildingId) q = q.eq('building_id', buildingId);
-      return unwrap<Location[]>(await q.order('name'));
-    },
+    queryFn: () => ds.listLocations(buildingId),
   });
 }
 
 export function useCreateLocation() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: LocationForm) =>
-      unwrap<Location>(
-        await supabase
-          .from('locations')
-          .insert({ ...input, floor_id: input.floor_id ?? null })
-          .select()
-          .single(),
-      ),
+    mutationFn: (input: LocationForm) => ds.createLocation(input),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['locations'] }),
   });
 }
@@ -159,15 +140,7 @@ export function useCreateLocation() {
 export function useUpdateLocation() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...input }: LocationForm & { id: string }) =>
-      unwrap<Location>(
-        await supabase
-          .from('locations')
-          .update({ ...input, floor_id: input.floor_id ?? null })
-          .eq('id', id)
-          .select()
-          .single(),
-      ),
+    mutationFn: ({ id, ...input }: LocationForm & { id: string }) => ds.updateLocation(id, input),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['locations'] }),
   });
 }
@@ -175,16 +148,223 @@ export function useUpdateLocation() {
 export function useDeleteLocation() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (id: string) => {
-      unwrap(
-        await supabase
-          .from('locations')
-          .update({ deleted_at: new Date().toISOString() })
-          .eq('id', id)
-          .select()
-          .single(),
-      );
-    },
+    mutationFn: (id: string) => ds.deleteLocation(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['locations'] }),
   });
 }
+
+// ── asset registry (plan §4.1) ───────────────────────────────────────────────
+export function useAssetCategories() {
+  return useQuery({ queryKey: ['asset_categories'], queryFn: () => ds.listAssetCategories() });
+}
+
+export function useAssets() {
+  return useQuery({ queryKey: ['assets'], queryFn: () => ds.listAssets() });
+}
+
+export function useCreateAsset() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: AssetForm) => ds.createAsset(input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['assets'] }),
+  });
+}
+
+export function useUpdateAsset() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...input }: AssetForm & { id: string }) => ds.updateAsset(id, input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['assets'] }),
+  });
+}
+
+export function useDeleteAsset() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => ds.deleteAsset(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['assets'] }),
+  });
+}
+
+export function useUsers() {
+  return useQuery({ queryKey: ['users'], queryFn: () => ds.listUsers() });
+}
+
+export function useAsset(id: string) {
+  return useQuery({ queryKey: ['asset', id], queryFn: () => ds.getAsset(id) });
+}
+
+export function useAssetByQrToken(token: string) {
+  return useQuery({ queryKey: ['asset_by_qr', token], queryFn: () => ds.getAssetByQrToken(token) });
+}
+
+export function useEnsureAssetQrToken(assetId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => ds.ensureAssetQrToken(assetId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['asset', assetId] }),
+  });
+}
+
+// ── asset photos (plan §4.1) ─────────────────────────────────────────────────
+export function useAssetPhotos(assetId: string) {
+  return useQuery({ queryKey: ['asset_photos', assetId], queryFn: () => ds.listAssetPhotos(assetId) });
+}
+
+export function useAddAssetPhoto(assetId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (file: File) => ds.addAssetPhoto(assetId, file),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['asset_photos', assetId] }),
+  });
+}
+
+export function useSetPrimaryPhoto(assetId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (photoId: string) => ds.setPrimaryPhoto(assetId, photoId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['asset_photos', assetId] }),
+  });
+}
+
+export function useDeleteAssetPhoto(assetId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (photoId: string) => ds.deleteAssetPhoto(photoId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['asset_photos', assetId] }),
+  });
+}
+
+// ── work orders / asset history (plan §4.2) ──────────────────────────────────
+export function useWorkOrders(assetId: string) {
+  return useQuery({ queryKey: ['work_orders', assetId], queryFn: () => ds.listWorkOrders(assetId) });
+}
+
+export function useCreateWorkOrder(assetId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: WorkLogForm) => ds.createWorkOrder(assetId, input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['work_orders', assetId] }),
+  });
+}
+
+// ── work-order photos: before (damage) / after (proof) (plan §4.2) ───────────
+export function useWorkOrderPhotos(workOrderId: string) {
+  return useQuery({
+    queryKey: ['work_order_photos', workOrderId],
+    queryFn: () => ds.listWorkOrderPhotos(workOrderId),
+  });
+}
+
+export function useAddWorkOrderPhoto(workOrderId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ file, kind }: { file: File; kind: WorkOrderPhotoKind }) =>
+      ds.addWorkOrderPhoto(workOrderId, file, kind),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['work_order_photos', workOrderId] }),
+  });
+}
+
+export function useDeleteWorkOrderPhoto(workOrderId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (photoId: string) => ds.deleteWorkOrderPhoto(photoId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['work_order_photos', workOrderId] }),
+  });
+}
+
+// ── work orders board (all WOs across assets) ────────────────────────────────
+export function useAllWorkOrders() {
+  return useQuery({ queryKey: ['all_work_orders'], queryFn: () => ds.listAllWorkOrders() });
+}
+
+function invalidateWorkOrders(qc: ReturnType<typeof useQueryClient>) {
+  qc.invalidateQueries({ queryKey: ['all_work_orders'] });
+  qc.invalidateQueries({ queryKey: ['work_orders'] }); // asset-scoped history
+}
+
+export function useCreateWorkOrderFromForm() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: WorkOrderForm) => ds.createWorkOrderFromForm(input),
+    onSuccess: () => invalidateWorkOrders(qc),
+  });
+}
+
+export function useUpdateWorkOrder() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, patch }: { id: string; patch: WorkOrderUpdate }) =>
+      ds.updateWorkOrder(id, patch),
+    onSuccess: () => invalidateWorkOrders(qc),
+  });
+}
+
+// ── work requests intake + triage (plan §3.1) ────────────────────────────────
+export function useWorkRequests() {
+  return useQuery({ queryKey: ['work_requests'], queryFn: () => ds.listWorkRequests() });
+}
+
+export function useCreateWorkRequest() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: WorkRequestForm) => ds.createWorkRequest(input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['work_requests'] }),
+  });
+}
+
+export function useConvertWorkRequest() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (requestId: string) => ds.convertWorkRequest(requestId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['work_requests'] });
+      invalidateWorkOrders(qc);
+    },
+  });
+}
+
+export function useDeclineWorkRequest() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (requestId: string) => ds.declineWorkRequest(requestId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['work_requests'] }),
+  });
+}
+
+// ── vendors / service contracts / contacts (plan §4.5) ───────────────────────
+const vendorHooks = crudHooks<import('@cmc/shared').Vendor, VendorForm>('vendors', {
+  list: () => ds.listVendors(),
+  create: (i) => ds.createVendor(i),
+  update: (id, i) => ds.updateVendor(id, i),
+  remove: (id) => ds.deleteVendor(id),
+});
+export const useVendors = vendorHooks.useList;
+export const useCreateVendor = vendorHooks.useCreate;
+export const useUpdateVendor = vendorHooks.useUpdate;
+export const useDeleteVendor = vendorHooks.useDelete;
+
+const contractHooks = crudHooks<import('@cmc/shared').ServiceContract, ServiceContractForm>(
+  'service_contracts',
+  {
+    list: () => ds.listServiceContracts(),
+    create: (i) => ds.createServiceContract(i),
+    update: (id, i) => ds.updateServiceContract(id, i),
+    remove: (id) => ds.deleteServiceContract(id),
+  },
+);
+export const useServiceContracts = contractHooks.useList;
+export const useCreateServiceContract = contractHooks.useCreate;
+export const useUpdateServiceContract = contractHooks.useUpdate;
+export const useDeleteServiceContract = contractHooks.useDelete;
+
+const contactHooks = crudHooks<import('@cmc/shared').Contact, ContactForm>('contacts', {
+  list: () => ds.listContacts(),
+  create: (i) => ds.createContact(i),
+  update: (id, i) => ds.updateContact(id, i),
+  remove: (id) => ds.deleteContact(id),
+});
+export const useContacts = contactHooks.useList;
+export const useCreateContact = contactHooks.useCreate;
+export const useUpdateContact = contactHooks.useUpdate;
+export const useDeleteContact = contactHooks.useDelete;

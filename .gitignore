@@ -21,6 +21,9 @@ supabase/.temp/
 # Triage scratch output
 feedback_issues.json
 
+# Generated screenshots (regenerate via `pnpm screenshots`)
+screenshots/
+
 # Claude Code local overrides
 .claude/settings.local.json
 

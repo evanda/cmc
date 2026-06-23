@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 export function Button({
   children,
   variant = 'primary',
+  className = '',
   ...props
 }: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'ghost' | 'danger' }) {
   const base = 'rounded px-3 py-1.5 text-sm font-medium transition disabled:opacity-50';
@@ -12,7 +13,7 @@ export function Button({
     danger: 'text-red-600 hover:bg-red-50',
   }[variant];
   return (
-    <button className={`${base} ${styles}`} {...props}>
+    <button className={`${base} ${styles} ${className}`} {...props}>
       {children}
     </button>
   );
@@ -61,6 +62,20 @@ export function Modal({
         {children}
       </div>
     </div>
+  );
+}
+
+/** A date with a colored countdown — red if past, amber within 30 days (plan §9). */
+export function ExpiryBadge({ date }: { date: string | null }) {
+  if (!date) return <span className="text-slate-400">—</span>;
+  const days = Math.ceil((new Date(date).getTime() - Date.now()) / 86_400_000);
+  const style =
+    days < 0 ? 'bg-red-100 text-red-700' : days <= 30 ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500';
+  const suffix = days < 0 ? 'expired' : `${days}d`;
+  return (
+    <span className={`rounded px-2 py-0.5 text-xs ${style}`}>
+      {date} · {suffix}
+    </span>
   );
 }
 

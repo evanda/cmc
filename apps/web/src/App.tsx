@@ -3,6 +3,12 @@ import { useAuth } from './auth/AuthProvider';
 import { Layout } from './components/Layout';
 import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
+import { AssetsPage } from './pages/AssetsPage';
+import { AssetDetailPage } from './pages/AssetDetailPage';
+import { AssetByTokenPage } from './pages/AssetByTokenPage';
+import { WorkOrdersPage } from './pages/WorkOrdersPage';
+import { WorkRequestsPage } from './pages/WorkRequestsPage';
+import { VendorsPage } from './pages/VendorsPage';
 import { BuildingsPage } from './pages/BuildingsPage';
 import { FloorsPage } from './pages/FloorsPage';
 import { LocationsPage } from './pages/LocationsPage';
@@ -26,6 +32,12 @@ export function App() {
     <Routes>
       <Route element={<Layout />}>
         <Route index element={<DashboardPage />} />
+        <Route path="requests" element={<WorkRequestsPage />} />
+        <Route path="work-orders" element={<WorkOrdersPage />} />
+        <Route path="assets" element={<AssetsPage />} />
+        <Route path="assets/:id" element={<AssetDetailPage />} />
+        <Route path="a/:token" element={<AssetByTokenPage />} />
+        <Route path="vendors" element={<VendorsPage />} />
         <Route path="buildings" element={<BuildingsPage />} />
         <Route path="floors" element={<FloorsPage />} />
         <Route path="locations" element={<LocationsPage />} />

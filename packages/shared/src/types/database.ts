@@ -6,11 +6,18 @@
 import type {
   Asset,
   AssetCategory,
+  AssetPhoto,
   Building,
+  Contact,
   Floor,
   Location,
   OrgSettings,
+  ServiceContract,
   User,
+  Vendor,
+  WorkOrder,
+  WorkOrderAttachment,
+  WorkRequest,
 } from './domain.js';
 
 /** Columns the database fills in itself; optional on insert/update. */
@@ -38,6 +45,13 @@ export interface Database {
       locations: TableShape<Location>;
       asset_categories: TableShape<AssetCategory>;
       assets: TableShape<Asset>;
+      asset_photos: TableShape<AssetPhoto>;
+      work_orders: TableShape<WorkOrder>;
+      work_order_attachments: TableShape<WorkOrderAttachment>;
+      work_requests: TableShape<WorkRequest>;
+      vendors: TableShape<Vendor>;
+      service_contracts: TableShape<ServiceContract>;
+      contacts: TableShape<Contact>;
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
@@ -45,6 +59,17 @@ export interface Database {
       user_role: 'admin' | 'technician' | 'requester' | 'trustee' | 'vendor';
       criticality: 'low' | 'medium' | 'high';
       asset_status: 'active' | 'retired';
+      work_order_type: 'reactive' | 'preventive' | 'inspection';
+      work_order_priority: 'low' | 'medium' | 'high' | 'urgent';
+      work_order_status:
+        | 'requested'
+        | 'open'
+        | 'in_progress'
+        | 'on_hold'
+        | 'completed'
+        | 'closed'
+        | 'cancelled';
+      work_request_status: 'open' | 'converted' | 'declined';
     };
   };
 }

@@ -1,5 +1,16 @@
 import { Link } from 'react-router-dom';
-import { useBuildings, useFloors, useLocations, useOrgSettings } from '../lib/queries';
+import { ACTIVE_WORK_ORDER_STATUSES } from '@cmc/shared';
+import {
+  useAllWorkOrders,
+  useAssets,
+  useBuildings,
+  useFloors,
+  useLocations,
+  useOrgSettings,
+  useServiceContracts,
+  useVendors,
+  useWorkRequests,
+} from '../lib/queries';
 
 function StatCard({ label, value, to }: { label: string; value: number | string; to: string }) {
   return (
@@ -15,9 +26,24 @@ function StatCard({ label, value, to }: { label: string; value: number | string;
 
 export function DashboardPage() {
   const { data: org } = useOrgSettings();
+  const assets = useAssets();
   const buildings = useBuildings();
   const floors = useFloors();
   const locations = useLocations();
+  const workOrders = useAllWorkOrders();
+  const requests = useWorkRequests();
+  const vendors = useVendors();
+  const contracts = useServiceContracts();
+
+  const openRequests = requests.data?.filter((r) => r.status === 'open').length;
+  const activeWorkOrders = workOrders.data?.filter((w) =>
+    ACTIVE_WORK_ORDER_STATUSES.includes(w.status),
+  ).length;
+  const within30 = (d: string | null) =>
+    d != null && Math.ceil((new Date(d).getTime() - Date.now()) / 86_400_000) <= 30;
+  const expiringSoon =
+    (vendors.data?.filter((v) => within30(v.coi_expiry) || within30(v.contract_expiry)).length ?? 0) +
+    (contracts.data?.filter((c) => within30(c.end_date)).length ?? 0);
 
   return (
     <div>
@@ -25,10 +51,16 @@ export function DashboardPage() {
         {org?.facility_name ?? 'Campus'} — Overview
       </h1>
       <p className="mb-6 text-sm text-slate-500">
-        Phase 0 foundation: buildings, floors, and locations. Assets, work orders, and the map
-        arrive in later phases.
+        Asset registry and campus structure. Work orders, vendors, and the map arrive in later
+        Phase 1–2 work.
       </p>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <StatCard label="Open requests" value={openRequests ?? '—'} to="/requests" />
+        <StatCard label="Active work orders" value={activeWorkOrders ?? '—'} to="/work-orders" />
+        <StatCard label="Expiring soon (COI/contract)" value={expiringSoon} to="/vendors" />
+      </div>
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <StatCard label="Assets" value={assets.data?.length ?? '—'} to="/assets" />
         <StatCard label="Buildings" value={buildings.data?.length ?? '—'} to="/buildings" />
         <StatCard label="Floors" value={floors.data?.length ?? '—'} to="/floors" />
         <StatCard label="Locations" value={locations.data?.length ?? '—'} to="/locations" />

@@ -2,6 +2,13 @@
 // Shared by web forms now and mobile/loader later. Inferred types feed the UI.
 
 import { z } from 'zod';
+import {
+  ASSET_STATUSES,
+  CRITICALITIES,
+  WORK_ORDER_PRIORITIES,
+  WORK_ORDER_STATUSES,
+  WORK_ORDER_TYPES,
+} from '../types/enums.js';
 
 const optionalText = z
   .string()
@@ -9,6 +16,20 @@ const optionalText = z
   .max(2000)
   .optional()
   .transform((v) => (v === '' ? undefined : v));
+
+/** Optional email: accepts '' (→ undefined) or a valid address. */
+const optionalEmail = z
+  .string()
+  .trim()
+  .optional()
+  .transform((v) => (v === '' ? undefined : v))
+  .refine((v) => v === undefined || z.string().email().safeParse(v).success, 'Invalid email');
+
+/** Optional non-negative money/number from a text input ('' → undefined). */
+const optionalNumber = z.preprocess(
+  (v) => (v === '' || v === null || v === undefined ? undefined : v),
+  z.coerce.number().nonnegative('Must be ≥ 0').optional(),
+);
 
 export const buildingFormSchema = z.object({
   name: z.string().trim().min(1, 'Name is required').max(200),
@@ -32,6 +53,125 @@ export const locationFormSchema = z.object({
   type: optionalText,
 });
 export type LocationForm = z.infer<typeof locationFormSchema>;
+
+// ── Asset Registry (plan §4.1, Phase 1) ──────────────────────────────────────
+export const assetFormSchema = z.object({
+  name: z.string().trim().min(1, 'Name is required').max(200),
+  category_id: z.string().uuid().nullish(),
+  location_id: z.string().uuid().nullish(),
+  make: optionalText,
+  model: optionalText,
+  serial: optionalText,
+  criticality: z.enum(CRITICALITIES),
+  status: z.enum(ASSET_STATUSES),
+  notes: optionalText,
+  contact_name: optionalText,
+  contact_email: optionalEmail,
+});
+export type AssetForm = z.infer<typeof assetFormSchema>;
+
+// ── Log work / service-history entry (plan §4.2, §4.7) ───────────────────────
+// Captures a completed unit of work against an asset: what/when/cost, who did
+// it, who coordinated/authorized, invoice, and check/payment #.
+export const workLogFormSchema = z.object({
+  title: z.string().trim().min(1, 'Title is required').max(200),
+  type: z.enum(WORK_ORDER_TYPES).default('reactive'),
+  completed_date: z
+    .string()
+    .optional()
+    .transform((v) => (v === '' ? undefined : v)),
+  assignee_user_id: z.string().uuid().nullish(),
+  coordinated_by_user_id: z.string().uuid().nullish(),
+  authorized_by_user_id: z.string().uuid().nullish(),
+  vendor_id: z.string().uuid().nullish(),
+  vendor_name: optionalText,
+  actual_parts_cost: optionalNumber,
+  actual_labor_cost: optionalNumber,
+  actual_vendor_cost: optionalNumber,
+  labor_hours: optionalNumber,
+  invoice_number: optionalText,
+  payment_reference: optionalText,
+  completion_notes: optionalText,
+});
+export type WorkLogForm = z.infer<typeof workLogFormSchema>;
+
+// ── Work Request intake (plan §3.1) ──────────────────────────────────────────
+export const workRequestFormSchema = z.object({
+  title: z.string().trim().min(1, 'Describe the problem').max(200),
+  description: optionalText,
+  linked_asset_id: z.string().uuid().nullish(),
+  location_id: z.string().uuid().nullish(),
+});
+export type WorkRequestForm = z.infer<typeof workRequestFormSchema>;
+
+// ── Work Order create (board) — an open, assignable unit of work (plan §4.2) ──
+export const workOrderFormSchema = z.object({
+  title: z.string().trim().min(1, 'Title is required').max(200),
+  description: optionalText,
+  type: z.enum(WORK_ORDER_TYPES).default('reactive'),
+  priority: z.enum(WORK_ORDER_PRIORITIES).default('medium'),
+  status: z.enum(WORK_ORDER_STATUSES).default('open'),
+  linked_asset_id: z.string().uuid().nullish(),
+  location_id: z.string().uuid().nullish(),
+  assignee_user_id: z.string().uuid().nullish(),
+  vendor_id: z.string().uuid().nullish(),
+  due_date: z
+    .string()
+    .optional()
+    .transform((v) => (v === '' ? undefined : v)),
+});
+export type WorkOrderForm = z.infer<typeof workOrderFormSchema>;
+
+// ── Work Order triage edit — status / assignee / priority (plan §4.2) ────────
+export const workOrderUpdateSchema = z.object({
+  status: z.enum(WORK_ORDER_STATUSES),
+  priority: z.enum(WORK_ORDER_PRIORITIES),
+  assignee_user_id: z.string().uuid().nullish(),
+});
+export type WorkOrderUpdate = z.infer<typeof workOrderUpdateSchema>;
+
+const optionalDate = z
+  .string()
+  .optional()
+  .transform((v) => (v === '' ? undefined : v));
+
+// ── Vendors, Service Contracts & Contacts (plan §4.5) ────────────────────────
+export const vendorFormSchema = z.object({
+  name: z.string().trim().min(1, 'Name is required').max(200),
+  category: optionalText,
+  contact_name: optionalText,
+  phone: optionalText,
+  email: optionalEmail,
+  address: optionalText,
+  rate: optionalNumber,
+  coi_expiry: optionalDate,
+  contract_expiry: optionalDate,
+  notes: optionalText,
+});
+export type VendorForm = z.infer<typeof vendorFormSchema>;
+
+export const serviceContractFormSchema = z.object({
+  vendor_id: z.string().uuid().nullish(),
+  description: z.string().trim().min(1, 'Description is required').max(200),
+  cadence: optionalText,
+  cost: optionalNumber,
+  period_unit: optionalText,
+  start_date: optionalDate,
+  end_date: optionalDate,
+  renewal_reminder_days: optionalNumber,
+});
+export type ServiceContractForm = z.infer<typeof serviceContractFormSchema>;
+
+export const contactFormSchema = z.object({
+  name: z.string().trim().min(1, 'Name is required').max(200),
+  org: optionalText,
+  role: optionalText,
+  phone: optionalText,
+  email: optionalEmail,
+  account_number: optionalText,
+  notes: optionalText,
+});
+export type ContactForm = z.infer<typeof contactFormSchema>;
 
 export const orgSettingsFormSchema = z.object({
   facility_name: z.string().trim().min(1, 'Facility name is required').max(200),

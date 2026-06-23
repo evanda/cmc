@@ -6,7 +6,16 @@
 // typed client constrains table rows to `Record<string, unknown>`, which object
 // `type` literals satisfy but interfaces do not (no implicit index signature).
 
-import type { AssetStatus, Criticality, UserRole } from './enums.js';
+import type {
+  AssetStatus,
+  Criticality,
+  UserRole,
+  WorkOrderPhotoKind,
+  WorkOrderPriority,
+  WorkOrderStatus,
+  WorkOrderType,
+  WorkRequestStatus,
+} from './enums.js';
 
 /** Columns every table carries (plan §6 preamble). */
 export type BaseRow = {
@@ -28,6 +37,8 @@ export type OrgSettings = BaseRow & {
   currency: string;
   timezone: string;
   theme: Record<string, unknown> | null;
+  /** Org-wide maintenance contact (a mail list); per-asset contact overrides it. */
+  maintenance_contact_email: string | null;
 };
 
 /** App users + their role (plan §6 users, §7.5). Mirrors auth.users by id. */
@@ -85,6 +96,107 @@ export type Asset = BaseRow & {
   /** Stable unguessable slug for QR deep links; null until tagged (plan §3). */
   qr_token: string | null;
   notes: string | null;
+  /** Per-asset point of contact (plan §4.5); falls back to org maintenance email. */
+  contact_name: string | null;
+  contact_email: string | null;
+};
+
+/** One photo of an asset; multiple per asset, one primary (plan §4.1, §6). */
+export type AssetPhoto = BaseRow & {
+  asset_id: string;
+  url: string;
+  caption: string | null;
+  is_primary: boolean;
+  taken_at: string | null;
+};
+
+/** A work order — also the asset's service-history record (plan §4.2). */
+export type WorkOrder = BaseRow & {
+  title: string;
+  description: string | null;
+  type: WorkOrderType;
+  priority: WorkOrderPriority;
+  status: WorkOrderStatus;
+  linked_asset_id: string | null;
+  location_id: string | null;
+  requested_by: string | null;
+  assignee_user_id: string | null;
+  coordinated_by_user_id: string | null;
+  authorized_by_user_id: string | null;
+  vendor_name: string | null;
+  vendor_id: string | null;
+  estimate_cost: number | null;
+  actual_parts_cost: number | null;
+  actual_labor_cost: number | null;
+  actual_vendor_cost: number | null;
+  labor_hours: number | null;
+  invoice_number: string | null;
+  invoice_url: string | null;
+  /** Check / payment number. */
+  payment_reference: string | null;
+  scheduled_date: string | null;
+  due_date: string | null;
+  completed_date: string | null;
+  completion_notes: string | null;
+  /** The work request this WO was triaged from, if any (plan §6). */
+  source_request_id: string | null;
+};
+
+/** A raw work request before triage into a WO (plan §3.1, §4.2). */
+export type WorkRequest = BaseRow & {
+  title: string;
+  description: string | null;
+  requested_by: string | null;
+  location_id: string | null;
+  linked_asset_id: string | null;
+  status: WorkRequestStatus;
+  photo_url: string | null;
+};
+
+/** External company that performs work (plan §4.5). */
+export type Vendor = BaseRow & {
+  name: string;
+  category: string | null;
+  contact_name: string | null;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  rate: number | null;
+  coi_expiry: string | null;
+  contract_expiry: string | null;
+  notes: string | null;
+};
+
+/** Recurring service (garbage, pest, landscaping…) (plan §4.5). */
+export type ServiceContract = BaseRow & {
+  vendor_id: string | null;
+  description: string;
+  cadence: string | null;
+  cost: number | null;
+  period_unit: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  renewal_reminder_days: number | null;
+};
+
+/** Lighter directory entry: utilities, insurance agent, locksmith… (plan §4.5). */
+export type Contact = BaseRow & {
+  name: string;
+  org: string | null;
+  role: string | null;
+  phone: string | null;
+  email: string | null;
+  account_number: string | null;
+  notes: string | null;
+};
+
+/** A photo/attachment on a work order; `kind` = before | after (plan §4.2, §6). */
+export type WorkOrderAttachment = BaseRow & {
+  work_order_id: string;
+  url: string;
+  kind: WorkOrderPhotoKind;
+  caption: string | null;
+  taken_at: string | null;
 };
 
 // Minimal GeoJSON shapes used by the spatial schema (full system: Phase 2).
