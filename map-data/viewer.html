@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CMC — Campus indoor map preview</title>
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<style>
+  html, body, #map { margin: 0; height: 100%; }
+  body { font: 14px/1.4 system-ui, sans-serif; }
+  /* level switcher (plan §5.2: Site · B1 · 1 · 2) */
+  #levels {
+    position: absolute; top: 12px; left: 12px; z-index: 2;
+    background: #fff; border-radius: 10px; box-shadow: 0 1px 6px rgba(0,0,0,.25);
+    padding: 6px; display: flex; flex-direction: column; gap: 4px; width: 84px;
+  }
+  #levels button {
+    border: 0; border-radius: 7px; padding: 8px 10px; cursor: pointer;
+    background: #f1f5f9; color: #0f172a; font-weight: 600; text-align: left;
+  }
+  #levels button.active { background: #2563eb; color: #fff; }
+  #legend {
+    position: absolute; bottom: 12px; left: 12px; z-index: 2; background: #fff;
+    border-radius: 10px; box-shadow: 0 1px 6px rgba(0,0,0,.25); padding: 10px 12px;
+  }
+  #legend .row { display: flex; align-items: center; gap: 8px; margin: 3px 0; }
+  #legend .dot { width: 12px; height: 12px; border-radius: 50%; border: 1px solid #0003; }
+  .maplibregl-popup-content { max-width: 260px; }
+  .maplibregl-popup-content h3 { margin: 0 0 4px; font-size: 14px; }
+  .maplibregl-popup-content .meta { color: #475569; font-size: 12px; margin-bottom: 4px; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div id="levels"></div>
+<div id="legend"></div>
+
+<script>
+// Level palette by kind (HVAC unit family inferred from the unit name prefix).
+const KIND_COLORS = {
+  air_conditioner: '#2563eb',
+  heat_pump:       '#16a34a',
+  air_handler:     '#9333ea',
+  packaged_unit:   '#ea580c',
+  wall_unit:       '#0891b2',
+  boiler:          '#dc2626',
+};
+const KIND_LABELS = {
+  air_conditioner: 'AC — air conditioner',
+  heat_pump:       'HP — heat pump',
+  air_handler:     'AH — air handler',
+  packaged_unit:   'BG/BGF — packaged unit',
+  wall_unit:       'WU — wall unit',
+  boiler:          'Boiler',
+};
+
+// Levels: Site shows footprints only; the rest filter POIs by `level`.
+const LEVELS = [
+  { id: 'site',  label: 'Site',     level: null },
+  { id: 'up',    label: '2 · Upper', level: 2 },
+  { id: 'main',  label: '1 · Main',  level: 1 },
+  { id: 'b1',    label: 'B1 · Lower', level: -1 },
+];
+
+const colorExpr = ['match', ['get', 'kind'],
+  ...Object.entries(KIND_COLORS).flatMap(([k, c]) => [k, c]),
+  '#64748b'];
+
+const map = new maplibregl.Map({
+  container: 'map',
+  style: {
+    version: 8,
+    glyphs: 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
+    sources: {},
+    layers: [{ id: 'bg', type: 'background', paint: { 'background-color': '#0b1220' } }],
+  },
+  center: [-79.9998355, 34.9999549],
+  zoom: 17.2,
+});
+map.addControl(new maplibregl.NavigationControl(), 'top-right');
+
+let activeLevel = 1; // default to Main
+
+async function load() {
+  const [buildings, pois] = await Promise.all([
+    fetch('./buildings.geojson').then(r => r.json()),
+    fetch('./pois.geojson').then(r => r.json()),
+  ]);
+
+  map.addSource('buildings', { type: 'geojson', data: buildings });
+  map.addSource('pois', { type: 'geojson', data: pois });
+
+  map.addLayer({ id: 'bldg-fill', type: 'fill', source: 'buildings',
+    paint: { 'fill-color': '#1e293b', 'fill-opacity': 0.85 } });
+  map.addLayer({ id: 'bldg-line', type: 'line', source: 'buildings',
+    paint: { 'line-color': '#64748b', 'line-width': 1.5 } });
+  map.addLayer({ id: 'bldg-label', type: 'symbol', source: 'buildings',
+    layout: { 'text-field': ['get', 'name'], 'text-size': 13,
+      'text-font': ['Open Sans Regular'], 'text-max-width': 8 },
+    paint: { 'text-color': '#cbd5e1', 'text-halo-color': '#0b1220', 'text-halo-width': 1.4 } });
+
+  map.addLayer({ id: 'poi-dot', type: 'circle', source: 'pois',
+    paint: {
+      'circle-radius': 8, 'circle-color': colorExpr,
+      'circle-stroke-width': 2, 'circle-stroke-color': '#fff',
+    } });
+  map.addLayer({ id: 'poi-label', type: 'symbol', source: 'pois',
+    layout: { 'text-field': ['get', 'label'], 'text-size': 11,
+      'text-font': ['Open Sans Regular'], 'text-offset': [0, 1.2], 'text-anchor': 'top' },
+    paint: { 'text-color': '#e2e8f0', 'text-halo-color': '#0b1220', 'text-halo-width': 1.2 } });
+
+  map.on('click', 'poi-dot', (e) => {
+    const p = e.features[0].properties;
+    new maplibregl.Popup({ offset: 12 })
+      .setLngLat(e.features[0].geometry.coordinates.slice())
+      .setHTML(
+        `<h3>${p.label}</h3>` +
+        `<div class="meta">${p.building} · ${p.level_name} · ${KIND_LABELS[p.kind] || p.kind}</div>` +
+        `<div>${p.notes || ''}</div>`)
+      .addTo(map);
+  });
+  map.on('mouseenter', 'poi-dot', () => map.getCanvas().style.cursor = 'pointer');
+  map.on('mouseleave', 'poi-dot', () => map.getCanvas().style.cursor = '');
+
+  buildLevelSwitcher();
+  buildLegend();
+  applyLevel(1, 'main');
+}
+
+function applyLevel(level, id) {
+  activeLevel = level;
+  const visible = level === null ? false : ['==', ['get', 'level'], level];
+  map.setFilter('poi-dot', visible === false ? ['==', ['get', 'level'], 999999] : visible);
+  map.setFilter('poi-label', visible === false ? ['==', ['get', 'level'], 999999] : visible);
+  document.querySelectorAll('#levels button').forEach(b =>
+    b.classList.toggle('active', b.dataset.id === id));
+}
+
+function buildLevelSwitcher() {
+  const el = document.getElementById('levels');
+  LEVELS.forEach(l => {
+    const b = document.createElement('button');
+    b.textContent = l.label; b.dataset.id = l.id;
+    b.onclick = () => applyLevel(l.level, l.id);
+    el.appendChild(b);
+  });
+}
+
+function buildLegend() {
+  const el = document.getElementById('legend');
+  el.innerHTML = '<div style="font-weight:600;margin-bottom:4px">HVAC unit type</div>' +
+    Object.entries(KIND_LABELS).map(([k, label]) =>
+      `<div class="row"><span class="dot" style="background:${KIND_COLORS[k]}"></span>${label}</div>`
+    ).join('');
+}
+
+map.on('load', load);
+</script>
+</body>
+</html>

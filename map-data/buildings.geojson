@@ -1,0 +1,172 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "kind": "building",
+        "code": "09",
+        "name": "2009 Building (Church)",
+        "description": "Sanctuary, narthex/front lobby, nurseries & children's ministry, choir/music offices.",
+        "levels": [
+          -1,
+          1,
+          2
+        ]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -80.0008554,
+              34.9997475
+            ],
+            [
+              -80.0004387,
+              34.9997475
+            ],
+            [
+              -80.0004387,
+              35.0000721
+            ],
+            [
+              -80.0002413,
+              35.0000721
+            ],
+            [
+              -80.0002413,
+              35.0003427
+            ],
+            [
+              -80.0008554,
+              35.0003427
+            ],
+            [
+              -80.0008554,
+              34.9997475
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "kind": "building",
+        "code": "FH",
+        "name": "Fellowship Hall",
+        "description": "Fellowship hall, pastors' offices, Explorers/Harvesters/Light classrooms.",
+        "levels": [
+          1
+        ]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -80.0004387,
+              34.9995491
+            ],
+            [
+              -80.0000548,
+              34.9995491
+            ],
+            [
+              -80.0000548,
+              34.9997475
+            ],
+            [
+              -80.0004387,
+              34.9997475
+            ],
+            [
+              -80.0004387,
+              34.9995491
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "kind": "building",
+        "code": "87",
+        "name": "1987 Building (School)",
+        "description": "Kitchen/cafeteria, library, computer lab, 1987 sanctuary, K\u20135th grade classrooms.",
+        "levels": [
+          -1,
+          1
+        ]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -80.0000548,
+              34.9995041
+            ],
+            [
+              -79.9995613,
+              34.9995041
+            ],
+            [
+              -79.9995613,
+              34.9999098
+            ],
+            [
+              -80.0000548,
+              34.9999098
+            ],
+            [
+              -80.0000548,
+              34.9995041
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "kind": "building",
+        "code": "GYM",
+        "name": "Gym / Middle School",
+        "description": "Middle-school gym, locker rooms, concession stand, classrooms, Colloquium room.",
+        "levels": [
+          1
+        ]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -79.9993969,
+              34.9997295
+            ],
+            [
+              -79.9987937,
+              34.9997295
+            ],
+            [
+              -79.9987937,
+              35.0001803
+            ],
+            [
+              -79.9993969,
+              35.0001803
+            ],
+            [
+              -79.9993969,
+              34.9997295
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}
