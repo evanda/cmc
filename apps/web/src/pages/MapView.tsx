@@ -1,9 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import maplibregl, {
   type ExpressionSpecification,
   type Map as MlMap,
 } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
+
+interface SelectedPoi {
+  label: string;
+  poi_type: string;
+  building: string | null;
+  level_name: string | null;
+  notes: string | null;
+}
 
 // Single-map, level-switchable indoor model (plan §5). No external tiles — a
 // neutral background + georeferenced footprints/POIs renders fully offline.
@@ -18,12 +27,21 @@ const POI_COLORS: Record<string, string> = {
 
 type Level = 'site' | number;
 
-export function MapView({ facility = 'midwaypca' }: { facility?: string }) {
+export function MapView({
+  facility = 'midwaypca',
+  assets = [],
+}: {
+  facility?: string;
+  assets?: { id: string; name: string }[];
+}) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MlMap | null>(null);
   const [level, setLevel] = useState<Level>('site');
   const [levels, setLevels] = useState<number[]>([]);
+  const [selected, setSelected] = useState<SelectedPoi | null>(null);
   const base = `${import.meta.env.BASE_URL}facilities/${facility}`;
+  // POIs are named after their asset (e.g. "AC16A"); link by label.
+  const assetIdByName = new Map(assets.map((a) => [a.name, a.id]));
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -105,20 +123,17 @@ export function MapView({ facility = 'midwaypca' }: { facility?: string }) {
         new maplibregl.Marker({ element: el }).setLngLat(ll).addTo(map);
       }
 
-      // POI popups on click.
+      // POI click → React detail card (links through to the asset record).
       map.on('click', 'poi', (e) => {
         const p = e.features?.[0]?.properties;
         if (!p) return;
-        new maplibregl.Popup({ closeButton: true })
-          .setLngLat((e.features![0].geometry as GeoJSON.Point).coordinates as [number, number])
-          .setHTML(
-            `<div style="font:13px sans-serif;max-width:220px">
-               <strong>${p.label ?? p.poi_type}</strong><br/>
-               <span style="color:#64748b">${p.building ?? ''}${p.level_name ? ' · ' + p.level_name : ''}</span>
-               ${p.notes ? `<div style="margin-top:4px;color:#475569">${p.notes}</div>` : ''}
-             </div>`,
-          )
-          .addTo(map);
+        setSelected({
+          label: p.label ?? p.poi_type,
+          poi_type: p.poi_type,
+          building: p.building ?? null,
+          level_name: p.level_name ?? null,
+          notes: p.notes ?? null,
+        });
       });
       map.on('mouseenter', 'poi', () => (map.getCanvas().style.cursor = 'pointer'));
       map.on('mouseleave', 'poi', () => (map.getCanvas().style.cursor = ''));
@@ -134,6 +149,12 @@ export function MapView({ facility = 'midwaypca' }: { facility?: string }) {
         .filter((x): x is number => typeof x === 'number')
         .sort((a, b) => a - b);
       setLevels(lv);
+
+      // Expose for the screenshot harness (project a POI → pixel to click it).
+      if (import.meta.env.VITE_DEMO) {
+        (window as unknown as { __cmcMap?: MlMap; __cmcPois?: unknown }).__cmcMap = map;
+        (window as unknown as { __cmcMap?: MlMap; __cmcPois?: unknown }).__cmcPois = pois;
+      }
     });
 
     return () => map.remove();
@@ -182,6 +203,37 @@ export function MapView({ facility = 'midwaypca' }: { facility?: string }) {
             </div>
           ))}
       </div>
+
+      {/* Selected POI card (plan §5.4 — click a POI → its asset record) */}
+      {selected && (
+        <div className="absolute right-3 top-3 z-10 w-64 rounded-lg border border-slate-300 bg-white p-3 shadow-lg">
+          <div className="flex items-start justify-between">
+            <div className="font-semibold text-slate-800">{selected.label}</div>
+            <button
+              className="text-slate-400 hover:text-slate-700"
+              onClick={() => setSelected(null)}
+            >
+              ✕
+            </button>
+          </div>
+          <div className="mt-0.5 text-xs text-slate-500">
+            {selected.poi_type}
+            {selected.building ? ` · ${selected.building}` : ''}
+            {selected.level_name ? ` · ${selected.level_name}` : ''}
+          </div>
+          {selected.notes && <p className="mt-2 text-xs text-slate-600">{selected.notes}</p>}
+          {assetIdByName.get(selected.label) ? (
+            <Link
+              to={`/assets/${assetIdByName.get(selected.label)}`}
+              className="mt-3 inline-block rounded bg-slate-800 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-700"
+            >
+              Open asset record →
+            </Link>
+          ) : (
+            <p className="mt-3 text-xs text-slate-400">No linked asset.</p>
+          )}
+        </div>
+      )}
     </div>
   );
 }
