@@ -1,0 +1,36 @@
+#!/bin/sh
+# prepare-commit-msg — enforce the repo's issue-closing convention.
+#
+# Any commit that references an issue as `(#N)` in its subject (our title
+# convention, e.g. `fix(#58): ...`) must also carry a `Closes #N` line so
+# GitHub auto-closes the issue when the commit lands on the default branch.
+# A bare `(#N)` only links; it does not close. This hook appends the missing
+# `Closes #N` automatically so it can't be forgotten.
+#
+# Enabled via `git config core.hooksPath .githooks` (see WORKFLOW.md § Getting started).
+# Carried over from evanda/bub unchanged — it is stack-agnostic.
+
+COMMIT_MSG_FILE="$1"
+COMMIT_SOURCE="$2"
+
+# Only act on freshly authored messages. Skip merges, squashes, and messages
+# reused from an existing commit (amend / rebase / cherry-pick).
+case "$COMMIT_SOURCE" in
+  merge|squash|commit) exit 0 ;;
+esac
+
+# Subject = first non-comment, non-blank line.
+subject=$(sed -e '/^#/d' -e '/^[[:space:]]*$/d' "$COMMIT_MSG_FILE" | head -n 1)
+
+# Issue numbers referenced in the subject, e.g. "fix(#58):" or "(#54, #58)".
+issues=$(printf '%s\n' "$subject" | grep -oE '#[0-9]+' | sort -u)
+[ -z "$issues" ] && exit 0
+
+for ref in $issues; do
+  num=${ref#\#}
+  # Already has a closing keyword for this issue anywhere in the body? Leave it.
+  if grep -qiE "(close[sd]?|fix(e[sd])?|resolve[sd]?)[[:space:]]+#$num\b" "$COMMIT_MSG_FILE"; then
+    continue
+  fi
+  printf '\nCloses #%s\n' "$num" >> "$COMMIT_MSG_FILE"
+done

@@ -31,6 +31,25 @@ mobile**, **single-tenant per deployment** (each church gets its own instance).
 - Prefer **complete, runnable** output over scaffolding stubs.
 - **Ask before** adding dependencies not named in the plan.
 
+## Workflow (ported from `evanda/bub`)
+
+Three trigger words drive the day-to-day loop (full detail in @WORKFLOW.md):
+
+- **`triage`** — fetch public feedback (`evanda/cmc-feedback`), weed out-of-scope
+  (plan §13), **phase-gate** against the build order (plan §11), file internal
+  issues on `evanda/cmc` with breadcrumbs. Skill: `.agents/skills/feedback-rationalizer/`.
+- **`toil`** — on the `claude-async` branch, pick a current-phase issue, implement
+  it, verify the affected workspaces, commit/push, update one aggregate draft PR
+  (falls back to monorepo chores). Prompt: @cmc-async-prompt.md (hook-injected).
+- **`syncme`** — pull `claude-async`, apply migrations, run web + mobile for
+  manual testing, then guide merge + release across **Supabase → Vercel → Expo
+  EAS**. Skill: `.agents/skills/sync-and-release/`.
+
+Supporting machinery: `.claude/settings.json` hooks (SessionStart behind-origin
+check, `toil` injector, mobile `versionCode` release guard), `.githooks/prepare-commit-msg`
+(`Closes #N`), and `scripts/check-version-sync.js`. Release order is always
+**migrations → web → mobile**; the merge to `main` is a user-run step.
+
 ## Current task — Phase 0 (Foundation)
 
 Monorepo scaffold; Supabase project + schema (§6); auth + roles (RLS);

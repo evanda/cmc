@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+dist/
+build/
+.turbo/
+.vercel/
+.expo/
+
+# Supabase local stack
+supabase/.branches/
+supabase/.temp/
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# Triage scratch output
+feedback_issues.json
+
+# Claude Code local overrides
+.claude/settings.local.json
+
+# OS
+.DS_Store
