@@ -51,3 +51,4 @@ poi-049,MHPG1,heat_pump,hvac,GYM,Gym / Middle School,1,Main,,"All classrooms exc
 poi-050,MHPG2,heat_pump,hvac,GYM,Gym / Middle School,1,Main,,"All classrooms except the far end of the building. Outside, side closest to the pavilion and field.",-84.688866,33.9436118
 poi-051,MHPG3,heat_pump,hvac,GYM,Gym / Middle School,1,Main,,"All classrooms except the far end of the building. Outside, side closest to the pavilion and field.",-84.68878,33.9436118
 poi-052,WU1,wall_unit,hvac,GYM,Gym / Middle School,1,Main,,Colloquium classroom. Wall unit attached to the wall closest to the church.,-84.688694,33.9436118
+poi-900,Main Water Shutoff,,shutoff,,,1,Main,,Example non-HVAC POI — main water shutoff. Reposition in geojson.io.,-84.68795,33.94385

@@ -1196,6 +1196,29 @@
           33.9436118
         ]
       }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-900",
+        "poi_type": "shutoff",
+        "kind": null,
+        "label": "Main Water Shutoff",
+        "building": null,
+        "building_code": null,
+        "level": 1,
+        "level_name": "Main",
+        "linked_asset_id": null,
+        "icon": "shutoff",
+        "notes": "Example non-HVAC POI \u2014 main water shutoff. Reposition in geojson.io."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.68795,
+          33.94385
+        ]
+      }
     }
   ]
 }

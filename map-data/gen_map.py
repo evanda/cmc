@@ -7,7 +7,10 @@ loader tool (plan §10). Schematic, not survey-accurate."""
 
 import json, math, os
 
-OUT = "/home/user/cmc/map-data"
+# Placeholder generator (legacy). Writes to a throwaway facility dir so it can
+# never clobber a real, traced facility. The live data is per-facility under
+# facilities/<id>/ — see gen_pois.py + authoring/import_buildings.py.
+OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "facilities", "_placeholder")
 os.makedirs(OUT, exist_ok=True)
 
 # Arbitrary placeholder anchor (round numbers => obviously not real coords).

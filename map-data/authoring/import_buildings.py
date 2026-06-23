@@ -10,6 +10,8 @@ Usage:  python3 authoring/import_buildings.py <raw_export.geojson>
 import json, os, sys
 
 MD = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # map-data/
+FACILITY = os.environ.get("FACILITY", "midwaypca")
+FDIR = os.path.join(MD, "facilities", FACILITY)
 KEYS = ("kind", "code", "name", "description", "levels")
 
 def main(src):
@@ -29,7 +31,8 @@ def main(src):
         props["label_lnglat"] = [round((min(xs) + max(xs)) / 2, 7),
                                  round(max(ys) + (max(ys) - min(ys)) * 0.18, 7)]
         out.append({"type": "Feature", "properties": props, "geometry": f["geometry"]})
-    dst = os.path.join(MD, "buildings.geojson")
+    os.makedirs(FDIR, exist_ok=True)
+    dst = os.path.join(FDIR, "buildings.geojson")
     json.dump({"type": "FeatureCollection", "features": out}, open(dst, "w"), indent=2)
     print(f"wrote {dst}: {len(out)} buildings —",
           ", ".join(p['properties'].get('code', '?') for p in out))

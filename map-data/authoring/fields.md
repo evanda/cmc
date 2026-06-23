@@ -42,6 +42,33 @@ Keep these property keys exactly — `viewer.html`, the loader (plan §10), and 
 | `wall_unit` | WU | `#0891b2` teal |
 | `boiler` | Boiler | `#dc2626` red |
 
+### `poi_type` values (plan §5.4)
+
+`hvac` (the slide units), `shutoff`, `door_controller`, `network_hardware`,
+`sound_system`, `fountain`, `fire_extinguisher`, `playground`, `building`,
+`area`, … — extend freely. Only `hvac` uses the `kind` sub-color; every other
+type is colored by `poi_type` (one line in `viewer.html` → `POI_TYPE_COLORS`).
+
+## Areas (`areas.geojson`, Polygon — optional)
+
+Exterior, non-building extents shown at every level as ground context.
+
+| key | type | required | notes |
+|-----|------|----------|-------|
+| `feature_type` | enum | yes | `playground`, `cemetery`, `garden`, `carport`, `parking`, `field`, `pavilion`, … → fill/outline color (`viewer.html` → `AREA_COLORS`) |
+| `name` | string | no | label drawn at the polygon center |
+
+## `meta.json` (facility identity + basemap, plan §7.6)
+
+| key | type | notes |
+|-----|------|-------|
+| `id` | string | folder name, e.g. `midwaypca` |
+| `name` | string | display name (viewer title) |
+| `description` | string | optional |
+| `basemap_tiles` | string | optional XYZ template; relative (`tiles/{z}/{x}/{y}.jpg`, resolved against the facility dir) or absolute `http…`. Omit to stream live Esri. |
+| `basemap_minzoom` / `basemap_maxzoom` | int | optional, for a local cache |
+| `basemap_attribution` | string | optional credit line |
+
 ## Floors (`floors.json`, plan §6 `floors`)
 
 `building_code`, `building`, `name`, `level`, `floorplan_image_url`,

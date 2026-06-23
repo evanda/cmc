@@ -13,7 +13,9 @@ import json, math, os
 import gen_map as G  # safe: gen_map only writes files under __main__
 
 MD = os.path.dirname(os.path.abspath(__file__))
-buildings = json.load(open(os.path.join(MD, "buildings.geojson")))["features"]
+FACILITY = os.environ.get("FACILITY", "midwaypca")
+FDIR = os.path.join(MD, "facilities", FACILITY)
+buildings = json.load(open(os.path.join(FDIR, "buildings.geojson")))["features"]
 
 ring_by_code = {f["properties"]["code"]: f["geometry"]["coordinates"][0] for f in buildings}
 name_by_code = {f["properties"]["code"]: f["properties"]["name"] for f in buildings}
@@ -37,6 +39,15 @@ def grid(ring, n, frac=0.20):
         gy = y1 if rows == 1 else y1 - (y1 - y0) * r / (rows - 1)
         out.append([round(gx, 7), round(gy, 7)])
     return out
+
+# Preserve any manually-added, non-HVAC features (shutoffs, fountains, …) so
+# regenerating the slide-derived HVAC set doesn't wipe hand-placed features.
+pois_path = os.path.join(FDIR, "pois.geojson")
+kept = []
+if os.path.exists(pois_path):
+    for f in json.load(open(pois_path))["features"]:
+        if f.get("properties", {}).get("poi_type") != "hvac":
+            kept.append(f)
 
 poi_features = []
 pid = 1
@@ -70,7 +81,9 @@ for f in buildings:
             "floorplan_image_url": None, "geo_corners_geojson": quad, "rotation_deg": 0,
         })
 
-json.dump({"type": "FeatureCollection", "features": poi_features},
-          open(os.path.join(MD, "pois.geojson"), "w"), indent=2)
-json.dump(floors, open(os.path.join(MD, "floors.json"), "w"), indent=2)
-print(f"wrote pois.geojson ({len(poi_features)} POIs) + floors.json ({len(floors)} floors)")
+all_pois = poi_features + kept   # generated HVAC + preserved manual features
+json.dump({"type": "FeatureCollection", "features": all_pois},
+          open(pois_path, "w"), indent=2)
+json.dump(floors, open(os.path.join(FDIR, "floors.json"), "w"), indent=2)
+print(f"wrote pois.geojson ({len(poi_features)} HVAC + {len(kept)} kept) "
+      f"+ floors.json ({len(floors)} floors) for facility '{FACILITY}'")
