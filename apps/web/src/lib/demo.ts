@@ -32,6 +32,7 @@ import type {
 } from '@cmc/shared';
 import { requestToWorkOrder } from '@cmc/shared';
 import type { DataSource } from './datasource';
+import midwayData from '../data/midwaypca.json';
 
 let seq = 0;
 const id = () => `demo-${++seq}`;
@@ -430,6 +431,73 @@ seedRequest({
 });
 seedRequest({ title: 'Flickering lights in Room 101', location_id: locId('Room 101') });
 seedRequest({ title: 'Loose handrail by the Narthex steps', location_id: locId('Narthex') });
+
+// ── Midway PCA dataset (VITE_DEMO=midway) ────────────────────────────────────
+// Reuse the same in-memory store but reseed the campus + assets from the real
+// map data (scripts/gen-midway-demo.mjs). Vendors/contacts/users stay generic.
+if (import.meta.env.VITE_DEMO === 'midway') {
+  Object.assign(org, {
+    facility_name: midwayData.org.facility_name,
+    address: midwayData.org.address,
+    maintenance_contact_email: midwayData.org.maintenance_contact_email,
+    timezone: midwayData.org.timezone,
+  });
+  for (const arr of [buildings, floors, locations, assets, photos, workOrders, workRequests, woPhotos])
+    (arr as { length: number }).length = 0;
+
+  const buildingIdByName = new Map<string, string>();
+  for (const b of midwayData.buildings) {
+    const row: Building = {
+      id: id(),
+      ...base(),
+      name: b.name,
+      description: b.description,
+      address: null,
+      footprint_geojson: b.footprint as Building['footprint_geojson'],
+    };
+    buildings.push(row);
+    buildingIdByName.set(b.name, row.id);
+  }
+  for (const fl of midwayData.floors) {
+    const buildingId = buildingIdByName.get(fl.building);
+    if (!buildingId) continue;
+    floors.push({
+      id: id(),
+      ...base(),
+      building_id: buildingId,
+      name: fl.name,
+      level: fl.level,
+      floorplan_image_url: null,
+      geo_corners_geojson: fl.geo_corners as Floor['geo_corners_geojson'],
+      rotation_deg: null,
+    });
+  }
+  const locationIdByBuilding = new Map<string, string>();
+  for (const l of midwayData.locations) {
+    const buildingId = buildingIdByName.get(l.building);
+    if (!buildingId) continue;
+    const row: Location = {
+      id: id(),
+      ...base(),
+      building_id: buildingId,
+      floor_id: null,
+      name: l.name,
+      type: 'area',
+    };
+    locations.push(row);
+    locationIdByBuilding.set(l.building, row.id);
+  }
+  const categoryIdByName = (name: string) => categories.find((c) => c.name === name)?.id ?? null;
+  for (const a of midwayData.assets) {
+    seedAsset(a.name, a.category, null, {
+      location_id: (a.building ? locationIdByBuilding.get(a.building) : null) ?? null,
+      category_id: categoryIdByName(a.category),
+      criticality: a.criticality as Asset['criticality'],
+      make: a.make,
+      notes: a.notes,
+    });
+  }
+}
 
 const live = (rows: { deleted_at: string | null }[]) => rows.filter((r) => r.deleted_at === null);
 

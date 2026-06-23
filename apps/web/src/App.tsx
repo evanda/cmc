@@ -9,6 +9,7 @@ import { AssetByTokenPage } from './pages/AssetByTokenPage';
 import { WorkOrdersPage } from './pages/WorkOrdersPage';
 import { WorkRequestsPage } from './pages/WorkRequestsPage';
 import { VendorsPage } from './pages/VendorsPage';
+import { MapPage } from './pages/MapPage';
 import { BuildingsPage } from './pages/BuildingsPage';
 import { FloorsPage } from './pages/FloorsPage';
 import { LocationsPage } from './pages/LocationsPage';
@@ -32,6 +33,7 @@ export function App() {
     <Routes>
       <Route element={<Layout />}>
         <Route index element={<DashboardPage />} />
+        <Route path="map" element={<MapPage />} />
         <Route path="requests" element={<WorkRequestsPage />} />
         <Route path="work-orders" element={<WorkOrdersPage />} />
         <Route path="assets" element={<AssetsPage />} />

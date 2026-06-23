@@ -1,0 +1,834 @@
+{
+  "org": {
+    "facility_name": "Midway PCA",
+    "address": "Powder Springs, GA",
+    "maintenance_contact_email": "maintenance@midwaypca.org",
+    "timezone": "America/New_York",
+    "distance_unit": "mi",
+    "currency": "USD"
+  },
+  "buildings": [
+    {
+      "code": "09",
+      "name": "2009 Building (Church)",
+      "description": "Sanctuary, narthex/front lobby, nurseries & children's ministry, choir/music offices.",
+      "footprint": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -84.688207,
+              33.944181
+            ],
+            [
+              -84.688267,
+              33.943927
+            ],
+            [
+              -84.687777,
+              33.943834
+            ],
+            [
+              -84.687695,
+              33.944087
+            ],
+            [
+              -84.688207,
+              33.944181
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "code": "FH",
+      "name": "Fellowship Hall",
+      "description": "Fellowship hall, pastors' offices, Explorers/Harvesters/Light classrooms.",
+      "footprint": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -84.687906,
+              33.943575
+            ],
+            [
+              -84.687457,
+              33.943479
+            ],
+            [
+              -84.68739,
+              33.943766
+            ],
+            [
+              -84.687815,
+              33.943841
+            ],
+            [
+              -84.687906,
+              33.943575
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "code": "87",
+      "name": "1987 Building (School)",
+      "description": "Kitchen/cafeteria, library, computer lab, 1987 sanctuary, K–5th grade classrooms.",
+      "footprint": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -84.687342,
+              33.944021
+            ],
+            [
+              -84.687471,
+              33.943479
+            ],
+            [
+              -84.687029,
+              33.943407
+            ],
+            [
+              -84.686981,
+              33.943577
+            ],
+            [
+              -84.687214,
+              33.943636
+            ],
+            [
+              -84.687205,
+              33.943706
+            ],
+            [
+              -84.687149,
+              33.943694
+            ],
+            [
+              -84.687135,
+              33.943772
+            ],
+            [
+              -84.687111,
+              33.94377
+            ],
+            [
+              -84.68707,
+              33.943985
+            ],
+            [
+              -84.687342,
+              33.944021
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "code": "GYM",
+      "name": "Gym / Middle School",
+      "description": "Middle-school gym, locker rooms, concession stand, classrooms, Colloquium room.",
+      "footprint": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -84.688928,
+              33.943935
+            ],
+            [
+              -84.688952,
+              33.943555
+            ],
+            [
+              -84.688546,
+              33.943531
+            ],
+            [
+              -84.688522,
+              33.943909
+            ],
+            [
+              -84.688928,
+              33.943935
+            ]
+          ]
+        ]
+      }
+    }
+  ],
+  "floors": [
+    {
+      "building": "2009 Building (Church)",
+      "name": "Basement",
+      "level": -1,
+      "geo_corners": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -84.688267,
+              33.943834
+            ],
+            [
+              -84.687695,
+              33.943834
+            ],
+            [
+              -84.687695,
+              33.944181
+            ],
+            [
+              -84.688267,
+              33.944181
+            ],
+            [
+              -84.688267,
+              33.943834
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "building": "2009 Building (Church)",
+      "name": "Main",
+      "level": 1,
+      "geo_corners": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -84.688267,
+              33.943834
+            ],
+            [
+              -84.687695,
+              33.943834
+            ],
+            [
+              -84.687695,
+              33.944181
+            ],
+            [
+              -84.688267,
+              33.944181
+            ],
+            [
+              -84.688267,
+              33.943834
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "building": "2009 Building (Church)",
+      "name": "Upper",
+      "level": 2,
+      "geo_corners": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -84.688267,
+              33.943834
+            ],
+            [
+              -84.687695,
+              33.943834
+            ],
+            [
+              -84.687695,
+              33.944181
+            ],
+            [
+              -84.688267,
+              33.944181
+            ],
+            [
+              -84.688267,
+              33.943834
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "building": "Fellowship Hall",
+      "name": "Main",
+      "level": 1,
+      "geo_corners": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -84.687906,
+              33.943479
+            ],
+            [
+              -84.68739,
+              33.943479
+            ],
+            [
+              -84.68739,
+              33.943841
+            ],
+            [
+              -84.687906,
+              33.943841
+            ],
+            [
+              -84.687906,
+              33.943479
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "building": "1987 Building (School)",
+      "name": "Lower",
+      "level": -1,
+      "geo_corners": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -84.687471,
+              33.943407
+            ],
+            [
+              -84.686981,
+              33.943407
+            ],
+            [
+              -84.686981,
+              33.944021
+            ],
+            [
+              -84.687471,
+              33.944021
+            ],
+            [
+              -84.687471,
+              33.943407
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "building": "1987 Building (School)",
+      "name": "Main",
+      "level": 1,
+      "geo_corners": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -84.687471,
+              33.943407
+            ],
+            [
+              -84.686981,
+              33.943407
+            ],
+            [
+              -84.686981,
+              33.944021
+            ],
+            [
+              -84.687471,
+              33.944021
+            ],
+            [
+              -84.687471,
+              33.943407
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "building": "Gym / Middle School",
+      "name": "Main",
+      "level": 1,
+      "geo_corners": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -84.688952,
+              33.943531
+            ],
+            [
+              -84.688522,
+              33.943531
+            ],
+            [
+              -84.688522,
+              33.943935
+            ],
+            [
+              -84.688952,
+              33.943935
+            ],
+            [
+              -84.688952,
+              33.943531
+            ]
+          ]
+        ]
+      }
+    }
+  ],
+  "locations": [
+    {
+      "building": "2009 Building (Church)",
+      "name": "General"
+    },
+    {
+      "building": "Fellowship Hall",
+      "name": "General"
+    },
+    {
+      "building": "1987 Building (School)",
+      "name": "General"
+    },
+    {
+      "building": "Gym / Middle School",
+      "name": "General"
+    }
+  ],
+  "assets": [
+    {
+      "name": "AC16A",
+      "category": "HVAC",
+      "building": "2009 Building (Church)",
+      "criticality": "medium",
+      "make": "AC unit",
+      "notes": "Sanctuary control (basement). In big white fencing outside the emergency-exit stairwell behind the 2009 pulpit."
+    },
+    {
+      "name": "AC16B",
+      "category": "HVAC",
+      "building": "2009 Building (Church)",
+      "criticality": "medium",
+      "make": "AC unit",
+      "notes": "Sanctuary control (basement). In big white fencing outside the emergency-exit stairwell behind the 2009 pulpit."
+    },
+    {
+      "name": "HP9",
+      "category": "HVAC",
+      "building": "2009 Building (Church)",
+      "criticality": "medium",
+      "make": "Heat pump",
+      "notes": "Narthex / front-lobby control. Basement: nursery playground, unit closest to the nursery entry."
+    },
+    {
+      "name": "HP11",
+      "category": "HVAC",
+      "building": "2009 Building (Church)",
+      "criticality": "medium",
+      "make": "Heat pump",
+      "notes": "Narthex / front-lobby control. Basement: nursery playground, unit closest to the nursery entry."
+    },
+    {
+      "name": "HP5",
+      "category": "HVAC",
+      "building": "2009 Building (Church)",
+      "criticality": "medium",
+      "make": "Heat pump",
+      "notes": "Children's ministry room & hallway control. Basement: nursery playground, unit closest to the main-level lobby entry."
+    },
+    {
+      "name": "AC5",
+      "category": "HVAC",
+      "building": "2009 Building (Church)",
+      "criticality": "medium",
+      "make": "AC unit",
+      "notes": "Children's ministry room & hallway control. Basement: mechanical room, end of hall near the concession-style kitchen."
+    },
+    {
+      "name": "AC1",
+      "category": "HVAC",
+      "building": "2009 Building (Church)",
+      "criticality": "medium",
+      "make": "AC unit",
+      "notes": "Special-needs nursery 1 control. Main level: catwalk behind the 2009 sanctuary pulpit."
+    },
+    {
+      "name": "AC2",
+      "category": "HVAC",
+      "building": "2009 Building (Church)",
+      "criticality": "medium",
+      "make": "AC unit",
+      "notes": "Infant nursery 2 control. Main level: catwalk behind the 2009 sanctuary pulpit."
+    },
+    {
+      "name": "AC3",
+      "category": "HVAC",
+      "building": "2009 Building (Church)",
+      "criticality": "medium",
+      "make": "AC unit",
+      "notes": "Children nursery 3 control. Main level: catwalk behind the 2009 sanctuary pulpit."
+    },
+    {
+      "name": "AC4",
+      "category": "HVAC",
+      "building": "2009 Building (Church)",
+      "criticality": "medium",
+      "make": "AC unit",
+      "notes": "Youth ministry room 4 control. Main level: catwalk behind the 2009 sanctuary pulpit."
+    },
+    {
+      "name": "AC15",
+      "category": "HVAC",
+      "building": "2009 Building (Church)",
+      "criticality": "medium",
+      "make": "AC unit",
+      "notes": "Long hallway connecting church with school. Main level: in ceiling in front of the men's restroom by the 2009 sanctuary."
+    },
+    {
+      "name": "HP15",
+      "category": "HVAC",
+      "building": "2009 Building (Church)",
+      "criticality": "medium",
+      "make": "Heat pump",
+      "notes": "Long hallway connecting church with school. Main level: outside the southern lobby entrance toward the nursery entrance."
+    },
+    {
+      "name": "HP12",
+      "category": "HVAC",
+      "building": "2009 Building (Church)",
+      "criticality": "medium",
+      "make": "Heat pump",
+      "notes": "Choir practice room & music-ministry offices control. Upper level: roof access off the stairwell by the elevator."
+    },
+    {
+      "name": "HP13",
+      "category": "HVAC",
+      "building": "2009 Building (Church)",
+      "criticality": "medium",
+      "make": "Heat pump",
+      "notes": "Choir practice room & music-ministry offices control. Upper level: roof access off the stairwell by the elevator."
+    },
+    {
+      "name": "AC12",
+      "category": "HVAC",
+      "building": "2009 Building (Church)",
+      "criticality": "medium",
+      "make": "AC unit",
+      "notes": "Choir practice room & music-ministry offices. Upper level: above the men's robing room (ladder entry)."
+    },
+    {
+      "name": "AC13",
+      "category": "HVAC",
+      "building": "2009 Building (Church)",
+      "criticality": "medium",
+      "make": "AC unit",
+      "notes": "Choir practice room & music-ministry offices. Upper level: above the men's robing room (ladder entry)."
+    },
+    {
+      "name": "AC9",
+      "category": "HVAC",
+      "building": "2009 Building (Church)",
+      "criticality": "medium",
+      "make": "AC unit",
+      "notes": "Narthex / front-lobby control. Upper level: above the women's robing room in the choir practice room (ladder entry)."
+    },
+    {
+      "name": "AC11",
+      "category": "HVAC",
+      "building": "2009 Building (Church)",
+      "criticality": "medium",
+      "make": "AC unit",
+      "notes": "Narthex / front-lobby control. Upper level: above the women's robing room in the choir practice room (ladder entry)."
+    },
+    {
+      "name": "AH16A",
+      "category": "HVAC",
+      "building": "2009 Building (Church)",
+      "criticality": "medium",
+      "make": null,
+      "notes": "Sanctuary air handler. Upper level: behind mechanical-room doors on the balcony, either side of the 2009 pulpit."
+    },
+    {
+      "name": "AH16B",
+      "category": "HVAC",
+      "building": "2009 Building (Church)",
+      "criticality": "medium",
+      "make": null,
+      "notes": "Sanctuary air handler. Upper level: behind mechanical-room doors on the balcony, either side of the 2009 pulpit."
+    },
+    {
+      "name": "HP7",
+      "category": "HVAC",
+      "building": "Fellowship Hall",
+      "criticality": "medium",
+      "make": "Heat pump",
+      "notes": "Fellowship-hall classrooms. Main level: outside, next to the head pastor's office."
+    },
+    {
+      "name": "HP8",
+      "category": "HVAC",
+      "building": "Fellowship Hall",
+      "criticality": "medium",
+      "make": "Heat pump",
+      "notes": "Fellowship-hall classrooms. Main level: outside, next to the head pastor's office."
+    },
+    {
+      "name": "HP10",
+      "category": "HVAC",
+      "building": "Fellowship Hall",
+      "criticality": "medium",
+      "make": "Heat pump",
+      "notes": "Back-hallway access to Explorers/Harvesters/Light classrooms. Main level: outside, next to the head pastor's office."
+    },
+    {
+      "name": "HP14A",
+      "category": "HVAC",
+      "building": "Fellowship Hall",
+      "criticality": "medium",
+      "make": "Heat pump",
+      "notes": "Pastors' offices — Marc's office. Main level: outside, next to the head pastor's office."
+    },
+    {
+      "name": "HP14B",
+      "category": "HVAC",
+      "building": "Fellowship Hall",
+      "criticality": "medium",
+      "make": "Heat pump",
+      "notes": "Pastors' offices — David's office. Main level: outside, next to the head pastor's office."
+    },
+    {
+      "name": "AC7",
+      "category": "HVAC",
+      "building": "Fellowship Hall",
+      "criticality": "medium",
+      "make": "AC unit",
+      "notes": "Fellowship-hall classrooms. Main level: in ceiling, long drop tiles in the pastor-offices hallway."
+    },
+    {
+      "name": "AC8",
+      "category": "HVAC",
+      "building": "Fellowship Hall",
+      "criticality": "medium",
+      "make": "AC unit",
+      "notes": "Fellowship-hall classrooms. Main level: in ceiling, long drop tiles in the pastor-offices hallway."
+    },
+    {
+      "name": "AC10",
+      "category": "HVAC",
+      "building": "Fellowship Hall",
+      "criticality": "medium",
+      "make": "AC unit",
+      "notes": "Explorers/Harvesters/Light classrooms. Main level: Light classroom storage closet, back-left corner."
+    },
+    {
+      "name": "AC6",
+      "category": "HVAC",
+      "building": "Fellowship Hall",
+      "criticality": "medium",
+      "make": "AC unit",
+      "notes": "Fellowship-hall center. Roof unit: on the roof over the cafeteria kitchen."
+    },
+    {
+      "name": "BG",
+      "category": "HVAC",
+      "building": "1987 Building (School)",
+      "criticality": "medium",
+      "make": null,
+      "notes": "Kitchen, cafeteria, Latin room, computer lab, library, (main) music room, intern office, Sheri Purdue's office. Outside, behind the kitchen and dumpster."
+    },
+    {
+      "name": "AC17",
+      "category": "HVAC",
+      "building": "1987 Building (School)",
+      "criticality": "medium",
+      "make": "AC unit",
+      "notes": "Beverage station / pantry hallway. Roof unit: on the roof over the cafeteria kitchen."
+    },
+    {
+      "name": "BG2",
+      "category": "HVAC",
+      "building": "1987 Building (School)",
+      "criticality": "medium",
+      "make": null,
+      "notes": "1987 sanctuary. Fenced-in elementary playground; air handler in the boiler room."
+    },
+    {
+      "name": "BGF4",
+      "category": "HVAC",
+      "building": "1987 Building (School)",
+      "criticality": "medium",
+      "make": null,
+      "notes": "Matt Ross office (main level). Unit in the elementary-playground corner behind some bushes; AC in the Matt Ross office."
+    },
+    {
+      "name": "BGF1",
+      "category": "HVAC",
+      "building": "1987 Building (School)",
+      "criticality": "medium",
+      "make": null,
+      "notes": "Lower-level music room. Outside, behind the kitchen and dumpster (smaller than BG)."
+    },
+    {
+      "name": "BGF2",
+      "category": "HVAC",
+      "building": "1987 Building (School)",
+      "criticality": "medium",
+      "make": null,
+      "notes": "Lower-level classrooms, kindergarten–3rd grade. Outside, behind the kitchen and dumpster."
+    },
+    {
+      "name": "BGF3",
+      "category": "HVAC",
+      "building": "1987 Building (School)",
+      "criticality": "medium",
+      "make": null,
+      "notes": "Lower-level classrooms, kindergarten–3rd grade. Outside, behind the kitchen and dumpster."
+    },
+    {
+      "name": "BGF5",
+      "category": "HVAC",
+      "building": "1987 Building (School)",
+      "criticality": "medium",
+      "make": null,
+      "notes": "Stairway & teachers'-lounge rooms (lower level). Fenced-in elementary playground."
+    },
+    {
+      "name": "BGF6",
+      "category": "HVAC",
+      "building": "1987 Building (School)",
+      "criticality": "medium",
+      "make": null,
+      "notes": "Lower-level classrooms: kindergarten, 4th & 5th grade. North side, just past the elementary playground; AC in ceiling of the school hallway (sticker-labeled tiles)."
+    },
+    {
+      "name": "BGF7",
+      "category": "HVAC",
+      "building": "1987 Building (School)",
+      "criticality": "medium",
+      "make": null,
+      "notes": "Lower-level classrooms: kindergarten, 4th & 5th grade. North side, just past the elementary playground; AC in ceiling of the school hallway (sticker-labeled tiles)."
+    },
+    {
+      "name": "BGF8",
+      "category": "HVAC",
+      "building": "1987 Building (School)",
+      "criticality": "medium",
+      "make": null,
+      "notes": "Lower-level classrooms: kindergarten, 4th & 5th grade. North side, just past the elementary playground; AC in ceiling of the school hallway (sticker-labeled tiles)."
+    },
+    {
+      "name": "Boiler",
+      "category": "HVAC",
+      "building": "1987 Building (School)",
+      "criticality": "medium",
+      "make": null,
+      "notes": "Boiler. In the boiler room (serves the BG2 air handler)."
+    },
+    {
+      "name": "HPG1",
+      "category": "HVAC",
+      "building": "Gym / Middle School",
+      "criticality": "medium",
+      "make": "Heat pump",
+      "notes": "Middle-school gym, locker rooms, concession stand. Outside, farthest side of the building from the church."
+    },
+    {
+      "name": "HPG2",
+      "category": "HVAC",
+      "building": "Gym / Middle School",
+      "criticality": "medium",
+      "make": "Heat pump",
+      "notes": "Middle-school gym, locker rooms, concession stand. Outside, farthest side of the building from the church."
+    },
+    {
+      "name": "HPG3",
+      "category": "HVAC",
+      "building": "Gym / Middle School",
+      "criticality": "medium",
+      "make": "Heat pump",
+      "notes": "Middle-school gym, locker rooms, concession stand. Outside, farthest side of the building from the church."
+    },
+    {
+      "name": "HPG4",
+      "category": "HVAC",
+      "building": "Gym / Middle School",
+      "criticality": "medium",
+      "make": "Heat pump",
+      "notes": "Gym / locker rooms / concession. Outside, corner closest to the church nursery."
+    },
+    {
+      "name": "ACG1",
+      "category": "HVAC",
+      "building": "Gym / Middle School",
+      "criticality": "medium",
+      "make": "AC unit",
+      "notes": "Locker room 1. In ceiling."
+    },
+    {
+      "name": "ACG2",
+      "category": "HVAC",
+      "building": "Gym / Middle School",
+      "criticality": "medium",
+      "make": "AC unit",
+      "notes": "Locker room 2. In ceiling."
+    },
+    {
+      "name": "ACG4",
+      "category": "HVAC",
+      "building": "Gym / Middle School",
+      "criticality": "medium",
+      "make": "AC unit",
+      "notes": "Above the concession room. In ceiling."
+    },
+    {
+      "name": "MHPG1",
+      "category": "HVAC",
+      "building": "Gym / Middle School",
+      "criticality": "medium",
+      "make": "Heat pump",
+      "notes": "All classrooms except the far end of the building. Outside, side closest to the pavilion and field."
+    },
+    {
+      "name": "MHPG2",
+      "category": "HVAC",
+      "building": "Gym / Middle School",
+      "criticality": "medium",
+      "make": "Heat pump",
+      "notes": "All classrooms except the far end of the building. Outside, side closest to the pavilion and field."
+    },
+    {
+      "name": "MHPG3",
+      "category": "HVAC",
+      "building": "Gym / Middle School",
+      "criticality": "medium",
+      "make": "Heat pump",
+      "notes": "All classrooms except the far end of the building. Outside, side closest to the pavilion and field."
+    },
+    {
+      "name": "WU1",
+      "category": "HVAC",
+      "building": "Gym / Middle School",
+      "criticality": "medium",
+      "make": null,
+      "notes": "Colloquium classroom. Wall unit attached to the wall closest to the church."
+    },
+    {
+      "name": "Main Water Shutoff",
+      "category": "Utility/Infrastructure",
+      "building": null,
+      "criticality": "high",
+      "make": null,
+      "notes": "Example non-HVAC POI — main water shutoff. Reposition in geojson.io."
+    }
+  ]
+}
