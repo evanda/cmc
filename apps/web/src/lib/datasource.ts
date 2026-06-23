@@ -10,12 +10,18 @@ import type {
   AssetPhoto,
   Building,
   BuildingForm,
+  Contact,
+  ContactForm,
   Floor,
   FloorForm,
   Location,
   LocationForm,
   OrgSettings,
+  ServiceContract,
+  ServiceContractForm,
   User,
+  Vendor,
+  VendorForm,
   WorkLogForm,
   WorkOrder,
   WorkOrderAttachment,
@@ -72,6 +78,59 @@ export interface DataSource {
   createWorkRequest(input: WorkRequestForm): Promise<WorkRequest>;
   convertWorkRequest(requestId: string): Promise<WorkOrder>;
   declineWorkRequest(requestId: string): Promise<void>;
+  // Vendors, service contracts, contacts (plan §4.5).
+  listVendors(): Promise<Vendor[]>;
+  createVendor(input: VendorForm): Promise<Vendor>;
+  updateVendor(id: string, input: VendorForm): Promise<Vendor>;
+  deleteVendor(id: string): Promise<void>;
+  listServiceContracts(): Promise<ServiceContract[]>;
+  createServiceContract(input: ServiceContractForm): Promise<ServiceContract>;
+  updateServiceContract(id: string, input: ServiceContractForm): Promise<ServiceContract>;
+  deleteServiceContract(id: string): Promise<void>;
+  listContacts(): Promise<Contact[]>;
+  createContact(input: ContactForm): Promise<Contact>;
+  updateContact(id: string, input: ContactForm): Promise<Contact>;
+  deleteContact(id: string): Promise<void>;
+}
+
+function vendorPatch(input: VendorForm) {
+  return {
+    name: input.name,
+    category: input.category ?? null,
+    contact_name: input.contact_name ?? null,
+    phone: input.phone ?? null,
+    email: input.email ?? null,
+    address: input.address ?? null,
+    rate: input.rate ?? null,
+    coi_expiry: input.coi_expiry ?? null,
+    contract_expiry: input.contract_expiry ?? null,
+    notes: input.notes ?? null,
+  };
+}
+
+function serviceContractPatch(input: ServiceContractForm) {
+  return {
+    vendor_id: input.vendor_id ?? null,
+    description: input.description,
+    cadence: input.cadence ?? null,
+    cost: input.cost ?? null,
+    period_unit: input.period_unit ?? null,
+    start_date: input.start_date ?? null,
+    end_date: input.end_date ?? null,
+    renewal_reminder_days: input.renewal_reminder_days ?? null,
+  };
+}
+
+function contactPatch(input: ContactForm) {
+  return {
+    name: input.name,
+    org: input.org ?? null,
+    role: input.role ?? null,
+    phone: input.phone ?? null,
+    email: input.email ?? null,
+    account_number: input.account_number ?? null,
+    notes: input.notes ?? null,
+  };
 }
 
 // Status edits also stamp completed_date when a WO is marked completed.
@@ -94,6 +153,7 @@ function workOrderFormPatch(input: WorkOrderForm) {
     linked_asset_id: input.linked_asset_id ?? null,
     location_id: input.location_id ?? null,
     assignee_user_id: input.assignee_user_id ?? null,
+    vendor_id: input.vendor_id ?? null,
     due_date: input.due_date ?? null,
   };
 }
@@ -110,6 +170,7 @@ function workLogPatch(assetId: string, input: WorkLogForm) {
     assignee_user_id: input.assignee_user_id ?? null,
     coordinated_by_user_id: input.coordinated_by_user_id ?? null,
     authorized_by_user_id: input.authorized_by_user_id ?? null,
+    vendor_id: input.vendor_id ?? null,
     vendor_name: input.vendor_name ?? null,
     actual_parts_cost: input.actual_parts_cost ?? null,
     actual_labor_cost: input.actual_labor_cost ?? null,
@@ -430,6 +491,80 @@ const supabaseDataSource: DataSource = {
         .from('work_requests')
         .update({ status: 'declined' })
         .eq('id', requestId)
+        .select()
+        .single(),
+    );
+  },
+
+  listVendors: async () =>
+    unwrap<Vendor[]>(
+      await supabase.from('vendors').select('*').is('deleted_at', null).order('name'),
+    ),
+  createVendor: async (input) =>
+    unwrap<Vendor>(await supabase.from('vendors').insert(vendorPatch(input)).select().single()),
+  updateVendor: async (id, input) =>
+    unwrap<Vendor>(
+      await supabase.from('vendors').update(vendorPatch(input)).eq('id', id).select().single(),
+    ),
+  deleteVendor: async (id) => {
+    unwrap(
+      await supabase
+        .from('vendors')
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', id)
+        .select()
+        .single(),
+    );
+  },
+
+  listServiceContracts: async () =>
+    unwrap<ServiceContract[]>(
+      await supabase
+        .from('service_contracts')
+        .select('*')
+        .is('deleted_at', null)
+        .order('description'),
+    ),
+  createServiceContract: async (input) =>
+    unwrap<ServiceContract>(
+      await supabase.from('service_contracts').insert(serviceContractPatch(input)).select().single(),
+    ),
+  updateServiceContract: async (id, input) =>
+    unwrap<ServiceContract>(
+      await supabase
+        .from('service_contracts')
+        .update(serviceContractPatch(input))
+        .eq('id', id)
+        .select()
+        .single(),
+    ),
+  deleteServiceContract: async (id) => {
+    unwrap(
+      await supabase
+        .from('service_contracts')
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', id)
+        .select()
+        .single(),
+    );
+  },
+
+  listContacts: async () =>
+    unwrap<Contact[]>(
+      await supabase.from('contacts').select('*').is('deleted_at', null).order('name'),
+    ),
+  createContact: async (input) =>
+    unwrap<Contact>(await supabase.from('contacts').insert(contactPatch(input)).select().single()),
+  updateContact: async (id, input) =>
+    unwrap<Contact>(
+      await supabase.from('contacts').update(contactPatch(input)).eq('id', id).select().single(),
+    ),
+  deleteContact: async (id) => {
+    unwrap(
+      await supabase
+        .from('contacts')
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', id)
         .select()
         .single(),
     );

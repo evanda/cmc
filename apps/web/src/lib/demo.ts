@@ -9,12 +9,18 @@ import type {
   AssetPhoto,
   Building,
   BuildingForm,
+  Contact,
+  ContactForm,
   Floor,
   FloorForm,
   Location,
   LocationForm,
   OrgSettings,
+  ServiceContract,
+  ServiceContractForm,
   User,
+  Vendor,
+  VendorForm,
   WorkLogForm,
   WorkOrder,
   WorkOrderAttachment,
@@ -269,6 +275,7 @@ function buildWO(partial: Partial<WorkOrder> & { title: string }): WorkOrder {
     coordinated_by_user_id: null,
     authorized_by_user_id: null,
     vendor_name: null,
+    vendor_id: null,
     estimate_cost: null,
     actual_parts_cost: null,
     actual_labor_cost: null,
@@ -353,6 +360,25 @@ function seedWOPhoto(wo: WorkOrder, kind: WorkOrderPhotoKind, label: string, col
 seedWOPhoto(hvacWO, 'before', 'Before — clogged filter', '#b45309');
 seedWOPhoto(hvacWO, 'after', 'After — new filter', '#15803d');
 
+// Vendors, service contracts, contacts (plan §4.5).
+const vendors: Vendor[] = [
+  { id: id(), ...base(), name: 'Acme Mechanical', category: 'HVAC', contact_name: 'Dana Cruz', phone: '555-0101', email: 'service@acmemech.example', address: '12 Trade St', rate: 125, coi_expiry: '2026-09-30', contract_expiry: '2026-12-31', notes: null },
+  { id: id(), ...base(), name: 'Bright Spark Electric', category: 'Electrical', contact_name: 'Lee Park', phone: '555-0144', email: 'office@brightspark.example', address: null, rate: 110, coi_expiry: '2026-07-15', contract_expiry: null, notes: null },
+  { id: id(), ...base(), name: 'GreenScape Lawn', category: 'Landscaping', contact_name: 'Maria Gomez', phone: '555-0190', email: null, address: null, rate: null, coi_expiry: '2026-06-30', contract_expiry: '2027-03-01', notes: null },
+];
+const vendorId = (name: string) => vendors.find((v) => v.name === name)!.id;
+
+const serviceContracts: ServiceContract[] = [
+  { id: id(), ...base(), vendor_id: vendorId('GreenScape Lawn'), description: 'Weekly lawn mowing & trimming', cadence: 'weekly', cost: 320, period_unit: 'month', start_date: '2026-04-01', end_date: '2026-10-31', renewal_reminder_days: 30 },
+  { id: id(), ...base(), vendor_id: null, description: 'Garbage & recycling pickup', cadence: 'weekly', cost: 145, period_unit: 'month', start_date: '2026-01-01', end_date: '2026-12-31', renewal_reminder_days: 45 },
+];
+
+const contacts: Contact[] = [
+  { id: id(), ...base(), name: 'City Power & Light', org: 'Utility', role: 'Electric utility', phone: '800-555-0123', email: null, account_number: 'ACCT-44821', notes: 'Outage line: 800-555-0000' },
+  { id: id(), ...base(), name: 'Jordan Pipes', org: 'Rapid Plumbing', role: 'Emergency plumber', phone: '555-0177', email: 'jordan@rapidplumb.example', account_number: null, notes: null },
+  { id: id(), ...base(), name: 'Sam Rivera', org: 'Faithful Mutual', role: 'Insurance agent', phone: '555-0166', email: 'srivera@faithfulmutual.example', account_number: 'POL-99812', notes: null },
+];
+
 // A few in-flight work orders so the board has cards across status columns.
 workOrders.push(
   buildWO({
@@ -362,6 +388,7 @@ workOrders.push(
     linked_asset_id: assetByName('RTU-1 Rooftop Unit').id,
     location_id: locId('Sanctuary'),
     assignee_user_id: userId('Sam Tech'),
+    vendor_id: vendorId('Acme Mechanical'),
     due_date: '2026-06-28',
   }),
   buildWO({
@@ -603,6 +630,7 @@ export const demoDataSource: DataSource = {
       coordinated_by_user_id: input.coordinated_by_user_id ?? null,
       authorized_by_user_id: input.authorized_by_user_id ?? null,
       vendor_name: input.vendor_name ?? null,
+      vendor_id: input.vendor_id ?? null,
       estimate_cost: null,
       actual_parts_cost: input.actual_parts_cost ?? null,
       actual_labor_cost: input.actual_labor_cost ?? null,
@@ -660,6 +688,7 @@ export const demoDataSource: DataSource = {
       linked_asset_id: input.linked_asset_id ?? null,
       location_id: input.location_id ?? null,
       assignee_user_id: input.assignee_user_id ?? null,
+      vendor_id: input.vendor_id ?? null,
       due_date: input.due_date ?? null,
     });
     workOrders.push(w);
@@ -701,5 +730,120 @@ export const demoDataSource: DataSource = {
   declineWorkRequest: async (requestId) => {
     const r = workRequests.find((x) => x.id === requestId);
     if (r) r.status = 'declined';
+  },
+
+  listVendors: async () =>
+    (live(vendors) as Vendor[]).sort((a, b) => a.name.localeCompare(b.name)),
+  createVendor: async (input: VendorForm) => {
+    const v: Vendor = {
+      id: id(),
+      ...base(),
+      name: input.name,
+      category: input.category ?? null,
+      contact_name: input.contact_name ?? null,
+      phone: input.phone ?? null,
+      email: input.email ?? null,
+      address: input.address ?? null,
+      rate: input.rate ?? null,
+      coi_expiry: input.coi_expiry ?? null,
+      contract_expiry: input.contract_expiry ?? null,
+      notes: input.notes ?? null,
+    };
+    vendors.push(v);
+    return v;
+  },
+  updateVendor: async (vid, input: VendorForm) => {
+    const v = vendors.find((x) => x.id === vid)!;
+    Object.assign(v, {
+      name: input.name,
+      category: input.category ?? null,
+      contact_name: input.contact_name ?? null,
+      phone: input.phone ?? null,
+      email: input.email ?? null,
+      address: input.address ?? null,
+      rate: input.rate ?? null,
+      coi_expiry: input.coi_expiry ?? null,
+      contract_expiry: input.contract_expiry ?? null,
+      notes: input.notes ?? null,
+    });
+    return v;
+  },
+  deleteVendor: async (vid) => {
+    const v = vendors.find((x) => x.id === vid);
+    if (v) v.deleted_at = now;
+  },
+
+  listServiceContracts: async () =>
+    (live(serviceContracts) as ServiceContract[]).sort((a, b) =>
+      a.description.localeCompare(b.description),
+    ),
+  createServiceContract: async (input: ServiceContractForm) => {
+    const c: ServiceContract = {
+      id: id(),
+      ...base(),
+      vendor_id: input.vendor_id ?? null,
+      description: input.description,
+      cadence: input.cadence ?? null,
+      cost: input.cost ?? null,
+      period_unit: input.period_unit ?? null,
+      start_date: input.start_date ?? null,
+      end_date: input.end_date ?? null,
+      renewal_reminder_days: input.renewal_reminder_days ?? null,
+    };
+    serviceContracts.push(c);
+    return c;
+  },
+  updateServiceContract: async (cid, input: ServiceContractForm) => {
+    const c = serviceContracts.find((x) => x.id === cid)!;
+    Object.assign(c, {
+      vendor_id: input.vendor_id ?? null,
+      description: input.description,
+      cadence: input.cadence ?? null,
+      cost: input.cost ?? null,
+      period_unit: input.period_unit ?? null,
+      start_date: input.start_date ?? null,
+      end_date: input.end_date ?? null,
+      renewal_reminder_days: input.renewal_reminder_days ?? null,
+    });
+    return c;
+  },
+  deleteServiceContract: async (cid) => {
+    const c = serviceContracts.find((x) => x.id === cid);
+    if (c) c.deleted_at = now;
+  },
+
+  listContacts: async () =>
+    (live(contacts) as Contact[]).sort((a, b) => a.name.localeCompare(b.name)),
+  createContact: async (input: ContactForm) => {
+    const c: Contact = {
+      id: id(),
+      ...base(),
+      name: input.name,
+      org: input.org ?? null,
+      role: input.role ?? null,
+      phone: input.phone ?? null,
+      email: input.email ?? null,
+      account_number: input.account_number ?? null,
+      notes: input.notes ?? null,
+    };
+    contacts.push(c);
+    return c;
+  },
+  updateContact: async (cid, input: ContactForm) => {
+    const c = contacts.find((x) => x.id === cid)!;
+    Object.assign(c, {
+      name: input.name,
+      org: input.org ?? null,
+      role: input.role ?? null,
+      phone: input.phone ?? null,
+      email: input.email ?? null,
+      account_number: input.account_number ?? null,
+      notes: input.notes ?? null,
+    });
+    return c;
+  },
+  deleteContact: async (cid) => {
+    const c = contacts.find((x) => x.id === cid);
+    if (c) c.deleted_at = now;
   },
 };

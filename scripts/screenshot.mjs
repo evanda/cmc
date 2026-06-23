@@ -63,17 +63,16 @@ const shots = [
   { name: '01-dashboard', path: '/' },
   { name: '02-requests', path: '/requests' },
   { name: '03-work-orders-board', path: '/work-orders' },
-  { name: '04-work-order-new', path: '/work-orders', clicks: ['New work order'] },
-  { name: '05-work-order-triage', path: '/work-orders', clicks: ['Sanctuary AC short-cycling'] },
+  { name: '04-work-order-triage', path: '/work-orders', clicks: ['Sanctuary AC short-cycling'] },
+  { name: '05-vendors', path: '/vendors' },
   { name: '06-assets', path: '/assets' },
   { name: '07-asset-detail', path: '/assets', clicks: ['RTU-1 Rooftop Unit'] },
-  { name: '08-asset-log-work', path: '/assets', clicks: ['RTU-1 Rooftop Unit', 'Log work'] },
   {
-    name: '09-work-order-photos',
+    name: '08-work-order-photos',
     path: '/assets',
     clicks: ['RTU-1 Rooftop Unit', 'Annual HVAC service'],
   },
-  { name: '10-buildings', path: '/buildings' },
+  { name: '09-buildings', path: '/buildings' },
 ];
 
 async function clickByText(page, text) {

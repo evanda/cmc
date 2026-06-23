@@ -12,6 +12,7 @@ import {
   useAddWorkOrderPhoto,
   useDeleteWorkOrderPhoto,
   useUpdateWorkOrder,
+  useVendors,
   useWorkOrderPhotos,
 } from '../lib/queries';
 import { Button, Field, Modal, inputClass } from '../components/ui';
@@ -38,6 +39,9 @@ export function WorkOrderModal({
   const addPhoto = useAddWorkOrderPhoto(wo.id);
   const deletePhoto = useDeleteWorkOrderPhoto(wo.id);
   const updateWo = useUpdateWorkOrder();
+  const vendors = useVendors();
+  const vendorName =
+    (wo.vendor_id ? vendors.data?.find((v) => v.id === wo.vendor_id)?.name : null) ?? wo.vendor_name;
 
   const [status, setStatus] = useState<WorkOrderStatus>(wo.status);
   const [priority, setPriority] = useState<WorkOrderPriority>(wo.priority);
@@ -131,7 +135,8 @@ export function WorkOrderModal({
         {wo.completion_notes && <p className="text-slate-600">{wo.completion_notes}</p>}
 
         <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
-          <Detail label="Performed by" value={wo.vendor_name ?? userName(wo.assignee_user_id)} />
+          <Detail label="Vendor" value={vendorName} />
+          <Detail label="Performed by" value={userName(wo.assignee_user_id)} />
           <Detail label="Coordinated by" value={userName(wo.coordinated_by_user_id)} />
           <Detail label="Authorized by" value={userName(wo.authorized_by_user_id)} />
           <Detail label="Labor hours" value={wo.labor_hours != null ? `${wo.labor_hours} h` : null} />

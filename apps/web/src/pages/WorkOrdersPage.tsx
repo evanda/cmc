@@ -14,6 +14,7 @@ import {
   useLocations,
   useOrgSettings,
   useUsers,
+  useVendors,
 } from '../lib/queries';
 import { useAuth } from '../auth/AuthProvider';
 import { Button, Field, Modal, inputClass } from '../components/ui';
@@ -136,6 +137,7 @@ function NewWorkOrderModal({
 }) {
   const create = useCreateWorkOrderFromForm();
   const locations = useLocations();
+  const vendors = useVendors();
   const [f, setF] = useState({
     title: '',
     description: '',
@@ -144,6 +146,7 @@ function NewWorkOrderModal({
     linked_asset_id: '',
     location_id: '',
     assignee_user_id: '',
+    vendor_id: '',
     due_date: '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -163,6 +166,7 @@ function NewWorkOrderModal({
             linked_asset_id: f.linked_asset_id || null,
             location_id: f.location_id || null,
             assignee_user_id: f.assignee_user_id || null,
+            vendor_id: f.vendor_id || null,
           });
           if (!parsed.success) {
             setErrors(
@@ -227,6 +231,16 @@ function NewWorkOrderModal({
               {users.map((u) => (
                 <option key={u.id} value={u.id}>
                   {u.name ?? u.email}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Vendor">
+            <select className={inputClass} value={f.vendor_id} onChange={set('vendor_id')}>
+              <option value="">—</option>
+              {vendors.data?.map((v) => (
+                <option key={v.id} value={v.id}>
+                  {v.name}
                 </option>
               ))}
             </select>

@@ -2,8 +2,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
   AssetForm,
   BuildingForm,
+  ContactForm,
   FloorForm,
   LocationForm,
+  ServiceContractForm,
+  VendorForm,
   WorkLogForm,
   WorkOrderForm,
   WorkOrderPhotoKind,
@@ -11,6 +14,42 @@ import type {
   WorkRequestForm,
 } from '@cmc/shared';
 import { ds } from './datasource';
+
+// Generic CRUD-hook factory to cut boilerplate for the directory entities.
+function crudHooks<TRow, TForm>(
+  key: string,
+  ops: {
+    list: () => Promise<TRow[]>;
+    create: (input: TForm) => Promise<TRow>;
+    update: (id: string, input: TForm) => Promise<TRow>;
+    remove: (id: string) => Promise<void>;
+  },
+) {
+  return {
+    useList: () => useQuery({ queryKey: [key], queryFn: ops.list }),
+    useCreate: () => {
+      const qc = useQueryClient();
+      return useMutation({
+        mutationFn: (input: TForm) => ops.create(input),
+        onSuccess: () => qc.invalidateQueries({ queryKey: [key] }),
+      });
+    },
+    useUpdate: () => {
+      const qc = useQueryClient();
+      return useMutation({
+        mutationFn: ({ id, ...input }: TForm & { id: string }) => ops.update(id, input as TForm),
+        onSuccess: () => qc.invalidateQueries({ queryKey: [key] }),
+      });
+    },
+    useDelete: () => {
+      const qc = useQueryClient();
+      return useMutation({
+        mutationFn: (id: string) => ops.remove(id),
+        onSuccess: () => qc.invalidateQueries({ queryKey: [key] }),
+      });
+    },
+  };
+}
 
 // ── org_settings (single row, plan §7.6) ─────────────────────────────────────
 export function useOrgSettings() {
@@ -280,3 +319,40 @@ export function useDeclineWorkRequest() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['work_requests'] }),
   });
 }
+
+// ── vendors / service contracts / contacts (plan §4.5) ───────────────────────
+const vendorHooks = crudHooks<import('@cmc/shared').Vendor, VendorForm>('vendors', {
+  list: () => ds.listVendors(),
+  create: (i) => ds.createVendor(i),
+  update: (id, i) => ds.updateVendor(id, i),
+  remove: (id) => ds.deleteVendor(id),
+});
+export const useVendors = vendorHooks.useList;
+export const useCreateVendor = vendorHooks.useCreate;
+export const useUpdateVendor = vendorHooks.useUpdate;
+export const useDeleteVendor = vendorHooks.useDelete;
+
+const contractHooks = crudHooks<import('@cmc/shared').ServiceContract, ServiceContractForm>(
+  'service_contracts',
+  {
+    list: () => ds.listServiceContracts(),
+    create: (i) => ds.createServiceContract(i),
+    update: (id, i) => ds.updateServiceContract(id, i),
+    remove: (id) => ds.deleteServiceContract(id),
+  },
+);
+export const useServiceContracts = contractHooks.useList;
+export const useCreateServiceContract = contractHooks.useCreate;
+export const useUpdateServiceContract = contractHooks.useUpdate;
+export const useDeleteServiceContract = contractHooks.useDelete;
+
+const contactHooks = crudHooks<import('@cmc/shared').Contact, ContactForm>('contacts', {
+  list: () => ds.listContacts(),
+  create: (i) => ds.createContact(i),
+  update: (id, i) => ds.updateContact(id, i),
+  remove: (id) => ds.deleteContact(id),
+});
+export const useContacts = contactHooks.useList;
+export const useCreateContact = contactHooks.useCreate;
+export const useUpdateContact = contactHooks.useUpdate;
+export const useDeleteContact = contactHooks.useDelete;

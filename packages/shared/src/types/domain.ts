@@ -124,6 +124,7 @@ export type WorkOrder = BaseRow & {
   coordinated_by_user_id: string | null;
   authorized_by_user_id: string | null;
   vendor_name: string | null;
+  vendor_id: string | null;
   estimate_cost: number | null;
   actual_parts_cost: number | null;
   actual_labor_cost: number | null;
@@ -150,6 +151,43 @@ export type WorkRequest = BaseRow & {
   linked_asset_id: string | null;
   status: WorkRequestStatus;
   photo_url: string | null;
+};
+
+/** External company that performs work (plan §4.5). */
+export type Vendor = BaseRow & {
+  name: string;
+  category: string | null;
+  contact_name: string | null;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  rate: number | null;
+  coi_expiry: string | null;
+  contract_expiry: string | null;
+  notes: string | null;
+};
+
+/** Recurring service (garbage, pest, landscaping…) (plan §4.5). */
+export type ServiceContract = BaseRow & {
+  vendor_id: string | null;
+  description: string;
+  cadence: string | null;
+  cost: number | null;
+  period_unit: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  renewal_reminder_days: number | null;
+};
+
+/** Lighter directory entry: utilities, insurance agent, locksmith… (plan §4.5). */
+export type Contact = BaseRow & {
+  name: string;
+  org: string | null;
+  role: string | null;
+  phone: string | null;
+  email: string | null;
+  account_number: string | null;
+  notes: string | null;
 };
 
 /** A photo/attachment on a work order; `kind` = before | after (plan §4.2, §6). */

@@ -83,6 +83,7 @@ export const workLogFormSchema = z.object({
   assignee_user_id: z.string().uuid().nullish(),
   coordinated_by_user_id: z.string().uuid().nullish(),
   authorized_by_user_id: z.string().uuid().nullish(),
+  vendor_id: z.string().uuid().nullish(),
   vendor_name: optionalText,
   actual_parts_cost: optionalNumber,
   actual_labor_cost: optionalNumber,
@@ -113,6 +114,7 @@ export const workOrderFormSchema = z.object({
   linked_asset_id: z.string().uuid().nullish(),
   location_id: z.string().uuid().nullish(),
   assignee_user_id: z.string().uuid().nullish(),
+  vendor_id: z.string().uuid().nullish(),
   due_date: z
     .string()
     .optional()
@@ -127,6 +129,49 @@ export const workOrderUpdateSchema = z.object({
   assignee_user_id: z.string().uuid().nullish(),
 });
 export type WorkOrderUpdate = z.infer<typeof workOrderUpdateSchema>;
+
+const optionalDate = z
+  .string()
+  .optional()
+  .transform((v) => (v === '' ? undefined : v));
+
+// ── Vendors, Service Contracts & Contacts (plan §4.5) ────────────────────────
+export const vendorFormSchema = z.object({
+  name: z.string().trim().min(1, 'Name is required').max(200),
+  category: optionalText,
+  contact_name: optionalText,
+  phone: optionalText,
+  email: optionalEmail,
+  address: optionalText,
+  rate: optionalNumber,
+  coi_expiry: optionalDate,
+  contract_expiry: optionalDate,
+  notes: optionalText,
+});
+export type VendorForm = z.infer<typeof vendorFormSchema>;
+
+export const serviceContractFormSchema = z.object({
+  vendor_id: z.string().uuid().nullish(),
+  description: z.string().trim().min(1, 'Description is required').max(200),
+  cadence: optionalText,
+  cost: optionalNumber,
+  period_unit: optionalText,
+  start_date: optionalDate,
+  end_date: optionalDate,
+  renewal_reminder_days: optionalNumber,
+});
+export type ServiceContractForm = z.infer<typeof serviceContractFormSchema>;
+
+export const contactFormSchema = z.object({
+  name: z.string().trim().min(1, 'Name is required').max(200),
+  org: optionalText,
+  role: optionalText,
+  phone: optionalText,
+  email: optionalEmail,
+  account_number: optionalText,
+  notes: optionalText,
+});
+export type ContactForm = z.infer<typeof contactFormSchema>;
 
 export const orgSettingsFormSchema = z.object({
   facility_name: z.string().trim().min(1, 'Facility name is required').max(200),

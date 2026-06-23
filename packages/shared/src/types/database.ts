@@ -8,10 +8,13 @@ import type {
   AssetCategory,
   AssetPhoto,
   Building,
+  Contact,
   Floor,
   Location,
   OrgSettings,
+  ServiceContract,
   User,
+  Vendor,
   WorkOrder,
   WorkOrderAttachment,
   WorkRequest,
@@ -46,6 +49,9 @@ export interface Database {
       work_orders: TableShape<WorkOrder>;
       work_order_attachments: TableShape<WorkOrderAttachment>;
       work_requests: TableShape<WorkRequest>;
+      vendors: TableShape<Vendor>;
+      service_contracts: TableShape<ServiceContract>;
+      contacts: TableShape<Contact>;
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

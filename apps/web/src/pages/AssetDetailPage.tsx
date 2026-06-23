@@ -21,6 +21,7 @@ import {
   useOrgSettings,
   useSetPrimaryPhoto,
   useUsers,
+  useVendors,
   useWorkOrders,
 } from '../lib/queries';
 import { useAuth } from '../auth/AuthProvider';
@@ -315,10 +316,12 @@ function LogWorkModal({
   onClose: () => void;
 }) {
   const create = useCreateWorkOrder(assetId);
+  const vendors = useVendors();
   const [f, setF] = useState({
     title: '',
     type: 'reactive',
     completed_date: '',
+    vendor_id: '',
     vendor_name: '',
     assignee_user_id: '',
     coordinated_by_user_id: '',
@@ -360,6 +363,7 @@ function LogWorkModal({
           e.preventDefault();
           const parsed = workLogFormSchema.safeParse({
             ...f,
+            vendor_id: f.vendor_id || null,
             assignee_user_id: f.assignee_user_id || null,
             coordinated_by_user_id: f.coordinated_by_user_id || null,
             authorized_by_user_id: f.authorized_by_user_id || null,
@@ -394,10 +398,20 @@ function LogWorkModal({
           <Field label="Date completed">
             <input type="date" className={inputClass} value={f.completed_date} onChange={set('completed_date')} />
           </Field>
-          <Field label="Performed by (vendor/person)">
+          <Field label="Vendor">
+            <select className={inputClass} value={f.vendor_id} onChange={set('vendor_id')}>
+              <option value="">—</option>
+              {vendors.data?.map((v) => (
+                <option key={v.id} value={v.id}>
+                  {v.name}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Or other performer">
             <input className={inputClass} value={f.vendor_name} onChange={set('vendor_name')} />
           </Field>
-          <Field label="Or internal assignee">
+          <Field label="Internal assignee">
             <select className={inputClass} value={f.assignee_user_id} onChange={set('assignee_user_id')}>
               {userOpts('—')}
             </select>

@@ -8,6 +8,7 @@ const navItems = [
   { to: '/requests', label: 'Requests' },
   { to: '/work-orders', label: 'Work Orders' },
   { to: '/assets', label: 'Assets' },
+  { to: '/vendors', label: 'Vendors' },
   { to: '/buildings', label: 'Buildings' },
   { to: '/floors', label: 'Floors' },
   { to: '/locations', label: 'Locations' },

@@ -7,6 +7,8 @@ import {
   useFloors,
   useLocations,
   useOrgSettings,
+  useServiceContracts,
+  useVendors,
   useWorkRequests,
 } from '../lib/queries';
 
@@ -30,11 +32,18 @@ export function DashboardPage() {
   const locations = useLocations();
   const workOrders = useAllWorkOrders();
   const requests = useWorkRequests();
+  const vendors = useVendors();
+  const contracts = useServiceContracts();
 
   const openRequests = requests.data?.filter((r) => r.status === 'open').length;
   const activeWorkOrders = workOrders.data?.filter((w) =>
     ACTIVE_WORK_ORDER_STATUSES.includes(w.status),
   ).length;
+  const within30 = (d: string | null) =>
+    d != null && Math.ceil((new Date(d).getTime() - Date.now()) / 86_400_000) <= 30;
+  const expiringSoon =
+    (vendors.data?.filter((v) => within30(v.coi_expiry) || within30(v.contract_expiry)).length ?? 0) +
+    (contracts.data?.filter((c) => within30(c.end_date)).length ?? 0);
 
   return (
     <div>
@@ -45,9 +54,10 @@ export function DashboardPage() {
         Asset registry and campus structure. Work orders, vendors, and the map arrive in later
         Phase 1–2 work.
       </p>
-      <div className="mb-4 grid grid-cols-2 gap-4 sm:grid-cols-2">
+      <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatCard label="Open requests" value={openRequests ?? '—'} to="/requests" />
         <StatCard label="Active work orders" value={activeWorkOrders ?? '—'} to="/work-orders" />
+        <StatCard label="Expiring soon (COI/contract)" value={expiringSoon} to="/vendors" />
       </div>
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <StatCard label="Assets" value={assets.data?.length ?? '—'} to="/assets" />
