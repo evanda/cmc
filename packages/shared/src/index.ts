@@ -14,3 +14,5 @@ export * from './pm/next-due.js';
 export * from './pm/engine.js';
 
 export * from './work-orders/convert.js';
+
+export * from './reports/capital.js';
