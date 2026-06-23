@@ -1,0 +1,247 @@
+[
+  {
+    "building_code": "09",
+    "building": "2009 Building (Church)",
+    "name": "Basement",
+    "level": -1,
+    "floorplan_image_url": null,
+    "geo_corners_geojson": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [
+            -84.688267,
+            33.943834
+          ],
+          [
+            -84.687695,
+            33.943834
+          ],
+          [
+            -84.687695,
+            33.944181
+          ],
+          [
+            -84.688267,
+            33.944181
+          ],
+          [
+            -84.688267,
+            33.943834
+          ]
+        ]
+      ]
+    },
+    "rotation_deg": 0
+  },
+  {
+    "building_code": "09",
+    "building": "2009 Building (Church)",
+    "name": "Main",
+    "level": 1,
+    "floorplan_image_url": null,
+    "geo_corners_geojson": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [
+            -84.688267,
+            33.943834
+          ],
+          [
+            -84.687695,
+            33.943834
+          ],
+          [
+            -84.687695,
+            33.944181
+          ],
+          [
+            -84.688267,
+            33.944181
+          ],
+          [
+            -84.688267,
+            33.943834
+          ]
+        ]
+      ]
+    },
+    "rotation_deg": 0
+  },
+  {
+    "building_code": "09",
+    "building": "2009 Building (Church)",
+    "name": "Upper",
+    "level": 2,
+    "floorplan_image_url": null,
+    "geo_corners_geojson": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [
+            -84.688267,
+            33.943834
+          ],
+          [
+            -84.687695,
+            33.943834
+          ],
+          [
+            -84.687695,
+            33.944181
+          ],
+          [
+            -84.688267,
+            33.944181
+          ],
+          [
+            -84.688267,
+            33.943834
+          ]
+        ]
+      ]
+    },
+    "rotation_deg": 0
+  },
+  {
+    "building_code": "FH",
+    "building": "Fellowship Hall",
+    "name": "Main",
+    "level": 1,
+    "floorplan_image_url": null,
+    "geo_corners_geojson": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [
+            -84.687906,
+            33.943479
+          ],
+          [
+            -84.68739,
+            33.943479
+          ],
+          [
+            -84.68739,
+            33.943841
+          ],
+          [
+            -84.687906,
+            33.943841
+          ],
+          [
+            -84.687906,
+            33.943479
+          ]
+        ]
+      ]
+    },
+    "rotation_deg": 0
+  },
+  {
+    "building_code": "87",
+    "building": "1987 Building (School)",
+    "name": "Lower",
+    "level": -1,
+    "floorplan_image_url": null,
+    "geo_corners_geojson": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [
+            -84.687471,
+            33.943407
+          ],
+          [
+            -84.686981,
+            33.943407
+          ],
+          [
+            -84.686981,
+            33.944021
+          ],
+          [
+            -84.687471,
+            33.944021
+          ],
+          [
+            -84.687471,
+            33.943407
+          ]
+        ]
+      ]
+    },
+    "rotation_deg": 0
+  },
+  {
+    "building_code": "87",
+    "building": "1987 Building (School)",
+    "name": "Main",
+    "level": 1,
+    "floorplan_image_url": null,
+    "geo_corners_geojson": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [
+            -84.687471,
+            33.943407
+          ],
+          [
+            -84.686981,
+            33.943407
+          ],
+          [
+            -84.686981,
+            33.944021
+          ],
+          [
+            -84.687471,
+            33.944021
+          ],
+          [
+            -84.687471,
+            33.943407
+          ]
+        ]
+      ]
+    },
+    "rotation_deg": 0
+  },
+  {
+    "building_code": "GYM",
+    "building": "Gym / Middle School",
+    "name": "Main",
+    "level": 1,
+    "floorplan_image_url": null,
+    "geo_corners_geojson": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [
+            -84.688952,
+            33.943531
+          ],
+          [
+            -84.688522,
+            33.943531
+          ],
+          [
+            -84.688522,
+            33.943935
+          ],
+          [
+            -84.688952,
+            33.943935
+          ],
+          [
+            -84.688952,
+            33.943531
+          ]
+        ]
+      ]
+    },
+    "rotation_deg": 0
+  }
+]

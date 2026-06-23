@@ -1,0 +1,1224 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-001",
+        "poi_type": "hvac",
+        "kind": "air_conditioner",
+        "label": "AC16A",
+        "building": "2009 Building (Church)",
+        "building_code": "09",
+        "level": -1,
+        "level_name": "Basement",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "Sanctuary control (basement). In big white fencing outside the emergency-exit stairwell behind the 2009 pulpit."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.6881526,
+          33.9441116
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-002",
+        "poi_type": "hvac",
+        "kind": "air_conditioner",
+        "label": "AC16B",
+        "building": "2009 Building (Church)",
+        "building_code": "09",
+        "level": -1,
+        "level_name": "Basement",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "Sanctuary control (basement). In big white fencing outside the emergency-exit stairwell behind the 2009 pulpit."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.687981,
+          33.9441116
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-003",
+        "poi_type": "hvac",
+        "kind": "heat_pump",
+        "label": "HP9",
+        "building": "2009 Building (Church)",
+        "building_code": "09",
+        "level": -1,
+        "level_name": "Basement",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "Narthex / front-lobby control. Basement: nursery playground, unit closest to the nursery entry."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.6878094,
+          33.9441116
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-004",
+        "poi_type": "hvac",
+        "kind": "heat_pump",
+        "label": "HP11",
+        "building": "2009 Building (Church)",
+        "building_code": "09",
+        "level": -1,
+        "level_name": "Basement",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "Narthex / front-lobby control. Basement: nursery playground, unit closest to the nursery entry."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.6881526,
+          33.9439034
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-005",
+        "poi_type": "hvac",
+        "kind": "heat_pump",
+        "label": "HP5",
+        "building": "2009 Building (Church)",
+        "building_code": "09",
+        "level": -1,
+        "level_name": "Basement",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "Children's ministry room & hallway control. Basement: nursery playground, unit closest to the main-level lobby entry."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.687981,
+          33.9439034
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-006",
+        "poi_type": "hvac",
+        "kind": "air_conditioner",
+        "label": "AC5",
+        "building": "2009 Building (Church)",
+        "building_code": "09",
+        "level": -1,
+        "level_name": "Basement",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "Children's ministry room & hallway control. Basement: mechanical room, end of hall near the concession-style kitchen."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.6878094,
+          33.9439034
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-007",
+        "poi_type": "hvac",
+        "kind": "air_conditioner",
+        "label": "AC1",
+        "building": "2009 Building (Church)",
+        "building_code": "09",
+        "level": 1,
+        "level_name": "Main",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "Special-needs nursery 1 control. Main level: catwalk behind the 2009 sanctuary pulpit."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.6881526,
+          33.9441116
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-008",
+        "poi_type": "hvac",
+        "kind": "air_conditioner",
+        "label": "AC2",
+        "building": "2009 Building (Church)",
+        "building_code": "09",
+        "level": 1,
+        "level_name": "Main",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "Infant nursery 2 control. Main level: catwalk behind the 2009 sanctuary pulpit."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.687981,
+          33.9441116
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-009",
+        "poi_type": "hvac",
+        "kind": "air_conditioner",
+        "label": "AC3",
+        "building": "2009 Building (Church)",
+        "building_code": "09",
+        "level": 1,
+        "level_name": "Main",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "Children nursery 3 control. Main level: catwalk behind the 2009 sanctuary pulpit."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.6878094,
+          33.9441116
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-010",
+        "poi_type": "hvac",
+        "kind": "air_conditioner",
+        "label": "AC4",
+        "building": "2009 Building (Church)",
+        "building_code": "09",
+        "level": 1,
+        "level_name": "Main",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "Youth ministry room 4 control. Main level: catwalk behind the 2009 sanctuary pulpit."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.6881526,
+          33.9439034
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-011",
+        "poi_type": "hvac",
+        "kind": "air_conditioner",
+        "label": "AC15",
+        "building": "2009 Building (Church)",
+        "building_code": "09",
+        "level": 1,
+        "level_name": "Main",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "Long hallway connecting church with school. Main level: in ceiling in front of the men's restroom by the 2009 sanctuary."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.687981,
+          33.9439034
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-012",
+        "poi_type": "hvac",
+        "kind": "heat_pump",
+        "label": "HP15",
+        "building": "2009 Building (Church)",
+        "building_code": "09",
+        "level": 1,
+        "level_name": "Main",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "Long hallway connecting church with school. Main level: outside the southern lobby entrance toward the nursery entrance."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.6878094,
+          33.9439034
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-013",
+        "poi_type": "hvac",
+        "kind": "heat_pump",
+        "label": "HP12",
+        "building": "2009 Building (Church)",
+        "building_code": "09",
+        "level": 2,
+        "level_name": "Upper",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "Choir practice room & music-ministry offices control. Upper level: roof access off the stairwell by the elevator."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.6881526,
+          33.9441116
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-014",
+        "poi_type": "hvac",
+        "kind": "heat_pump",
+        "label": "HP13",
+        "building": "2009 Building (Church)",
+        "building_code": "09",
+        "level": 2,
+        "level_name": "Upper",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "Choir practice room & music-ministry offices control. Upper level: roof access off the stairwell by the elevator."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.687981,
+          33.9441116
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-015",
+        "poi_type": "hvac",
+        "kind": "air_conditioner",
+        "label": "AC12",
+        "building": "2009 Building (Church)",
+        "building_code": "09",
+        "level": 2,
+        "level_name": "Upper",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "Choir practice room & music-ministry offices. Upper level: above the men's robing room (ladder entry)."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.6878094,
+          33.9441116
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-016",
+        "poi_type": "hvac",
+        "kind": "air_conditioner",
+        "label": "AC13",
+        "building": "2009 Building (Church)",
+        "building_code": "09",
+        "level": 2,
+        "level_name": "Upper",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "Choir practice room & music-ministry offices. Upper level: above the men's robing room (ladder entry)."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.6881526,
+          33.9440075
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-017",
+        "poi_type": "hvac",
+        "kind": "air_conditioner",
+        "label": "AC9",
+        "building": "2009 Building (Church)",
+        "building_code": "09",
+        "level": 2,
+        "level_name": "Upper",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "Narthex / front-lobby control. Upper level: above the women's robing room in the choir practice room (ladder entry)."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.687981,
+          33.9440075
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-018",
+        "poi_type": "hvac",
+        "kind": "air_conditioner",
+        "label": "AC11",
+        "building": "2009 Building (Church)",
+        "building_code": "09",
+        "level": 2,
+        "level_name": "Upper",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "Narthex / front-lobby control. Upper level: above the women's robing room in the choir practice room (ladder entry)."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.6878094,
+          33.9440075
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-019",
+        "poi_type": "hvac",
+        "kind": "air_handler",
+        "label": "AH16A",
+        "building": "2009 Building (Church)",
+        "building_code": "09",
+        "level": 2,
+        "level_name": "Upper",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "Sanctuary air handler. Upper level: behind mechanical-room doors on the balcony, either side of the 2009 pulpit."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.6881526,
+          33.9439034
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-020",
+        "poi_type": "hvac",
+        "kind": "air_handler",
+        "label": "AH16B",
+        "building": "2009 Building (Church)",
+        "building_code": "09",
+        "level": 2,
+        "level_name": "Upper",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "Sanctuary air handler. Upper level: behind mechanical-room doors on the balcony, either side of the 2009 pulpit."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.687981,
+          33.9439034
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-021",
+        "poi_type": "hvac",
+        "kind": "heat_pump",
+        "label": "HP7",
+        "building": "Fellowship Hall",
+        "building_code": "FH",
+        "level": 1,
+        "level_name": "Main",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "Fellowship-hall classrooms. Main level: outside, next to the head pastor's office."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.6878028,
+          33.9437686
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-022",
+        "poi_type": "hvac",
+        "kind": "heat_pump",
+        "label": "HP8",
+        "building": "Fellowship Hall",
+        "building_code": "FH",
+        "level": 1,
+        "level_name": "Main",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "Fellowship-hall classrooms. Main level: outside, next to the head pastor's office."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.687648,
+          33.9437686
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-023",
+        "poi_type": "hvac",
+        "kind": "heat_pump",
+        "label": "HP10",
+        "building": "Fellowship Hall",
+        "building_code": "FH",
+        "level": 1,
+        "level_name": "Main",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "Back-hallway access to Explorers/Harvesters/Light classrooms. Main level: outside, next to the head pastor's office."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.6874932,
+          33.9437686
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-024",
+        "poi_type": "hvac",
+        "kind": "heat_pump",
+        "label": "HP14A",
+        "building": "Fellowship Hall",
+        "building_code": "FH",
+        "level": 1,
+        "level_name": "Main",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "Pastors' offices \u2014 Marc's office. Main level: outside, next to the head pastor's office."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.6878028,
+          33.94366
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-025",
+        "poi_type": "hvac",
+        "kind": "heat_pump",
+        "label": "HP14B",
+        "building": "Fellowship Hall",
+        "building_code": "FH",
+        "level": 1,
+        "level_name": "Main",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "Pastors' offices \u2014 David's office. Main level: outside, next to the head pastor's office."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.687648,
+          33.94366
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-026",
+        "poi_type": "hvac",
+        "kind": "air_conditioner",
+        "label": "AC7",
+        "building": "Fellowship Hall",
+        "building_code": "FH",
+        "level": 1,
+        "level_name": "Main",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "Fellowship-hall classrooms. Main level: in ceiling, long drop tiles in the pastor-offices hallway."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.6874932,
+          33.94366
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-027",
+        "poi_type": "hvac",
+        "kind": "air_conditioner",
+        "label": "AC8",
+        "building": "Fellowship Hall",
+        "building_code": "FH",
+        "level": 1,
+        "level_name": "Main",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "Fellowship-hall classrooms. Main level: in ceiling, long drop tiles in the pastor-offices hallway."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.6878028,
+          33.9435514
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-028",
+        "poi_type": "hvac",
+        "kind": "air_conditioner",
+        "label": "AC10",
+        "building": "Fellowship Hall",
+        "building_code": "FH",
+        "level": 1,
+        "level_name": "Main",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "Explorers/Harvesters/Light classrooms. Main level: Light classroom storage closet, back-left corner."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.687648,
+          33.9435514
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-029",
+        "poi_type": "hvac",
+        "kind": "air_conditioner",
+        "label": "AC6",
+        "building": "Fellowship Hall",
+        "building_code": "FH",
+        "level": 1,
+        "level_name": "Main",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "Fellowship-hall center. Roof unit: on the roof over the cafeteria kitchen."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.6874932,
+          33.9435514
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-030",
+        "poi_type": "hvac",
+        "kind": "packaged_unit",
+        "label": "BG",
+        "building": "1987 Building (School)",
+        "building_code": "87",
+        "level": 1,
+        "level_name": "Main",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "Kitchen, cafeteria, Latin room, computer lab, library, (main) music room, intern office, Sheri Purdue's office. Outside, behind the kitchen and dumpster."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.687373,
+          33.9438982
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-031",
+        "poi_type": "hvac",
+        "kind": "air_conditioner",
+        "label": "AC17",
+        "building": "1987 Building (School)",
+        "building_code": "87",
+        "level": 1,
+        "level_name": "Main",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "Beverage station / pantry hallway. Roof unit: on the roof over the cafeteria kitchen."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.687079,
+          33.9438982
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-032",
+        "poi_type": "hvac",
+        "kind": "packaged_unit",
+        "label": "BG2",
+        "building": "1987 Building (School)",
+        "building_code": "87",
+        "level": 1,
+        "level_name": "Main",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "1987 sanctuary. Fenced-in elementary playground; air handler in the boiler room."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.687373,
+          33.9435298
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-033",
+        "poi_type": "hvac",
+        "kind": "packaged_unit",
+        "label": "BGF4",
+        "building": "1987 Building (School)",
+        "building_code": "87",
+        "level": 1,
+        "level_name": "Main",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "Matt Ross office (main level). Unit in the elementary-playground corner behind some bushes; AC in the Matt Ross office."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.687079,
+          33.9435298
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-034",
+        "poi_type": "hvac",
+        "kind": "packaged_unit",
+        "label": "BGF1",
+        "building": "1987 Building (School)",
+        "building_code": "87",
+        "level": -1,
+        "level_name": "Lower",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "Lower-level music room. Outside, behind the kitchen and dumpster (smaller than BG)."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.687373,
+          33.9438982
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-035",
+        "poi_type": "hvac",
+        "kind": "packaged_unit",
+        "label": "BGF2",
+        "building": "1987 Building (School)",
+        "building_code": "87",
+        "level": -1,
+        "level_name": "Lower",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "Lower-level classrooms, kindergarten\u20133rd grade. Outside, behind the kitchen and dumpster."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.687226,
+          33.9438982
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-036",
+        "poi_type": "hvac",
+        "kind": "packaged_unit",
+        "label": "BGF3",
+        "building": "1987 Building (School)",
+        "building_code": "87",
+        "level": -1,
+        "level_name": "Lower",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "Lower-level classrooms, kindergarten\u20133rd grade. Outside, behind the kitchen and dumpster."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.687079,
+          33.9438982
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-037",
+        "poi_type": "hvac",
+        "kind": "packaged_unit",
+        "label": "BGF5",
+        "building": "1987 Building (School)",
+        "building_code": "87",
+        "level": -1,
+        "level_name": "Lower",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "Stairway & teachers'-lounge rooms (lower level). Fenced-in elementary playground."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.687373,
+          33.943714
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-038",
+        "poi_type": "hvac",
+        "kind": "packaged_unit",
+        "label": "BGF6",
+        "building": "1987 Building (School)",
+        "building_code": "87",
+        "level": -1,
+        "level_name": "Lower",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "Lower-level classrooms: kindergarten, 4th & 5th grade. North side, just past the elementary playground; AC in ceiling of the school hallway (sticker-labeled tiles)."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.687226,
+          33.943714
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-039",
+        "poi_type": "hvac",
+        "kind": "packaged_unit",
+        "label": "BGF7",
+        "building": "1987 Building (School)",
+        "building_code": "87",
+        "level": -1,
+        "level_name": "Lower",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "Lower-level classrooms: kindergarten, 4th & 5th grade. North side, just past the elementary playground; AC in ceiling of the school hallway (sticker-labeled tiles)."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.687079,
+          33.943714
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-040",
+        "poi_type": "hvac",
+        "kind": "packaged_unit",
+        "label": "BGF8",
+        "building": "1987 Building (School)",
+        "building_code": "87",
+        "level": -1,
+        "level_name": "Lower",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "Lower-level classrooms: kindergarten, 4th & 5th grade. North side, just past the elementary playground; AC in ceiling of the school hallway (sticker-labeled tiles)."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.687373,
+          33.9435298
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-041",
+        "poi_type": "hvac",
+        "kind": "boiler",
+        "label": "Boiler",
+        "building": "1987 Building (School)",
+        "building_code": "87",
+        "level": -1,
+        "level_name": "Lower",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "Boiler. In the boiler room (serves the BG2 air handler)."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.687226,
+          33.9435298
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-042",
+        "poi_type": "hvac",
+        "kind": "heat_pump",
+        "label": "HPG1",
+        "building": "Gym / Middle School",
+        "building_code": "GYM",
+        "level": 1,
+        "level_name": "Main",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "Middle-school gym, locker rooms, concession stand. Outside, farthest side of the building from the church."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.688866,
+          33.9438542
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-043",
+        "poi_type": "hvac",
+        "kind": "heat_pump",
+        "label": "HPG2",
+        "building": "Gym / Middle School",
+        "building_code": "GYM",
+        "level": 1,
+        "level_name": "Main",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "Middle-school gym, locker rooms, concession stand. Outside, farthest side of the building from the church."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.68878,
+          33.9438542
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-044",
+        "poi_type": "hvac",
+        "kind": "heat_pump",
+        "label": "HPG3",
+        "building": "Gym / Middle School",
+        "building_code": "GYM",
+        "level": 1,
+        "level_name": "Main",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "Middle-school gym, locker rooms, concession stand. Outside, farthest side of the building from the church."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.688694,
+          33.9438542
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-045",
+        "poi_type": "hvac",
+        "kind": "heat_pump",
+        "label": "HPG4",
+        "building": "Gym / Middle School",
+        "building_code": "GYM",
+        "level": 1,
+        "level_name": "Main",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "Gym / locker rooms / concession. Outside, corner closest to the church nursery."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.688608,
+          33.9438542
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-046",
+        "poi_type": "hvac",
+        "kind": "air_conditioner",
+        "label": "ACG1",
+        "building": "Gym / Middle School",
+        "building_code": "GYM",
+        "level": 1,
+        "level_name": "Main",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "Locker room 1. In ceiling."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.688866,
+          33.943733
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-047",
+        "poi_type": "hvac",
+        "kind": "air_conditioner",
+        "label": "ACG2",
+        "building": "Gym / Middle School",
+        "building_code": "GYM",
+        "level": 1,
+        "level_name": "Main",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "Locker room 2. In ceiling."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.68878,
+          33.943733
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-048",
+        "poi_type": "hvac",
+        "kind": "air_conditioner",
+        "label": "ACG4",
+        "building": "Gym / Middle School",
+        "building_code": "GYM",
+        "level": 1,
+        "level_name": "Main",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "Above the concession room. In ceiling."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.688694,
+          33.943733
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-049",
+        "poi_type": "hvac",
+        "kind": "heat_pump",
+        "label": "MHPG1",
+        "building": "Gym / Middle School",
+        "building_code": "GYM",
+        "level": 1,
+        "level_name": "Main",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "All classrooms except the far end of the building. Outside, side closest to the pavilion and field."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.688608,
+          33.943733
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-050",
+        "poi_type": "hvac",
+        "kind": "heat_pump",
+        "label": "MHPG2",
+        "building": "Gym / Middle School",
+        "building_code": "GYM",
+        "level": 1,
+        "level_name": "Main",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "All classrooms except the far end of the building. Outside, side closest to the pavilion and field."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.688866,
+          33.9436118
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-051",
+        "poi_type": "hvac",
+        "kind": "heat_pump",
+        "label": "MHPG3",
+        "building": "Gym / Middle School",
+        "building_code": "GYM",
+        "level": 1,
+        "level_name": "Main",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "All classrooms except the far end of the building. Outside, side closest to the pavilion and field."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.68878,
+          33.9436118
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-052",
+        "poi_type": "hvac",
+        "kind": "wall_unit",
+        "label": "WU1",
+        "building": "Gym / Middle School",
+        "building_code": "GYM",
+        "level": 1,
+        "level_name": "Main",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "Colloquium classroom. Wall unit attached to the wall closest to the church."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.688694,
+          33.9436118
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-900",
+        "poi_type": "shutoff",
+        "kind": null,
+        "label": "Main Water Shutoff",
+        "building": null,
+        "building_code": null,
+        "level": 1,
+        "level_name": "Main",
+        "linked_asset_id": null,
+        "icon": "shutoff",
+        "notes": "Example non-HVAC POI \u2014 main water shutoff. Reposition in geojson.io."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.68795,
+          33.94385
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "type": "FeatureCollection",
+  "note": "geojson.io / QGIS authoring template. One sample building + one sample HVAC POI showing every property field (values copied from the slide import). Replace the geometry with the real, georeferenced shapes; keep the property keys. See fields.md for the schema and pois.csv for all 52 imported units.",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "kind": "building",
+        "code": "09",
+        "name": "2009 Building (Church)",
+        "description": "Sanctuary, narthex/front lobby, nurseries & children's ministry, choir/music offices.",
+        "levels": [-1, 1, 2],
+        "label_lnglat": [-79.99935, 35.00040]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-79.99965, 35.00043],
+          [-79.99925, 35.00043],
+          [-79.99925, 35.00015],
+          [-79.99945, 35.00015],
+          [-79.99945, 34.99985],
+          [-79.99965, 34.99985],
+          [-79.99965, 35.00043]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-001",
+        "poi_type": "hvac",
+        "kind": "air_conditioner",
+        "label": "AC16A",
+        "building": "2009 Building (Church)",
+        "building_code": "09",
+        "level": -1,
+        "level_name": "Basement",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "Sanctuary control (basement). In big white fencing outside the emergency-exit stairwell behind the 2009 pulpit."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-79.99955, 35.00030]
+      }
+    }
+  ]
+}
