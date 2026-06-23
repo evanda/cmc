@@ -5,6 +5,8 @@ import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { AssetsPage } from './pages/AssetsPage';
 import { AssetDetailPage } from './pages/AssetDetailPage';
+import { WorkOrdersPage } from './pages/WorkOrdersPage';
+import { WorkRequestsPage } from './pages/WorkRequestsPage';
 import { BuildingsPage } from './pages/BuildingsPage';
 import { FloorsPage } from './pages/FloorsPage';
 import { LocationsPage } from './pages/LocationsPage';
@@ -28,6 +30,8 @@ export function App() {
     <Routes>
       <Route element={<Layout />}>
         <Route index element={<DashboardPage />} />
+        <Route path="requests" element={<WorkRequestsPage />} />
+        <Route path="work-orders" element={<WorkOrdersPage />} />
         <Route path="assets" element={<AssetsPage />} />
         <Route path="assets/:id" element={<AssetDetailPage />} />
         <Route path="buildings" element={<BuildingsPage />} />

@@ -37,3 +37,15 @@ export type WorkOrderStatus = (typeof WORK_ORDER_STATUSES)[number];
 /** Work-order photo kind: 'before' (damage) vs 'after' (proof of repair). */
 export const WORK_ORDER_PHOTO_KINDS = ['before', 'after'] as const;
 export type WorkOrderPhotoKind = (typeof WORK_ORDER_PHOTO_KINDS)[number];
+
+/** Work-request lifecycle (plan §3.1): submitted → converted to a WO / declined. */
+export const WORK_REQUEST_STATUSES = ['open', 'converted', 'declined'] as const;
+export type WorkRequestStatus = (typeof WORK_REQUEST_STATUSES)[number];
+
+/** WO statuses that count as "active work" for board columns / dashboards. */
+export const ACTIVE_WORK_ORDER_STATUSES: readonly WorkOrderStatus[] = [
+  'requested',
+  'open',
+  'in_progress',
+  'on_hold',
+];

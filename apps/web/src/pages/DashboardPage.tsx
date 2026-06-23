@@ -1,5 +1,14 @@
 import { Link } from 'react-router-dom';
-import { useAssets, useBuildings, useFloors, useLocations, useOrgSettings } from '../lib/queries';
+import { ACTIVE_WORK_ORDER_STATUSES } from '@cmc/shared';
+import {
+  useAllWorkOrders,
+  useAssets,
+  useBuildings,
+  useFloors,
+  useLocations,
+  useOrgSettings,
+  useWorkRequests,
+} from '../lib/queries';
 
 function StatCard({ label, value, to }: { label: string; value: number | string; to: string }) {
   return (
@@ -19,6 +28,13 @@ export function DashboardPage() {
   const buildings = useBuildings();
   const floors = useFloors();
   const locations = useLocations();
+  const workOrders = useAllWorkOrders();
+  const requests = useWorkRequests();
+
+  const openRequests = requests.data?.filter((r) => r.status === 'open').length;
+  const activeWorkOrders = workOrders.data?.filter((w) =>
+    ACTIVE_WORK_ORDER_STATUSES.includes(w.status),
+  ).length;
 
   return (
     <div>
@@ -29,6 +45,10 @@ export function DashboardPage() {
         Asset registry and campus structure. Work orders, vendors, and the map arrive in later
         Phase 1–2 work.
       </p>
+      <div className="mb-4 grid grid-cols-2 gap-4 sm:grid-cols-2">
+        <StatCard label="Open requests" value={openRequests ?? '—'} to="/requests" />
+        <StatCard label="Active work orders" value={activeWorkOrders ?? '—'} to="/work-orders" />
+      </div>
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <StatCard label="Assets" value={assets.data?.length ?? '—'} to="/assets" />
         <StatCard label="Buildings" value={buildings.data?.length ?? '—'} to="/buildings" />

@@ -14,6 +14,7 @@ import type {
   WorkOrderPriority,
   WorkOrderStatus,
   WorkOrderType,
+  WorkRequestStatus,
 } from './enums.js';
 
 /** Columns every table carries (plan §6 preamble). */
@@ -136,6 +137,19 @@ export type WorkOrder = BaseRow & {
   due_date: string | null;
   completed_date: string | null;
   completion_notes: string | null;
+  /** The work request this WO was triaged from, if any (plan §6). */
+  source_request_id: string | null;
+};
+
+/** A raw work request before triage into a WO (plan §3.1, §4.2). */
+export type WorkRequest = BaseRow & {
+  title: string;
+  description: string | null;
+  requested_by: string | null;
+  location_id: string | null;
+  linked_asset_id: string | null;
+  status: WorkRequestStatus;
+  photo_url: string | null;
 };
 
 /** A photo/attachment on a work order; `kind` = before | after (plan §4.2, §6). */

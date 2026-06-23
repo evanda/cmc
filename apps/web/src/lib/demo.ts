@@ -18,8 +18,13 @@ import type {
   WorkLogForm,
   WorkOrder,
   WorkOrderAttachment,
+  WorkOrderForm,
   WorkOrderPhotoKind,
+  WorkOrderUpdate,
+  WorkRequest,
+  WorkRequestForm,
 } from '@cmc/shared';
+import { requestToWorkOrder } from '@cmc/shared';
 import type { DataSource } from './datasource';
 
 let seq = 0;
@@ -249,15 +254,15 @@ seedPhoto('RTU-1 Rooftop Unit', 'RTU-1 — install', '#334155');
 seedPhoto('Playground Structure', 'Playground — overview', '#9333ea', true);
 
 const workOrders: WorkOrder[] = [];
-function seedWO(assetName: string, wo: Partial<WorkOrder> & { title: string }): WorkOrder {
-  const w: WorkOrder = {
+function buildWO(partial: Partial<WorkOrder> & { title: string }): WorkOrder {
+  return {
     id: id(),
     ...base(),
     description: null,
     type: 'reactive',
     priority: 'medium',
-    status: 'completed',
-    linked_asset_id: assetByName(assetName).id,
+    status: 'open',
+    linked_asset_id: null,
     location_id: null,
     requested_by: null,
     assignee_user_id: null,
@@ -276,8 +281,14 @@ function seedWO(assetName: string, wo: Partial<WorkOrder> & { title: string }): 
     due_date: null,
     completed_date: null,
     completion_notes: null,
-    ...wo,
+    source_request_id: null,
+    ...partial,
   };
+}
+
+// Seed a completed history WO for a named asset.
+function seedWO(assetName: string, wo: Partial<WorkOrder> & { title: string }): WorkOrder {
+  const w = buildWO({ status: 'completed', linked_asset_id: assetByName(assetName).id, ...wo });
   workOrders.push(w);
   return w;
 }
@@ -341,6 +352,57 @@ function seedWOPhoto(wo: WorkOrder, kind: WorkOrderPhotoKind, label: string, col
 }
 seedWOPhoto(hvacWO, 'before', 'Before — clogged filter', '#b45309');
 seedWOPhoto(hvacWO, 'after', 'After — new filter', '#15803d');
+
+// A few in-flight work orders so the board has cards across status columns.
+workOrders.push(
+  buildWO({
+    title: 'Sanctuary AC short-cycling',
+    status: 'open',
+    priority: 'high',
+    linked_asset_id: assetByName('RTU-1 Rooftop Unit').id,
+    location_id: locId('Sanctuary'),
+    assignee_user_id: userId('Sam Tech'),
+    due_date: '2026-06-28',
+  }),
+  buildWO({
+    title: 'Boiler pressure gauge replacement',
+    status: 'in_progress',
+    priority: 'medium',
+    linked_asset_id: assetByName('Boiler').id,
+    location_id: locId('Boiler Room'),
+    assignee_user_id: userId('Sam Tech'),
+  }),
+  buildWO({
+    title: 'Repaint gym foul lines',
+    status: 'on_hold',
+    priority: 'low',
+    location_id: locId('Main Court'),
+  }),
+);
+
+// Work requests awaiting triage (plan §3.1).
+const workRequests: WorkRequest[] = [];
+function seedRequest(partial: Partial<WorkRequest> & { title: string }) {
+  workRequests.push({
+    id: id(),
+    ...base(),
+    description: null,
+    requested_by: userId('Trustee Lee'),
+    location_id: null,
+    linked_asset_id: null,
+    status: 'open',
+    photo_url: null,
+    ...partial,
+  });
+}
+seedRequest({
+  title: 'AC not cooling in the Sanctuary',
+  description: 'Warm during the 9am service.',
+  linked_asset_id: assetByName('RTU-1 Rooftop Unit').id,
+  location_id: locId('Sanctuary'),
+});
+seedRequest({ title: 'Flickering lights in Room 101', location_id: locId('Room 101') });
+seedRequest({ title: 'Loose handrail by the Narthex steps', location_id: locId('Narthex') });
 
 const live = (rows: { deleted_at: string | null }[]) => rows.filter((r) => r.deleted_at === null);
 
@@ -553,6 +615,7 @@ export const demoDataSource: DataSource = {
       due_date: null,
       completed_date: input.completed_date ?? null,
       completion_notes: input.completion_notes ?? null,
+      source_request_id: null,
     };
     workOrders.push(w);
     return w;
@@ -583,5 +646,60 @@ export const demoDataSource: DataSource = {
   deleteWorkOrderPhoto: async (photoId) => {
     const p = woPhotos.find((x) => x.id === photoId);
     if (p) p.deleted_at = now;
+  },
+
+  listAllWorkOrders: async () =>
+    (live(workOrders) as WorkOrder[]).sort((a, b) => b.created_at.localeCompare(a.created_at)),
+  createWorkOrderFromForm: async (input: WorkOrderForm) => {
+    const w = buildWO({
+      title: input.title,
+      description: input.description ?? null,
+      type: input.type,
+      priority: input.priority,
+      status: input.status,
+      linked_asset_id: input.linked_asset_id ?? null,
+      location_id: input.location_id ?? null,
+      assignee_user_id: input.assignee_user_id ?? null,
+      due_date: input.due_date ?? null,
+    });
+    workOrders.push(w);
+    return w;
+  },
+  updateWorkOrder: async (woId, patch: WorkOrderUpdate) => {
+    const w = workOrders.find((x) => x.id === woId)!;
+    w.status = patch.status;
+    w.priority = patch.priority;
+    w.assignee_user_id = patch.assignee_user_id ?? null;
+    if (patch.status === 'completed' && !w.completed_date) w.completed_date = '2026-06-23';
+    return w;
+  },
+
+  listWorkRequests: async () =>
+    (live(workRequests) as WorkRequest[]).sort((a, b) => b.created_at.localeCompare(a.created_at)),
+  createWorkRequest: async (input: WorkRequestForm) => {
+    const r: WorkRequest = {
+      id: id(),
+      ...base(),
+      title: input.title,
+      description: input.description ?? null,
+      requested_by: 'demo-admin',
+      location_id: input.location_id ?? null,
+      linked_asset_id: input.linked_asset_id ?? null,
+      status: 'open',
+      photo_url: null,
+    };
+    workRequests.push(r);
+    return r;
+  },
+  convertWorkRequest: async (requestId) => {
+    const r = workRequests.find((x) => x.id === requestId)!;
+    const w = buildWO(requestToWorkOrder(r));
+    workOrders.push(w);
+    r.status = 'converted';
+    return w;
+  },
+  declineWorkRequest: async (requestId) => {
+    const r = workRequests.find((x) => x.id === requestId);
+    if (r) r.status = 'declined';
   },
 };

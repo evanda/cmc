@@ -61,19 +61,19 @@ const server = http.createServer(async (req, res) => {
 // Screens to capture. `clicks` are button texts pressed (in order) before the shot.
 const shots = [
   { name: '01-dashboard', path: '/' },
-  { name: '02-assets', path: '/assets' },
-  { name: '03-asset-new-modal', path: '/assets', clicks: ['New asset'] },
-  { name: '04-buildings', path: '/buildings' },
-  { name: '05-building-new-modal', path: '/buildings', clicks: ['New building'] },
-  { name: '06-floors', path: '/floors' },
-  { name: '07-locations', path: '/locations' },
-  { name: '08-asset-detail', path: '/assets', clicks: ['RTU-1 Rooftop Unit'] },
-  { name: '09-asset-log-work', path: '/assets', clicks: ['RTU-1 Rooftop Unit', 'Log work'] },
+  { name: '02-requests', path: '/requests' },
+  { name: '03-work-orders-board', path: '/work-orders' },
+  { name: '04-work-order-new', path: '/work-orders', clicks: ['New work order'] },
+  { name: '05-work-order-triage', path: '/work-orders', clicks: ['Sanctuary AC short-cycling'] },
+  { name: '06-assets', path: '/assets' },
+  { name: '07-asset-detail', path: '/assets', clicks: ['RTU-1 Rooftop Unit'] },
+  { name: '08-asset-log-work', path: '/assets', clicks: ['RTU-1 Rooftop Unit', 'Log work'] },
   {
-    name: '10-work-order-photos',
+    name: '09-work-order-photos',
     path: '/assets',
     clicks: ['RTU-1 Rooftop Unit', 'Annual HVAC service'],
   },
+  { name: '10-buildings', path: '/buildings' },
 ];
 
 async function clickByText(page, text) {
@@ -110,7 +110,7 @@ async function main() {
 
   const browser = await puppeteer.launch({ executablePath, args: extraArgs, headless: true });
   const page = await browser.newPage();
-  await page.setViewport({ width: 1280, height: 900, deviceScaleFactor: 2 });
+  await page.setViewport({ width: 1440, height: 1000, deviceScaleFactor: 3 });
 
   for (const shot of shots) {
     await page.goto(base + shot.path, { waitUntil: 'networkidle0' });

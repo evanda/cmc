@@ -5,7 +5,10 @@ import type {
   FloorForm,
   LocationForm,
   WorkLogForm,
+  WorkOrderForm,
   WorkOrderPhotoKind,
+  WorkOrderUpdate,
+  WorkRequestForm,
 } from '@cmc/shared';
 import { ds } from './datasource';
 
@@ -216,5 +219,64 @@ export function useDeleteWorkOrderPhoto(workOrderId: string) {
   return useMutation({
     mutationFn: (photoId: string) => ds.deleteWorkOrderPhoto(photoId),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['work_order_photos', workOrderId] }),
+  });
+}
+
+// ── work orders board (all WOs across assets) ────────────────────────────────
+export function useAllWorkOrders() {
+  return useQuery({ queryKey: ['all_work_orders'], queryFn: () => ds.listAllWorkOrders() });
+}
+
+function invalidateWorkOrders(qc: ReturnType<typeof useQueryClient>) {
+  qc.invalidateQueries({ queryKey: ['all_work_orders'] });
+  qc.invalidateQueries({ queryKey: ['work_orders'] }); // asset-scoped history
+}
+
+export function useCreateWorkOrderFromForm() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: WorkOrderForm) => ds.createWorkOrderFromForm(input),
+    onSuccess: () => invalidateWorkOrders(qc),
+  });
+}
+
+export function useUpdateWorkOrder() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, patch }: { id: string; patch: WorkOrderUpdate }) =>
+      ds.updateWorkOrder(id, patch),
+    onSuccess: () => invalidateWorkOrders(qc),
+  });
+}
+
+// ── work requests intake + triage (plan §3.1) ────────────────────────────────
+export function useWorkRequests() {
+  return useQuery({ queryKey: ['work_requests'], queryFn: () => ds.listWorkRequests() });
+}
+
+export function useCreateWorkRequest() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: WorkRequestForm) => ds.createWorkRequest(input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['work_requests'] }),
+  });
+}
+
+export function useConvertWorkRequest() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (requestId: string) => ds.convertWorkRequest(requestId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['work_requests'] });
+      invalidateWorkOrders(qc);
+    },
+  });
+}
+
+export function useDeclineWorkRequest() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (requestId: string) => ds.declineWorkRequest(requestId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['work_requests'] }),
   });
 }

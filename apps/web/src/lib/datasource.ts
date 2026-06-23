@@ -19,8 +19,13 @@ import type {
   WorkLogForm,
   WorkOrder,
   WorkOrderAttachment,
+  WorkOrderForm,
   WorkOrderPhotoKind,
+  WorkOrderUpdate,
+  WorkRequest,
+  WorkRequestForm,
 } from '@cmc/shared';
+import { requestToWorkOrder } from '@cmc/shared';
 import { supabase, isDemo } from './supabase';
 import { demoDataSource } from './demo';
 
@@ -58,6 +63,39 @@ export interface DataSource {
     kind: WorkOrderPhotoKind,
   ): Promise<WorkOrderAttachment>;
   deleteWorkOrderPhoto(photoId: string): Promise<void>;
+  // Board: all work orders across assets, plus create/update.
+  listAllWorkOrders(): Promise<WorkOrder[]>;
+  createWorkOrderFromForm(input: WorkOrderForm): Promise<WorkOrder>;
+  updateWorkOrder(id: string, patch: WorkOrderUpdate): Promise<WorkOrder>;
+  // Work requests intake + triage.
+  listWorkRequests(): Promise<WorkRequest[]>;
+  createWorkRequest(input: WorkRequestForm): Promise<WorkRequest>;
+  convertWorkRequest(requestId: string): Promise<WorkOrder>;
+  declineWorkRequest(requestId: string): Promise<void>;
+}
+
+// Status edits also stamp completed_date when a WO is marked completed.
+function workOrderUpdatePatch(patch: WorkOrderUpdate) {
+  return {
+    status: patch.status,
+    priority: patch.priority,
+    assignee_user_id: patch.assignee_user_id ?? null,
+    ...(patch.status === 'completed' ? { completed_date: new Date().toISOString().slice(0, 10) } : {}),
+  };
+}
+
+function workOrderFormPatch(input: WorkOrderForm) {
+  return {
+    title: input.title,
+    description: input.description ?? null,
+    type: input.type,
+    priority: input.priority,
+    status: input.status,
+    linked_asset_id: input.linked_asset_id ?? null,
+    location_id: input.location_id ?? null,
+    assignee_user_id: input.assignee_user_id ?? null,
+    due_date: input.due_date ?? null,
+  };
 }
 
 // Map a "log work" form to a completed work_orders row (history entry).
@@ -320,6 +358,78 @@ const supabaseDataSource: DataSource = {
         .from('work_order_attachments')
         .update({ deleted_at: new Date().toISOString() })
         .eq('id', photoId)
+        .select()
+        .single(),
+    );
+  },
+
+  listAllWorkOrders: async () =>
+    unwrap<WorkOrder[]>(
+      await supabase
+        .from('work_orders')
+        .select('*')
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false }),
+    ),
+  createWorkOrderFromForm: async (input) =>
+    unwrap<WorkOrder>(
+      await supabase.from('work_orders').insert(workOrderFormPatch(input)).select().single(),
+    ),
+  updateWorkOrder: async (id, patch) =>
+    unwrap<WorkOrder>(
+      await supabase
+        .from('work_orders')
+        .update(workOrderUpdatePatch(patch))
+        .eq('id', id)
+        .select()
+        .single(),
+    ),
+
+  listWorkRequests: async () =>
+    unwrap<WorkRequest[]>(
+      await supabase
+        .from('work_requests')
+        .select('*')
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false }),
+    ),
+  createWorkRequest: async (input) =>
+    unwrap<WorkRequest>(
+      await supabase
+        .from('work_requests')
+        .insert({
+          title: input.title,
+          description: input.description ?? null,
+          linked_asset_id: input.linked_asset_id ?? null,
+          location_id: input.location_id ?? null,
+          status: 'open',
+        })
+        .select()
+        .single(),
+    ),
+  convertWorkRequest: async (requestId) => {
+    const req = unwrap<WorkRequest>(
+      await supabase.from('work_requests').select('*').eq('id', requestId).single(),
+    );
+    const wo = unwrap<WorkOrder>(
+      await supabase.from('work_orders').insert(requestToWorkOrder(req)).select().single(),
+    );
+    unwrap(
+      await supabase
+        .from('work_requests')
+        .update({ status: 'converted' })
+        .eq('id', requestId)
+        .select()
+        .single(),
+    );
+    return wo;
+  },
+  declineWorkRequest: async (requestId) => {
+    unwrap(
+      await supabase
+        .from('work_requests')
+        .update({ status: 'declined' })
+        .eq('id', requestId)
         .select()
         .single(),
     );

@@ -2,7 +2,13 @@
 // Shared by web forms now and mobile/loader later. Inferred types feed the UI.
 
 import { z } from 'zod';
-import { ASSET_STATUSES, CRITICALITIES, WORK_ORDER_TYPES } from '../types/enums.js';
+import {
+  ASSET_STATUSES,
+  CRITICALITIES,
+  WORK_ORDER_PRIORITIES,
+  WORK_ORDER_STATUSES,
+  WORK_ORDER_TYPES,
+} from '../types/enums.js';
 
 const optionalText = z
   .string()
@@ -87,6 +93,40 @@ export const workLogFormSchema = z.object({
   completion_notes: optionalText,
 });
 export type WorkLogForm = z.infer<typeof workLogFormSchema>;
+
+// ── Work Request intake (plan §3.1) ──────────────────────────────────────────
+export const workRequestFormSchema = z.object({
+  title: z.string().trim().min(1, 'Describe the problem').max(200),
+  description: optionalText,
+  linked_asset_id: z.string().uuid().nullish(),
+  location_id: z.string().uuid().nullish(),
+});
+export type WorkRequestForm = z.infer<typeof workRequestFormSchema>;
+
+// ── Work Order create (board) — an open, assignable unit of work (plan §4.2) ──
+export const workOrderFormSchema = z.object({
+  title: z.string().trim().min(1, 'Title is required').max(200),
+  description: optionalText,
+  type: z.enum(WORK_ORDER_TYPES).default('reactive'),
+  priority: z.enum(WORK_ORDER_PRIORITIES).default('medium'),
+  status: z.enum(WORK_ORDER_STATUSES).default('open'),
+  linked_asset_id: z.string().uuid().nullish(),
+  location_id: z.string().uuid().nullish(),
+  assignee_user_id: z.string().uuid().nullish(),
+  due_date: z
+    .string()
+    .optional()
+    .transform((v) => (v === '' ? undefined : v)),
+});
+export type WorkOrderForm = z.infer<typeof workOrderFormSchema>;
+
+// ── Work Order triage edit — status / assignee / priority (plan §4.2) ────────
+export const workOrderUpdateSchema = z.object({
+  status: z.enum(WORK_ORDER_STATUSES),
+  priority: z.enum(WORK_ORDER_PRIORITIES),
+  assignee_user_id: z.string().uuid().nullish(),
+});
+export type WorkOrderUpdate = z.infer<typeof workOrderUpdateSchema>;
 
 export const orgSettingsFormSchema = z.object({
   facility_name: z.string().trim().min(1, 'Facility name is required').max(200),

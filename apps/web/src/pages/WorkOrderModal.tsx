@@ -1,11 +1,20 @@
-import { useRef } from 'react';
-import type { User, WorkOrder, WorkOrderPhotoKind } from '@cmc/shared';
+import { useRef, useState } from 'react';
+import {
+  WORK_ORDER_PRIORITIES,
+  WORK_ORDER_STATUSES,
+  type User,
+  type WorkOrder,
+  type WorkOrderPhotoKind,
+  type WorkOrderPriority,
+  type WorkOrderStatus,
+} from '@cmc/shared';
 import {
   useAddWorkOrderPhoto,
   useDeleteWorkOrderPhoto,
+  useUpdateWorkOrder,
   useWorkOrderPhotos,
 } from '../lib/queries';
-import { Button, Modal } from '../components/ui';
+import { Button, Field, Modal, inputClass } from '../components/ui';
 
 function money(value: number | null | undefined, currency: string) {
   if (value == null) return null;
@@ -28,6 +37,15 @@ export function WorkOrderModal({
   const photos = useWorkOrderPhotos(wo.id);
   const addPhoto = useAddWorkOrderPhoto(wo.id);
   const deletePhoto = useDeleteWorkOrderPhoto(wo.id);
+  const updateWo = useUpdateWorkOrder();
+
+  const [status, setStatus] = useState<WorkOrderStatus>(wo.status);
+  const [priority, setPriority] = useState<WorkOrderPriority>(wo.priority);
+  const [assignee, setAssignee] = useState(wo.assignee_user_id ?? '');
+  const dirty =
+    status !== wo.status ||
+    priority !== wo.priority ||
+    (assignee || null) !== wo.assignee_user_id;
 
   const userName = (uid: string | null) =>
     uid ? (users.find((u) => u.id === uid)?.name ?? '—') : null;
@@ -40,15 +58,75 @@ export function WorkOrderModal({
   return (
     <Modal title={wo.title} onClose={onClose}>
       <div className="max-h-[72vh] space-y-4 overflow-y-auto pr-1 text-sm">
-        <div className="flex flex-wrap gap-2 text-xs">
-          <span className="rounded bg-slate-100 px-2 py-0.5 text-slate-600">{wo.type}</span>
-          <span className="rounded bg-slate-100 px-2 py-0.5 text-slate-600">{wo.status}</span>
-          {wo.completed_date && (
-            <span className="rounded bg-slate-100 px-2 py-0.5 text-slate-600">
-              {wo.completed_date}
-            </span>
-          )}
-        </div>
+        {canEdit ? (
+          <div className="rounded border border-slate-200 bg-slate-50 p-3">
+            <div className="grid grid-cols-3 gap-2">
+              <Field label="Status">
+                <select
+                  className={inputClass}
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value as WorkOrderStatus)}
+                >
+                  {WORK_ORDER_STATUSES.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Priority">
+                <select
+                  className={inputClass}
+                  value={priority}
+                  onChange={(e) => setPriority(e.target.value as WorkOrderPriority)}
+                >
+                  {WORK_ORDER_PRIORITIES.map((p) => (
+                    <option key={p} value={p}>
+                      {p}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Assignee">
+                <select
+                  className={inputClass}
+                  value={assignee}
+                  onChange={(e) => setAssignee(e.target.value)}
+                >
+                  <option value="">Unassigned</option>
+                  {users.map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.name ?? u.email}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            </div>
+            <div className="mt-2 flex justify-end">
+              <Button
+                disabled={!dirty || updateWo.isPending}
+                onClick={() =>
+                  updateWo.mutate({
+                    id: wo.id,
+                    patch: { status, priority, assignee_user_id: assignee || null },
+                  })
+                }
+              >
+                {updateWo.isPending ? 'Saving…' : 'Save changes'}
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-wrap gap-2 text-xs">
+            <span className="rounded bg-slate-100 px-2 py-0.5 text-slate-600">{wo.type}</span>
+            <span className="rounded bg-slate-100 px-2 py-0.5 text-slate-600">{wo.status}</span>
+            {wo.completed_date && (
+              <span className="rounded bg-slate-100 px-2 py-0.5 text-slate-600">
+                {wo.completed_date}
+              </span>
+            )}
+          </div>
+        )}
 
         {wo.completion_notes && <p className="text-slate-600">{wo.completion_notes}</p>}
 
