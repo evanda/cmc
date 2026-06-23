@@ -6,7 +6,16 @@ import reactHooks from 'eslint-plugin-react-hooks';
 
 export default tseslint.config(
   {
-    ignores: ['**/dist/**', '**/build/**', '**/.turbo/**', '**/node_modules/**', '**/.expo/**'],
+    ignores: [
+      '**/dist/**',
+      '**/build/**',
+      '**/.turbo/**',
+      '**/node_modules/**',
+      '**/.expo/**',
+      // Vite/Vitest writes a transient config next to vite.config.ts while
+      // loading it; eslint can race it (ENOENT) when run alongside tests.
+      '**/*.timestamp-*.mjs',
+    ],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
