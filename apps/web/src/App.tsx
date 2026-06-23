@@ -10,6 +10,7 @@ import { WorkOrdersPage } from './pages/WorkOrdersPage';
 import { WorkRequestsPage } from './pages/WorkRequestsPage';
 import { VendorsPage } from './pages/VendorsPage';
 import { MapPage } from './pages/MapPage';
+import { UsersPage } from './pages/UsersPage';
 import { BuildingsPage } from './pages/BuildingsPage';
 import { FloorsPage } from './pages/FloorsPage';
 import { LocationsPage } from './pages/LocationsPage';
@@ -40,6 +41,7 @@ export function App() {
         <Route path="assets/:id" element={<AssetDetailPage />} />
         <Route path="a/:token" element={<AssetByTokenPage />} />
         <Route path="vendors" element={<VendorsPage />} />
+        <Route path="users" element={<UsersPage />} />
         <Route path="buildings" element={<BuildingsPage />} />
         <Route path="floors" element={<FloorsPage />} />
         <Route path="locations" element={<LocationsPage />} />

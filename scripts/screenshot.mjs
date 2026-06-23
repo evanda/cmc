@@ -82,6 +82,7 @@ const midwayShots = [
   { name: '04-assets', path: '/assets' },
   { name: '05-buildings', path: '/buildings' },
   { name: '06-asset-detail', path: '/assets', clicks: ['HP9'] },
+  { name: '07-users', path: '/users' },
 ];
 
 const activeShots = SHOT_SET === 'midway' ? midwayShots : shots;

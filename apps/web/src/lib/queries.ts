@@ -190,6 +190,15 @@ export function useUsers() {
   return useQuery({ queryKey: ['users'], queryFn: () => ds.listUsers() });
 }
 
+export function useUpdateUserRole() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, role }: { id: string; role: import('@cmc/shared').UserRole }) =>
+      ds.updateUserRole(id, role),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['users'] }),
+  });
+}
+
 export function useAsset(id: string) {
   return useQuery({ queryKey: ['asset', id], queryFn: () => ds.getAsset(id) });
 }
