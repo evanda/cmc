@@ -1,0 +1,67 @@
+import { describe, expect, it } from 'vitest';
+import { demoDataSource as ds } from './demo';
+
+// The in-memory demo DataSource backs offline mode + screenshots. These guard
+// the seed shape and the core write flows the UI relies on.
+
+describe('demo data source — seed', () => {
+  it('seeds the sample campus (4 buildings) and PM schedules', async () => {
+    expect((await ds.listBuildings()).length).toBe(4);
+    expect((await ds.listPmSchedules()).length).toBeGreaterThanOrEqual(5);
+    expect((await ds.listAssetCategories()).length).toBe(18);
+  });
+
+  it('exposes the org identity', async () => {
+    const org = await ds.getOrgSettings();
+    expect(org?.facility_name).toBeTruthy();
+  });
+});
+
+describe('demo data source — request → work order conversion', () => {
+  it('converts a request into an open WO and marks the request converted', async () => {
+    const req = await ds.createWorkRequest({ title: 'AC out in Room 12', description: 'hot' });
+    const wo = await ds.convertWorkRequest(req.id);
+
+    expect(wo.status).toBe('open');
+    expect(wo.title).toBe('AC out in Room 12');
+    expect(wo.source_request_id).toBe(req.id);
+
+    const reqAfter = (await ds.listWorkRequests()).find((r) => r.id === req.id);
+    expect(reqAfter?.status).toBe('converted');
+  });
+});
+
+describe('demo data source — board work orders', () => {
+  it('creates a WO that appears in the global list', async () => {
+    const wo = await ds.createWorkOrderFromForm({
+      title: 'Replace ballast',
+      type: 'reactive',
+      priority: 'high',
+      status: 'open',
+    });
+    const all = await ds.listAllWorkOrders();
+    expect(all.find((w) => w.id === wo.id)?.priority).toBe('high');
+  });
+
+  it('updateWorkOrder stamps completed_date when completed', async () => {
+    const wo = await ds.createWorkOrderFromForm({ title: 'Fix door', type: 'reactive', priority: 'low', status: 'open' });
+    const updated = await ds.updateWorkOrder(wo.id, {
+      status: 'completed',
+      priority: 'low',
+      assignee_user_id: null,
+    });
+    expect(updated.status).toBe('completed');
+    expect(updated.completed_date).toBeTruthy();
+  });
+});
+
+describe('demo data source — QR token', () => {
+  it('generates a stable token (same on repeat)', async () => {
+    const asset = (await ds.listAssets())[0];
+    const t1 = await ds.ensureAssetQrToken(asset.id);
+    const t2 = await ds.ensureAssetQrToken(asset.id);
+    expect(t1).toBeTruthy();
+    expect(t1).toBe(t2);
+    expect((await ds.getAssetByQrToken(t1))?.id).toBe(asset.id);
+  });
+});
