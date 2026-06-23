@@ -4,16 +4,17 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>CMC — Campus indoor map preview</title>
-<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
-<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<!-- Vendored locally so the demo runs with no CDN / API key / network. -->
+<link href="./vendor/maplibre-gl.css" rel="stylesheet" />
+<script src="./vendor/maplibre-gl.js"></script>
 <style>
   html, body, #map { margin: 0; height: 100%; }
   body { font: 14px/1.4 system-ui, sans-serif; }
-  /* level switcher (plan §5.2: Site · B1 · 1 · 2) */
+  /* level switcher (plan §5.2: Site · 2 · 1 · B1) */
   #levels {
     position: absolute; top: 12px; left: 12px; z-index: 2;
     background: #fff; border-radius: 10px; box-shadow: 0 1px 6px rgba(0,0,0,.25);
-    padding: 6px; display: flex; flex-direction: column; gap: 4px; width: 84px;
+    padding: 6px; display: flex; flex-direction: column; gap: 4px; width: 92px;
   }
   #levels button {
     border: 0; border-radius: 7px; padding: 8px 10px; cursor: pointer;
@@ -26,6 +27,27 @@
   }
   #legend .row { display: flex; align-items: center; gap: 8px; margin: 3px 0; }
   #legend .dot { width: 12px; height: 12px; border-radius: 50%; border: 1px solid #0003; }
+  #title {
+    position: absolute; top: 12px; right: 12px; z-index: 2; background: #fff;
+    border-radius: 10px; box-shadow: 0 1px 6px rgba(0,0,0,.25); padding: 8px 12px;
+    max-width: 230px;
+  }
+  #title b { display: block; }
+  #title small { color: #475569; }
+  /* HTML markers (no glyphs needed) */
+  .poi { transform: translate(-50%, -50%); text-align: center; pointer-events: auto; cursor: pointer; }
+  .poi .dot {
+    width: 14px; height: 14px; border-radius: 50%; border: 2px solid #fff;
+    margin: 0 auto; box-shadow: 0 0 0 1px #0004;
+  }
+  .poi .lbl {
+    margin-top: 2px; font-size: 11px; font-weight: 600; color: #e2e8f0;
+    text-shadow: 0 0 3px #000, 0 0 3px #000; white-space: nowrap;
+  }
+  .bname {
+    transform: translate(-50%, -50%); color: #cbd5e1; font-weight: 700; font-size: 13px;
+    text-shadow: 0 0 4px #000, 0 0 4px #000; pointer-events: none; text-align: center;
+  }
   .maplibregl-popup-content { max-width: 260px; }
   .maplibregl-popup-content h3 { margin: 0 0 4px; font-size: 14px; }
   .maplibregl-popup-content .meta { color: #475569; font-size: 12px; margin-bottom: 4px; }
@@ -35,52 +57,36 @@
 <div id="map"></div>
 <div id="levels"></div>
 <div id="legend"></div>
+<div id="title"><b>Campus indoor map — preview</b><small>Generated from HVAC slides + satellite. Placeholder coordinates.</small></div>
 
 <script>
-// Level palette by kind (HVAC unit family inferred from the unit name prefix).
 const KIND_COLORS = {
-  air_conditioner: '#2563eb',
-  heat_pump:       '#16a34a',
-  air_handler:     '#9333ea',
-  packaged_unit:   '#ea580c',
-  wall_unit:       '#0891b2',
-  boiler:          '#dc2626',
+  air_conditioner: '#2563eb', heat_pump: '#16a34a', air_handler: '#9333ea',
+  packaged_unit: '#ea580c', wall_unit: '#0891b2', boiler: '#dc2626',
 };
 const KIND_LABELS = {
-  air_conditioner: 'AC — air conditioner',
-  heat_pump:       'HP — heat pump',
-  air_handler:     'AH — air handler',
-  packaged_unit:   'BG/BGF — packaged unit',
-  wall_unit:       'WU — wall unit',
-  boiler:          'Boiler',
+  air_conditioner: 'AC — air conditioner', heat_pump: 'HP — heat pump',
+  air_handler: 'AH — air handler', packaged_unit: 'BG/BGF — packaged unit',
+  wall_unit: 'WU — wall unit', boiler: 'Boiler',
 };
-
-// Levels: Site shows footprints only; the rest filter POIs by `level`.
+// Site shows footprints only; the rest filter POIs by `level`.
 const LEVELS = [
-  { id: 'site',  label: 'Site',     level: null },
-  { id: 'up',    label: '2 · Upper', level: 2 },
-  { id: 'main',  label: '1 · Main',  level: 1 },
-  { id: 'b1',    label: 'B1 · Lower', level: -1 },
+  { id: 'site', label: 'Site', level: null },
+  { id: 'up',   label: '2 · Upper', level: 2 },
+  { id: 'main', label: '1 · Main', level: 1 },
+  { id: 'b1',   label: 'B1 · Lower', level: -1 },
 ];
-
-const colorExpr = ['match', ['get', 'kind'],
-  ...Object.entries(KIND_COLORS).flatMap(([k, c]) => [k, c]),
-  '#64748b'];
 
 const map = new maplibregl.Map({
   container: 'map',
-  style: {
-    version: 8,
-    glyphs: 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
-    sources: {},
-    layers: [{ id: 'bg', type: 'background', paint: { 'background-color': '#0b1220' } }],
-  },
-  center: [-79.9998355, 34.9999549],
-  zoom: 17.2,
+  style: { version: 8, sources: {},
+    layers: [{ id: 'bg', type: 'background', paint: { 'background-color': '#0b1220' } }] },
+  center: [-79.9998355, 34.9999549], zoom: 17.2,
 });
 map.addControl(new maplibregl.NavigationControl(), 'top-right');
 
-let activeLevel = 1; // default to Main
+let poiMarkers = []; // { marker, level }
+let activeLevel = 1;
 
 async function load() {
   const [buildings, pois] = await Promise.all([
@@ -89,50 +95,51 @@ async function load() {
   ]);
 
   map.addSource('buildings', { type: 'geojson', data: buildings });
-  map.addSource('pois', { type: 'geojson', data: pois });
-
   map.addLayer({ id: 'bldg-fill', type: 'fill', source: 'buildings',
     paint: { 'fill-color': '#1e293b', 'fill-opacity': 0.85 } });
   map.addLayer({ id: 'bldg-line', type: 'line', source: 'buildings',
     paint: { 'line-color': '#64748b', 'line-width': 1.5 } });
-  map.addLayer({ id: 'bldg-label', type: 'symbol', source: 'buildings',
-    layout: { 'text-field': ['get', 'name'], 'text-size': 13,
-      'text-font': ['Open Sans Regular'], 'text-max-width': 8 },
-    paint: { 'text-color': '#cbd5e1', 'text-halo-color': '#0b1220', 'text-halo-width': 1.4 } });
 
-  map.addLayer({ id: 'poi-dot', type: 'circle', source: 'pois',
-    paint: {
-      'circle-radius': 8, 'circle-color': colorExpr,
-      'circle-stroke-width': 2, 'circle-stroke-color': '#fff',
-    } });
-  map.addLayer({ id: 'poi-label', type: 'symbol', source: 'pois',
-    layout: { 'text-field': ['get', 'label'], 'text-size': 11,
-      'text-font': ['Open Sans Regular'], 'text-offset': [0, 1.2], 'text-anchor': 'top' },
-    paint: { 'text-color': '#e2e8f0', 'text-halo-color': '#0b1220', 'text-halo-width': 1.2 } });
-
-  map.on('click', 'poi-dot', (e) => {
-    const p = e.features[0].properties;
-    new maplibregl.Popup({ offset: 12 })
-      .setLngLat(e.features[0].geometry.coordinates.slice())
-      .setHTML(
-        `<h3>${p.label}</h3>` +
-        `<div class="meta">${p.building} · ${p.level_name} · ${KIND_LABELS[p.kind] || p.kind}</div>` +
-        `<div>${p.notes || ''}</div>`)
-      .addTo(map);
+  // building name markers (explicit label anchor from the data)
+  buildings.features.forEach(f => {
+    const c = f.properties.label_lnglat || bboxCenter(f.geometry.coordinates[0]);
+    const el = document.createElement('div');
+    el.className = 'bname'; el.textContent = f.properties.name;
+    new maplibregl.Marker({ element: el }).setLngLat(c).addTo(map);
   });
-  map.on('mouseenter', 'poi-dot', () => map.getCanvas().style.cursor = 'pointer');
-  map.on('mouseleave', 'poi-dot', () => map.getCanvas().style.cursor = '');
+
+  // POI markers (dot + label), toggled by level
+  pois.features.forEach(f => {
+    const p = f.properties;
+    const el = document.createElement('div');
+    el.className = 'poi';
+    el.innerHTML =
+      `<div class="dot" style="background:${KIND_COLORS[p.kind] || '#64748b'}"></div>` +
+      `<div class="lbl">${p.label}</div>`;
+    const popup = new maplibregl.Popup({ offset: 14 }).setHTML(
+      `<h3>${p.label}</h3>` +
+      `<div class="meta">${p.building} · ${p.level_name} · ${KIND_LABELS[p.kind] || p.kind}</div>` +
+      `<div>${p.notes || ''}</div>`);
+    const marker = new maplibregl.Marker({ element: el })
+      .setLngLat(f.geometry.coordinates).setPopup(popup).addTo(map);
+    poiMarkers.push({ marker, level: p.level });
+  });
 
   buildLevelSwitcher();
   buildLegend();
   applyLevel(1, 'main');
 }
 
+function bboxCenter(ring) {
+  let xs = ring.map(p => p[0]), ys = ring.map(p => p[1]);
+  return [(Math.min(...xs) + Math.max(...xs)) / 2, (Math.min(...ys) + Math.max(...ys)) / 2];
+}
+
 function applyLevel(level, id) {
   activeLevel = level;
-  const visible = level === null ? false : ['==', ['get', 'level'], level];
-  map.setFilter('poi-dot', visible === false ? ['==', ['get', 'level'], 999999] : visible);
-  map.setFilter('poi-label', visible === false ? ['==', ['get', 'level'], 999999] : visible);
+  poiMarkers.forEach(({ marker, level: l }) => {
+    marker.getElement().style.display = (level !== null && l === level) ? '' : 'none';
+  });
   document.querySelectorAll('#levels button').forEach(b =>
     b.classList.toggle('active', b.dataset.id === id));
 }
@@ -148,8 +155,8 @@ function buildLevelSwitcher() {
 }
 
 function buildLegend() {
-  const el = document.getElementById('legend');
-  el.innerHTML = '<div style="font-weight:600;margin-bottom:4px">HVAC unit type</div>' +
+  document.getElementById('legend').innerHTML =
+    '<div style="font-weight:600;margin-bottom:4px">HVAC unit type</div>' +
     Object.entries(KIND_LABELS).map(([k, label]) =>
       `<div class="row"><span class="dot" style="background:${KIND_COLORS[k]}"></span>${label}</div>`
     ).join('');
