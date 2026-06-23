@@ -8,6 +8,7 @@ const navItems = [
   { to: '/map', label: 'Map' },
   { to: '/requests', label: 'Requests' },
   { to: '/work-orders', label: 'Work Orders' },
+  { to: '/pm', label: 'PM' },
   { to: '/assets', label: 'Assets' },
   { to: '/vendors', label: 'Vendors' },
   { to: '/buildings', label: 'Buildings' },

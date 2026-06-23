@@ -5,6 +5,8 @@ import { z } from 'zod';
 import {
   ASSET_STATUSES,
   CRITICALITIES,
+  PM_INTERVAL_UNITS,
+  PM_TRIGGER_TYPES,
   WORK_ORDER_PRIORITIES,
   WORK_ORDER_STATUSES,
   WORK_ORDER_TYPES,
@@ -172,6 +174,24 @@ export const contactFormSchema = z.object({
   notes: optionalText,
 });
 export type ContactForm = z.infer<typeof contactFormSchema>;
+
+// ── Preventive-Maintenance schedule (plan §4.3) ──────────────────────────────
+export const pmScheduleFormSchema = z.object({
+  name: z.string().trim().min(1, 'Name is required').max(200),
+  asset_id: z.string().uuid().nullish(),
+  trigger_type: z.enum(PM_TRIGGER_TYPES).default('calendar'),
+  interval_value: optionalNumber,
+  interval_unit: z.enum(PM_INTERVAL_UNITS).nullish(),
+  fixed_month: optionalNumber,
+  fixed_day: optionalNumber,
+  meter_threshold: optionalNumber,
+  anchor_date: z.string().min(1, 'Anchor date is required'),
+  lead_time_days: z.coerce.number().int().min(0).max(365).default(14),
+  assignee_user_id: z.string().uuid().nullish(),
+  is_compliance: z.coerce.boolean().default(false),
+  category: optionalText,
+});
+export type PmScheduleForm = z.infer<typeof pmScheduleFormSchema>;
 
 export const orgSettingsFormSchema = z.object({
   facility_name: z.string().trim().min(1, 'Facility name is required').max(200),

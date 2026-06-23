@@ -377,3 +377,24 @@ export const useContacts = contactHooks.useList;
 export const useCreateContact = contactHooks.useCreate;
 export const useUpdateContact = contactHooks.useUpdate;
 export const useDeleteContact = contactHooks.useDelete;
+
+// ── preventive maintenance (plan §4.3) ───────────────────────────────────────
+export function usePmSchedules() {
+  return useQuery({ queryKey: ['pm_schedules'], queryFn: () => ds.listPmSchedules() });
+}
+
+export function useCreatePmSchedule() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: import('@cmc/shared').PmScheduleForm) => ds.createPmSchedule(input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['pm_schedules'] }),
+  });
+}
+
+export function useDeletePmSchedule() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => ds.deletePmSchedule(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['pm_schedules'] }),
+  });
+}

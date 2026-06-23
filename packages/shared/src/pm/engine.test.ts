@@ -1,0 +1,126 @@
+import { describe, expect, it } from 'vitest';
+import {
+  advanceAnchor,
+  meterUnitsRemaining,
+  nextDueDate,
+  shouldGenerateWorkOrder,
+  upcomingDueDate,
+  type PmTrigger,
+} from './engine.js';
+
+const calendar: PmTrigger = { type: 'calendar', intervalValue: 3, intervalUnit: 'month' };
+const fixed: PmTrigger = { type: 'fixed_date', fixedMonth: 4, fixedDay: 15 }; // annual backflow
+const meter: PmTrigger = { type: 'meter', meterThreshold: 5000 };
+
+describe('nextDueDate', () => {
+  it('calendar: anchor + one interval', () => {
+    expect(nextDueDate(calendar, new Date('2026-01-01T00:00:00Z'))?.toISOString()).toBe(
+      '2026-04-01T00:00:00.000Z',
+    );
+  });
+
+  it('fixed_date: next occurrence after anchor (same year)', () => {
+    expect(nextDueDate(fixed, new Date('2026-01-10T00:00:00Z'))?.toISOString()).toBe(
+      '2026-04-15T00:00:00.000Z',
+    );
+  });
+
+  it('fixed_date: rolls to next year when the date has passed', () => {
+    expect(nextDueDate(fixed, new Date('2026-05-01T00:00:00Z'))?.toISOString()).toBe(
+      '2027-04-15T00:00:00.000Z',
+    );
+  });
+
+  it('meter triggers have no due date', () => {
+    expect(nextDueDate(meter, new Date('2026-01-01T00:00:00Z'))).toBeNull();
+  });
+});
+
+describe('upcomingDueDate', () => {
+  const today = new Date('2026-06-23T00:00:00Z');
+
+  it('rolls a stale calendar anchor forward to the next future due', () => {
+    // quarterly from 2026-01-01 → 04-01 (past) → 07-01 (next future)
+    expect(upcomingDueDate(calendar, new Date('2026-01-01T00:00:00Z'), today)?.toISOString()).toBe(
+      '2026-07-01T00:00:00.000Z',
+    );
+  });
+
+  it('fixed_date: next occurrence on/after today', () => {
+    expect(upcomingDueDate(fixed, new Date('2020-01-01T00:00:00Z'), today)?.toISOString()).toBe(
+      '2027-04-15T00:00:00.000Z',
+    );
+  });
+});
+
+describe('meterUnitsRemaining', () => {
+  it('counts down from the threshold', () => {
+    expect(meterUnitsRemaining(meter, 4200)).toBe(800);
+    expect(meterUnitsRemaining(meter, 5200)).toBe(-200); // overdue
+  });
+});
+
+describe('shouldGenerateWorkOrder', () => {
+  const today = new Date('2026-03-25T00:00:00Z');
+
+  it('calendar: generates when due within the lead window', () => {
+    // due 2026-04-01, today 2026-03-25, lead 14 → 7 days out → generate
+    const r = shouldGenerateWorkOrder(calendar, new Date('2026-01-01T00:00:00Z'), {
+      today,
+      leadTimeDays: 14,
+      hasOpenWorkOrder: false,
+    });
+    expect(r).toBe(true);
+  });
+
+  it('calendar: does not generate when due beyond the lead window', () => {
+    const r = shouldGenerateWorkOrder(calendar, new Date('2026-02-01T00:00:00Z'), {
+      today,
+      leadTimeDays: 7,
+      hasOpenWorkOrder: false,
+    });
+    expect(r).toBe(false); // due 2026-05-01
+  });
+
+  it('never double-generates when an open WO exists', () => {
+    const r = shouldGenerateWorkOrder(calendar, new Date('2026-01-01T00:00:00Z'), {
+      today,
+      leadTimeDays: 14,
+      hasOpenWorkOrder: true,
+    });
+    expect(r).toBe(false);
+  });
+
+  it('meter: generates once usage reaches the threshold', () => {
+    const ctx = { today, leadTimeDays: 0, hasOpenWorkOrder: false };
+    expect(shouldGenerateWorkOrder(meter, today, { ...ctx, meterSinceLastService: 4999 })).toBe(
+      false,
+    );
+    expect(shouldGenerateWorkOrder(meter, today, { ...ctx, meterSinceLastService: 5000 })).toBe(
+      true,
+    );
+  });
+});
+
+describe('advanceAnchor', () => {
+  const prev = new Date('2026-01-01T00:00:00Z');
+
+  it('advance_from completion anchors to the completed date (no drift)', () => {
+    const next = advanceAnchor(calendar, prev, {
+      advanceFrom: 'completion',
+      completedDate: new Date('2026-04-05T00:00:00Z'), // done 4 days late
+    });
+    expect(next.toISOString()).toBe('2026-04-05T00:00:00.000Z');
+    // so the next due is 3 months from completion, not from the original anchor
+    expect(nextDueDate(calendar, next)?.toISOString()).toBe('2026-07-05T00:00:00.000Z');
+  });
+
+  it('advance_from scheduled anchors to the scheduled due date', () => {
+    const next = advanceAnchor(calendar, prev, {
+      advanceFrom: 'scheduled',
+      completedDate: new Date('2026-04-05T00:00:00Z'),
+      scheduledDate: new Date('2026-04-01T00:00:00Z'),
+    });
+    expect(next.toISOString()).toBe('2026-04-01T00:00:00.000Z');
+  });
+});

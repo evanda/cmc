@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ACTIVE_WORK_ORDER_STATUSES } from '@cmc/shared';
+import { ACTIVE_WORK_ORDER_STATUSES, upcomingDueDate } from '@cmc/shared';
 import {
   useAllWorkOrders,
   useAssets,
@@ -7,6 +7,7 @@ import {
   useFloors,
   useLocations,
   useOrgSettings,
+  usePmSchedules,
   useServiceContracts,
   useVendors,
   useWorkRequests,
@@ -34,6 +35,25 @@ export function DashboardPage() {
   const requests = useWorkRequests();
   const vendors = useVendors();
   const contracts = useServiceContracts();
+  const pms = usePmSchedules();
+
+  const now = new Date();
+  const pmsDueSoon = pms.data?.filter((s) => {
+    const due = upcomingDueDate(
+      {
+        type: s.trigger_type,
+        intervalValue: s.interval_value,
+        intervalUnit: s.interval_unit,
+        meterThreshold: s.meter_threshold,
+        fixedMonth: s.fixed_month,
+        fixedDay: s.fixed_day,
+      },
+      new Date(s.anchor_date),
+      now,
+    );
+    if (!due) return false;
+    return Math.ceil((due.getTime() - now.getTime()) / 86_400_000) <= s.lead_time_days;
+  }).length;
 
   const openRequests = requests.data?.filter((r) => r.status === 'open').length;
   const activeWorkOrders = workOrders.data?.filter((w) =>
@@ -54,9 +74,10 @@ export function DashboardPage() {
         Asset registry and campus structure. Work orders, vendors, and the map arrive in later
         Phase 1–2 work.
       </p>
-      <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="mb-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
         <StatCard label="Open requests" value={openRequests ?? '—'} to="/requests" />
         <StatCard label="Active work orders" value={activeWorkOrders ?? '—'} to="/work-orders" />
+        <StatCard label="PMs due soon" value={pmsDueSoon ?? '—'} to="/pm" />
         <StatCard label="Expiring soon (COI/contract)" value={expiringSoon} to="/vendors" />
       </div>
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">

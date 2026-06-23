@@ -11,5 +11,6 @@ export { createCmcClient } from './supabase/client.js';
 export type { CmcClient, SupabaseConfig } from './supabase/client.js';
 
 export * from './pm/next-due.js';
+export * from './pm/engine.js';
 
 export * from './work-orders/convert.js';
