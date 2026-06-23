@@ -8,7 +8,10 @@
     "node": ">=20"
   },
   "scripts": {
+    "build": "turbo run build",
     "lint": "turbo run lint",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "verify": "turbo run lint typecheck test",
@@ -16,6 +19,16 @@
     "triage:fetch": "node .agents/skills/feedback-rationalizer/scripts/fetch_issues.js",
     "db:reset": "supabase db reset",
     "db:push": "supabase db push",
-    "db:diff": "supabase db diff --linked"
+    "db:diff": "supabase db diff --linked",
+    "db:seed": "tsx scripts/reset-seed.ts"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.13.0",
+    "eslint": "^9.13.0",
+    "prettier": "^3.3.3",
+    "tsx": "^4.19.2",
+    "turbo": "^2.2.3",
+    "typescript": "^5.6.3",
+    "typescript-eslint": "^8.12.2"
   }
 }
