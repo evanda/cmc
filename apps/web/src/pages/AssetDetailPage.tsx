@@ -10,6 +10,7 @@ import {
 } from '@cmc/shared';
 import { ds } from '../lib/datasource';
 import { WorkOrderModal } from './WorkOrderModal';
+import { QrLabelModal } from './QrLabelModal';
 import {
   useAddAssetPhoto,
   useAsset,
@@ -64,6 +65,7 @@ export function AssetDetailPage() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [showLog, setShowLog] = useState(false);
   const [viewWo, setViewWo] = useState<WorkOrder | null>(null);
+  const [showQr, setShowQr] = useState(false);
 
   const userName = (uid: string | null) =>
     uid ? (users.data?.find((u) => u.id === uid)?.name ?? '—') : null;
@@ -99,6 +101,11 @@ export function AssetDetailPage() {
           >
             {a.status}
           </span>
+          {canEdit && (
+            <Button variant="ghost" onClick={() => setShowQr(true)} className="ml-auto">
+              QR label
+            </Button>
+          )}
         </div>
       </div>
 
@@ -293,6 +300,7 @@ export function AssetDetailPage() {
           onClose={() => setViewWo(null)}
         />
       )}
+      {showQr && <QrLabelModal asset={a} onClose={() => setShowQr(false)} />}
     </div>
   );
 }

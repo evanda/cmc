@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 export function Button({
   children,
   variant = 'primary',
+  className = '',
   ...props
 }: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'ghost' | 'danger' }) {
   const base = 'rounded px-3 py-1.5 text-sm font-medium transition disabled:opacity-50';
@@ -12,7 +13,7 @@ export function Button({
     danger: 'text-red-600 hover:bg-red-50',
   }[variant];
   return (
-    <button className={`${base} ${styles}`} {...props}>
+    <button className={`${base} ${styles} ${className}`} {...props}>
       {children}
     </button>
   );

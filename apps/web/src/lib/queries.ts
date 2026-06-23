@@ -194,6 +194,18 @@ export function useAsset(id: string) {
   return useQuery({ queryKey: ['asset', id], queryFn: () => ds.getAsset(id) });
 }
 
+export function useAssetByQrToken(token: string) {
+  return useQuery({ queryKey: ['asset_by_qr', token], queryFn: () => ds.getAssetByQrToken(token) });
+}
+
+export function useEnsureAssetQrToken(assetId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => ds.ensureAssetQrToken(assetId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['asset', assetId] }),
+  });
+}
+
 // ── asset photos (plan §4.1) ─────────────────────────────────────────────────
 export function useAssetPhotos(assetId: string) {
   return useQuery({ queryKey: ['asset_photos', assetId], queryFn: () => ds.listAssetPhotos(assetId) });

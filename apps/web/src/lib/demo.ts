@@ -531,6 +531,13 @@ export const demoDataSource: DataSource = {
   listAssets: async () =>
     (live(assets) as Asset[]).sort((a, b) => a.name.localeCompare(b.name)),
   getAsset: async (aid) => assets.find((a) => a.id === aid && a.deleted_at === null) ?? null,
+  getAssetByQrToken: async (token) =>
+    assets.find((a) => a.qr_token === token && a.deleted_at === null) ?? null,
+  ensureAssetQrToken: async (aid) => {
+    const a = assets.find((x) => x.id === aid)!;
+    if (!a.qr_token) a.qr_token = `demo${aid.replace(/\D/g, '')}token`;
+    return a.qr_token;
+  },
   createAsset: async (input: AssetForm) => {
     const a: Asset = {
       id: id(),

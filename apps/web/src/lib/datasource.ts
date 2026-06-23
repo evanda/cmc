@@ -53,6 +53,8 @@ export interface DataSource {
   listAssetCategories(): Promise<AssetCategory[]>;
   listAssets(): Promise<Asset[]>;
   getAsset(id: string): Promise<Asset | null>;
+  getAssetByQrToken(token: string): Promise<Asset | null>;
+  ensureAssetQrToken(assetId: string): Promise<string>;
   createAsset(input: AssetForm): Promise<Asset>;
   updateAsset(id: string, input: AssetForm): Promise<Asset>;
   deleteAsset(id: string): Promise<void>;
@@ -119,6 +121,11 @@ function serviceContractPatch(input: ServiceContractForm) {
     end_date: input.end_date ?? null,
     renewal_reminder_days: input.renewal_reminder_days ?? null,
   };
+}
+
+// Stable, unguessable slug for a QR sticker (plan §3 — survives reprints).
+function genQrToken() {
+  return crypto.randomUUID().replace(/-/g, '').slice(0, 12);
 }
 
 function contactPatch(input: ContactForm) {
@@ -297,6 +304,24 @@ const supabaseDataSource: DataSource = {
     unwrap<Asset | null>(
       await supabase.from('assets').select('*').eq('id', id).is('deleted_at', null).maybeSingle(),
     ),
+  getAssetByQrToken: async (token) =>
+    unwrap<Asset | null>(
+      await supabase
+        .from('assets')
+        .select('*')
+        .eq('qr_token', token)
+        .is('deleted_at', null)
+        .maybeSingle(),
+    ),
+  ensureAssetQrToken: async (assetId) => {
+    const existing = unwrap<{ qr_token: string | null } | null>(
+      await supabase.from('assets').select('qr_token').eq('id', assetId).maybeSingle(),
+    );
+    if (existing?.qr_token) return existing.qr_token;
+    const token = genQrToken();
+    unwrap(await supabase.from('assets').update({ qr_token: token }).eq('id', assetId).select().single());
+    return token;
+  },
   createAsset: async (input) =>
     unwrap<Asset>(await supabase.from('assets').insert(assetPatch(input)).select().single()),
   updateAsset: async (id, input) =>

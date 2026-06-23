@@ -63,16 +63,12 @@ const shots = [
   { name: '01-dashboard', path: '/' },
   { name: '02-requests', path: '/requests' },
   { name: '03-work-orders-board', path: '/work-orders' },
-  { name: '04-work-order-triage', path: '/work-orders', clicks: ['Sanctuary AC short-cycling'] },
-  { name: '05-vendors', path: '/vendors' },
-  { name: '06-assets', path: '/assets' },
-  { name: '07-asset-detail', path: '/assets', clicks: ['RTU-1 Rooftop Unit'] },
-  {
-    name: '08-work-order-photos',
-    path: '/assets',
-    clicks: ['RTU-1 Rooftop Unit', 'Annual HVAC service'],
-  },
-  { name: '09-buildings', path: '/buildings' },
+  { name: '04-work-orders-list', path: '/work-orders', clicks: ['list'] },
+  { name: '05-work-orders-calendar', path: '/work-orders', clicks: ['calendar'] },
+  { name: '06-vendors', path: '/vendors' },
+  { name: '07-assets', path: '/assets' },
+  { name: '08-asset-detail', path: '/assets', clicks: ['RTU-1 Rooftop Unit'] },
+  { name: '09-qr-label', path: '/assets', clicks: ['RTU-1 Rooftop Unit', 'QR label'] },
 ];
 
 async function clickByText(page, text) {

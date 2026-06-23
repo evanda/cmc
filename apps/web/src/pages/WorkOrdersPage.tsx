@@ -19,6 +19,9 @@ import {
 import { useAuth } from '../auth/AuthProvider';
 import { Button, Field, Modal, inputClass } from '../components/ui';
 import { WorkOrderModal } from './WorkOrderModal';
+import { WorkOrderCalendar, WorkOrderList } from './WorkOrderViews';
+
+type View = 'board' | 'list' | 'calendar';
 
 const priorityStyle: Record<WorkOrderPriority, string> = {
   low: 'bg-slate-100 text-slate-500',
@@ -45,21 +48,47 @@ export function WorkOrdersPage() {
   const users = useUsers();
   const [open, setOpen] = useState<WorkOrder | null>(null);
   const [showNew, setShowNew] = useState(false);
+  const [view, setView] = useState<View>('board');
 
   const assetName = (id: string | null) =>
     id ? (assets.data?.find((a) => a.id === id)?.name ?? null) : null;
   const userName = (id: string | null) =>
     id ? (users.data?.find((u) => u.id === id)?.name ?? null) : null;
+  const items = workOrders.data ?? [];
 
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-slate-800">Work Orders</h1>
-        {canEdit && <Button onClick={() => setShowNew(true)}>+ New work order</Button>}
+        <div className="flex items-center gap-3">
+          <div className="flex rounded-lg border border-slate-300 p-0.5 text-sm">
+            {(['board', 'list', 'calendar'] as View[]).map((v) => (
+              <button
+                key={v}
+                onClick={() => setView(v)}
+                className={`rounded px-2.5 py-1 capitalize ${
+                  view === v ? 'bg-slate-800 text-white' : 'text-slate-600 hover:bg-slate-100'
+                }`}
+              >
+                {v}
+              </button>
+            ))}
+          </div>
+          {canEdit && <Button onClick={() => setShowNew(true)}>+ New work order</Button>}
+        </div>
       </div>
 
       {workOrders.isLoading ? (
         <p className="text-sm text-slate-500">Loading…</p>
+      ) : view === 'list' ? (
+        <WorkOrderList workOrders={items} assetName={assetName} userName={userName} onOpen={setOpen} />
+      ) : view === 'calendar' ? (
+        <WorkOrderCalendar
+          workOrders={items}
+          assetName={assetName}
+          userName={userName}
+          onOpen={setOpen}
+        />
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           {columns.map((col) => {
