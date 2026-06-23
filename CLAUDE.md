@@ -31,24 +31,20 @@ mobile**, **single-tenant per deployment** (each church gets its own instance).
 - Prefer **complete, runnable** output over scaffolding stubs.
 - **Ask before** adding dependencies not named in the plan.
 
-## Workflow (ported from `evanda/bub`)
+## Workflow
 
-Three trigger words drive the day-to-day loop (full detail in @WORKFLOW.md):
+Three trigger words drive the day-to-day loop (see `WORKFLOW.md` for full detail):
 
-- **`triage`** — fetch public feedback (`evanda/cmc-feedback`), weed out-of-scope
-  (plan §13), **phase-gate** against the build order (plan §11), file internal
-  issues on `evanda/cmc` with breadcrumbs. Skill: `.agents/skills/feedback-rationalizer/`.
-- **`toil`** — on the `claude-async` branch, pick a current-phase issue, implement
-  it, verify the affected workspaces, commit/push, update one aggregate draft PR
-  (falls back to monorepo chores). Prompt: @cmc-async-prompt.md (hook-injected).
-- **`syncme`** — pull `claude-async`, apply migrations, run web + mobile for
-  manual testing, then guide merge + release across **Supabase → Vercel → Expo
-  EAS**. Skill: `.agents/skills/sync-and-release/`.
+| Word | What it does |
+|------|-------------|
+| **`triage`** | Review open issues, group by phase, apply labels + structured bodies |
+| **`toil`** | Pick an issue, implement it on `claude-async`, commit + update draft PR |
+| **`syncme`** | Pull `claude-async`, run CI, test, merge, push migrations, cut release |
 
-Supporting machinery: `.claude/settings.json` hooks (SessionStart behind-origin
-check, `toil` injector, mobile `versionCode` release guard), `.githooks/prepare-commit-msg`
-(`Closes #N`), and `scripts/check-version-sync.js`. Release order is always
-**migrations → web → mobile**; the merge to `main` is a user-run step.
+Hooks wired in `.claude/settings.json`:
+- **SessionStart** — warns if the local branch is behind origin before any work.
+- **UserPromptSubmit** — intercepts `toil` and injects `claude-async-prompt.md`.
+- **PreToolUse (Bash)** — guards mobile `versionCode` before any release build.
 
 ## Current task — Phase 0 (Foundation)
 

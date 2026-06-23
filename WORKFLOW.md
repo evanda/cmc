@@ -1,8 +1,8 @@
 # Developer Workflow
 
-A quick-reference for the day-to-day loop, ported from `evanda/bub` and adapted
-to this CMMS monorepo (web + mobile + loader + shared, on Supabase). Each section
-links to the dedicated skill for full detail.
+A quick-reference for the day-to-day loop, adapted to this CMMS monorepo
+(web + mobile + loader + shared, on Supabase). Each section links to the
+dedicated skill for full detail.
 
 ---
 
@@ -12,9 +12,9 @@ Type one of these as your entire message to kick off the named workflow:
 
 | Word | What it does | Skill |
 |------|-------------|-------|
-| **`triage`** | Fetches public feedback issues, weeds out-of-scope, **phase-gates** against the build plan, groups them, asks for judgment calls, files approved items as internal issues with breadcrumbs | `.agents/skills/feedback-rationalizer/` |
-| **`toil`**   | On `claude-async`: picks an open issue fitting the current phase, implements it, verifies the affected workspaces, commits, pushes, updates the aggregate draft PR (falls back to monorepo chores when no issue fits) | _(inline prompt — [cmc-async-prompt.md](cmc-async-prompt.md), injected by a hook)_ |
-| **`syncme`** | Pulls `claude-async`, applies migrations, runs web + mobile for manual testing, summarises changes, waits for sign-off, then guides merge + release across Supabase / Vercel / Expo EAS | `.agents/skills/sync-and-release/` |
+| **`triage`** | Fetches open issues on evanda/cmc, groups them by phase, asks for judgment calls, consolidates duplicates, and fleshes out thin issues | `.claude/skills/triage/` |
+| **`toil`** | On `claude-async`: picks an open issue, implements it across the right workspaces, runs lint/typecheck/test, commits, pushes, updates the aggregate draft PR | _(inline prompt — [claude-async-prompt.md](claude-async-prompt.md), injected by a hook)_ |
+| **`syncme`** | Pulls `claude-async`, applies migrations, runs web + mobile for manual testing, summarises changes, waits for sign-off, then guides merge + release across Supabase / Vercel / Expo EAS | `.claude/skills/sync-and-release/` |
 
 ---
 
@@ -27,27 +27,26 @@ supabase start                         # local Postgres + Auth + Storage
 pnpm db:reset                          # apply migrations + seed a facility fixture
 ```
 
-The repo also ships Claude Code hooks (in `.claude/settings.json`): a
-SessionStart "behind origin" check, the `toil` prompt injector, and a mobile
-`versionCode` release guard. They activate automatically.
+The repo ships Claude Code hooks (in `.claude/settings.json`): a SessionStart
+"behind origin" check, the `toil` prompt injector, and a mobile `versionCode`
+release guard. They activate automatically.
 
 ---
 
-## 1. Daily Intake — Triage Feedback
+## 1. Daily Intake — Triage Issues
 
-Pull latest first, then process new public feedback.
+Pull latest first, then process open issues.
 
 ```bash
 git pull --ff-only
 ```
 
-Tell Claude **"triage"** — it fetches the public feedback repo
-(`evanda/cmc-feedback`), weeds out anything out of scope (plan §13) or
-multi-tenant (plan §7.6), **tags each request with the phase that owns it**
-(plan §11), asks you about judgment calls, and files approved items as internal
-issues on `evanda/cmc` with two-way breadcrumbs.
+Tell Claude **"triage"** — it fetches open issues on
+[evanda/cmc](https://github.com/evanda/cmc/issues), groups them by phase (§11),
+asks about judgment calls, consolidates duplicates, and ensures each has a
+structured body and the right label.
 
-Skill: `.agents/skills/feedback-rationalizer/`
+Skill: `.claude/skills/triage/`
 
 ---
 
@@ -57,7 +56,7 @@ Tell Claude **"toil"** (or run it overnight). It works on `claude-async`, picks 
 current-phase issue, implements it across the right workspaces, adds a Supabase
 migration if the schema changes, verifies (`pnpm -r lint typecheck test`),
 commits, pushes, and updates one aggregate draft PR against `main`. Full spec:
-[cmc-async-prompt.md](cmc-async-prompt.md).
+[claude-async-prompt.md](claude-async-prompt.md).
 
 ```bash
 gh pr list --repo evanda/cmc --head claude-async   # find the open draft PR
@@ -74,7 +73,7 @@ local/branch DB, runs the web (and mobile, if touched) surfaces for manual
 testing, summarises exactly what changed and what to test, waits for your
 sign-off, then guides the merge and the release.
 
-Skill: `.agents/skills/sync-and-release/`
+Skill: `.claude/skills/sync-and-release/`
 
 Release is three surfaces in dependency order:
 
@@ -90,7 +89,7 @@ the `check-versioncode.sh` PreToolUse hook (mobile only).
 
 ---
 
-## Parallel work — git worktrees (carried over from bub)
+## Parallel work — git worktrees
 
 Run independent sessions in separate worktrees so they don't collide on the index
 or `claude-async`:
@@ -113,4 +112,22 @@ pnpm --filter web dev          # Vite dev server (web)
 pnpm --filter mobile start     # Expo dev server (mobile; map in a WebView)
 pnpm -r lint typecheck test    # all workspaces
 pnpm check-versions            # mobile version sources agree
+```
+
+---
+
+## 5. Merge and Close Issues
+
+The PR description contains `Closes #N` for every internal issue addressed —
+merging closes them all automatically.
+
+```bash
+gh pr merge <N> --repo evanda/cmc --squash --delete-branch
+git checkout main && git pull --ff-only
+```
+
+For your own commits, reference the issue in the subject:
+
+```bash
+git commit -m "fix: location CRUD missing floor_id validation (#42)"
 ```
