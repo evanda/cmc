@@ -29,10 +29,8 @@ import type {
   WorkOrderForm,
   WorkOrderPhotoKind,
   WorkOrderUpdate,
-  WorkRequest,
   WorkRequestForm,
 } from '@cmc/shared';
-import { requestToWorkOrder } from '@cmc/shared';
 import type { DataSource } from './datasource';
 import midwayData from '../data/midwaypca.json';
 
@@ -310,7 +308,6 @@ function buildWO(partial: Partial<WorkOrder> & { title: string }): WorkOrder {
     due_date: null,
     completed_date: null,
     completion_notes: null,
-    source_request_id: null,
     source_pm_id: null,
     ...partial,
   };
@@ -430,20 +427,11 @@ workOrders.push(
   }),
 );
 
-// Work requests awaiting triage (plan §3.1).
-const workRequests: WorkRequest[] = [];
-function seedRequest(partial: Partial<WorkRequest> & { title: string }) {
-  workRequests.push({
-    id: id(),
-    ...base(),
-    description: null,
-    requested_by: userId('Trustee Lee'),
-    location_id: null,
-    linked_asset_id: null,
-    status: 'open',
-    photo_url: null,
-    ...partial,
-  });
+// Requests awaiting triage = work orders in 'requested' status (plan §3.1).
+function seedRequest(partial: Partial<WorkOrder> & { title: string }) {
+  workOrders.push(
+    buildWO({ status: 'requested', requested_by: userId('Trustee Lee'), ...partial }),
+  );
 }
 seedRequest({
   title: 'AC not cooling in the Sanctuary',
@@ -464,7 +452,7 @@ if (import.meta.env.VITE_DEMO === 'midway') {
     maintenance_contact_email: midwayData.org.maintenance_contact_email,
     timezone: midwayData.org.timezone,
   });
-  for (const arr of [buildings, floors, locations, assets, photos, workOrders, workRequests, woPhotos])
+  for (const arr of [buildings, floors, locations, assets, photos, workOrders, woPhotos])
     (arr as { length: number }).length = 0;
 
   const buildingIdByName = new Map<string, string>();
@@ -870,7 +858,6 @@ export const demoDataSource: DataSource = {
       due_date: null,
       completed_date: input.completed_date ?? null,
       completion_notes: input.completion_notes ?? null,
-      source_request_id: null,
       source_pm_id: null,
     };
     workOrders.push(w);
@@ -932,32 +919,29 @@ export const demoDataSource: DataSource = {
   },
 
   listWorkRequests: async () =>
-    (live(workRequests) as WorkRequest[]).sort((a, b) => b.created_at.localeCompare(a.created_at)),
+    (live(workOrders) as WorkOrder[])
+      .filter((w) => w.status === 'requested')
+      .sort((a, b) => b.created_at.localeCompare(a.created_at)),
   createWorkRequest: async (input: WorkRequestForm) => {
-    const r: WorkRequest = {
-      id: id(),
-      ...base(),
+    const w = buildWO({
       title: input.title,
       description: input.description ?? null,
-      requested_by: 'demo-admin',
       location_id: input.location_id ?? null,
       linked_asset_id: input.linked_asset_id ?? null,
-      status: 'open',
-      photo_url: null,
-    };
-    workRequests.push(r);
-    return r;
-  },
-  convertWorkRequest: async (requestId) => {
-    const r = workRequests.find((x) => x.id === requestId)!;
-    const w = buildWO(requestToWorkOrder(r));
+      requested_by: 'demo-admin',
+      status: 'requested',
+    });
     workOrders.push(w);
-    r.status = 'converted';
+    return w;
+  },
+  acceptWorkRequest: async (requestId) => {
+    const w = workOrders.find((x) => x.id === requestId)!;
+    w.status = 'open';
     return w;
   },
   declineWorkRequest: async (requestId) => {
-    const r = workRequests.find((x) => x.id === requestId);
-    if (r) r.status = 'declined';
+    const w = workOrders.find((x) => x.id === requestId);
+    if (w) w.status = 'cancelled';
   },
 
   listVendors: async () =>

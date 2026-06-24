@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { workRequestFormSchema, type WorkRequestStatus } from '@cmc/shared';
+import { workRequestFormSchema } from '@cmc/shared';
 import {
+  useAcceptWorkRequest,
   useAssets,
-  useConvertWorkRequest,
   useCreateWorkRequest,
   useDeclineWorkRequest,
   useLocations,
@@ -11,19 +11,13 @@ import {
 import { useAuth } from '../auth/AuthProvider';
 import { Button, EmptyState, Field, Modal, inputClass } from '../components/ui';
 
-const statusStyle: Record<WorkRequestStatus, string> = {
-  open: 'bg-amber-100 text-amber-700',
-  converted: 'bg-green-100 text-green-700',
-  declined: 'bg-slate-100 text-slate-500',
-};
-
 export function WorkRequestsPage() {
   const { role } = useAuth();
   const isStaff = role === 'admin' || role === 'technician';
   const requests = useWorkRequests();
   const assets = useAssets();
   const locations = useLocations();
-  const convert = useConvertWorkRequest();
+  const accept = useAcceptWorkRequest();
   const decline = useDeclineWorkRequest();
   const [showForm, setShowForm] = useState(false);
 
@@ -39,7 +33,7 @@ export function WorkRequestsPage() {
         <Button onClick={() => setShowForm(true)}>+ Submit request</Button>
       </div>
       <p className="mb-4 text-sm text-slate-500">
-        Anyone can report a problem here; maintenance triages each into a work order.
+        Report a problem here; maintenance accepts it as a work order or declines it.
       </p>
 
       {requests.isLoading ? (
@@ -51,8 +45,8 @@ export function WorkRequestsPage() {
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="font-medium text-slate-800">{r.title}</span>
-                  <span className={`rounded px-2 py-0.5 text-xs ${statusStyle[r.status]}`}>
-                    {r.status}
+                  <span className="rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-700">
+                    pending
                   </span>
                 </div>
                 {r.description && <p className="text-sm text-slate-500">{r.description}</p>}
@@ -61,9 +55,9 @@ export function WorkRequestsPage() {
                     'No asset/location'}
                 </p>
               </div>
-              {isStaff && r.status === 'open' && (
+              {isStaff && (
                 <div className="flex shrink-0 gap-1">
-                  <Button onClick={() => convert.mutate(r.id)}>Convert to WO</Button>
+                  <Button onClick={() => accept.mutate(r.id)}>Accept</Button>
                   <Button variant="ghost" onClick={() => decline.mutate(r.id)}>
                     Decline
                   </Button>

@@ -31,10 +31,8 @@ import type {
   WorkOrderForm,
   WorkOrderPhotoKind,
   WorkOrderUpdate,
-  WorkRequest,
   WorkRequestForm,
 } from '@cmc/shared';
-import { requestToWorkOrder } from '@cmc/shared';
 import { supabase, isDemo } from './supabase';
 import { demoDataSource } from './demo';
 
@@ -79,10 +77,11 @@ export interface DataSource {
   listAllWorkOrders(): Promise<WorkOrder[]>;
   createWorkOrderFromForm(input: WorkOrderForm): Promise<WorkOrder>;
   updateWorkOrder(id: string, patch: WorkOrderUpdate): Promise<WorkOrder>;
-  // Work requests intake + triage.
-  listWorkRequests(): Promise<WorkRequest[]>;
-  createWorkRequest(input: WorkRequestForm): Promise<WorkRequest>;
-  convertWorkRequest(requestId: string): Promise<WorkOrder>;
+  // Request intake + triage. A "request" is just a work order in 'requested'
+  // status; triage advances it in place (accept → open, decline → cancelled).
+  listWorkRequests(): Promise<WorkOrder[]>;
+  createWorkRequest(input: WorkRequestForm): Promise<WorkOrder>;
+  acceptWorkRequest(requestId: string): Promise<WorkOrder>;
   declineWorkRequest(requestId: string): Promise<void>;
   // Vendors, service contracts, contacts (plan §4.5).
   listVendors(): Promise<Vendor[]>;
@@ -503,50 +502,47 @@ const supabaseDataSource: DataSource = {
         .single(),
     ),
 
+  // The triage inbox: work orders still awaiting acceptance. RLS scopes this to
+  // the caller's own rows for requesters, and to everything for staff/trustee.
   listWorkRequests: async () =>
-    unwrap<WorkRequest[]>(
+    unwrap<WorkOrder[]>(
       await supabase
-        .from('work_requests')
+        .from('work_orders')
         .select('*')
+        .eq('status', 'requested')
         .is('deleted_at', null)
         .order('created_at', { ascending: false }),
     ),
   createWorkRequest: async (input) =>
-    unwrap<WorkRequest>(
+    unwrap<WorkOrder>(
       await supabase
-        .from('work_requests')
+        .from('work_orders')
         .insert({
           title: input.title,
           description: input.description ?? null,
           linked_asset_id: input.linked_asset_id ?? null,
           location_id: input.location_id ?? null,
-          status: 'open',
+          type: 'reactive',
+          priority: 'medium',
+          status: 'requested',
         })
         .select()
         .single(),
     ),
-  convertWorkRequest: async (requestId) => {
-    const req = unwrap<WorkRequest>(
-      await supabase.from('work_requests').select('*').eq('id', requestId).single(),
-    );
-    const wo = unwrap<WorkOrder>(
-      await supabase.from('work_orders').insert(requestToWorkOrder(req)).select().single(),
-    );
-    unwrap(
+  acceptWorkRequest: async (requestId) =>
+    unwrap<WorkOrder>(
       await supabase
-        .from('work_requests')
-        .update({ status: 'converted' })
+        .from('work_orders')
+        .update({ status: 'open' })
         .eq('id', requestId)
         .select()
         .single(),
-    );
-    return wo;
-  },
+    ),
   declineWorkRequest: async (requestId) => {
     unwrap(
       await supabase
-        .from('work_requests')
-        .update({ status: 'declined' })
+        .from('work_orders')
+        .update({ status: 'cancelled' })
         .eq('id', requestId)
         .select()
         .single(),

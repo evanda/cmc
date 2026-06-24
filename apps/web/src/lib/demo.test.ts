@@ -17,17 +17,29 @@ describe('demo data source — seed', () => {
   });
 });
 
-describe('demo data source — request → work order conversion', () => {
-  it('converts a request into an open WO and marks the request converted', async () => {
+describe('demo data source — request intake + triage', () => {
+  it('files a request as a "requested" work order', async () => {
     const req = await ds.createWorkRequest({ title: 'AC out in Room 12', description: 'hot' });
-    const wo = await ds.convertWorkRequest(req.id);
+    expect(req.status).toBe('requested');
 
+    const inbox = await ds.listWorkRequests();
+    expect(inbox.find((r) => r.id === req.id)).toBeTruthy();
+  });
+
+  it('accepting advances the same WO to open and clears it from the inbox', async () => {
+    const req = await ds.createWorkRequest({ title: 'Leaky faucet' });
+    const wo = await ds.acceptWorkRequest(req.id);
+
+    expect(wo.id).toBe(req.id); // in-place, no duplicate row
     expect(wo.status).toBe('open');
-    expect(wo.title).toBe('AC out in Room 12');
-    expect(wo.source_request_id).toBe(req.id);
+    expect((await ds.listWorkRequests()).find((r) => r.id === req.id)).toBeUndefined();
+    expect((await ds.listAllWorkOrders()).find((w) => w.id === req.id)?.status).toBe('open');
+  });
 
-    const reqAfter = (await ds.listWorkRequests()).find((r) => r.id === req.id);
-    expect(reqAfter?.status).toBe('converted');
+  it('declining cancels the request', async () => {
+    const req = await ds.createWorkRequest({ title: 'Spider in the narthex' });
+    await ds.declineWorkRequest(req.id);
+    expect((await ds.listWorkRequests()).find((r) => r.id === req.id)).toBeUndefined();
   });
 });
 

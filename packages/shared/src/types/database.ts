@@ -22,7 +22,6 @@ import type {
   Vendor,
   WorkOrder,
   WorkOrderAttachment,
-  WorkRequest,
 } from './domain.js';
 
 /** Columns the database fills in itself; optional on insert/update. */
@@ -53,7 +52,6 @@ export interface Database {
       asset_photos: TableShape<AssetPhoto>;
       work_orders: TableShape<WorkOrder>;
       work_order_attachments: TableShape<WorkOrderAttachment>;
-      work_requests: TableShape<WorkRequest>;
       vendors: TableShape<Vendor>;
       service_contracts: TableShape<ServiceContract>;
       contacts: TableShape<Contact>;
@@ -79,7 +77,6 @@ export interface Database {
         | 'completed'
         | 'closed'
         | 'cancelled';
-      work_request_status: 'open' | 'converted' | 'declined';
       pm_trigger_type: 'calendar' | 'meter' | 'fixed_date';
       pm_interval_unit: 'day' | 'week' | 'month' | 'year';
       pm_advance_from: 'completion' | 'scheduled';

@@ -309,7 +309,14 @@ export function useUpdateWorkOrder() {
   });
 }
 
-// ── work requests intake + triage (plan §3.1) ────────────────────────────────
+// ── request intake + triage (plan §3.1) ──────────────────────────────────────
+// A "request" is a work order in 'requested' status; these all touch
+// work_orders, so they invalidate both the request inbox and the WO board.
+function invalidateRequests(qc: ReturnType<typeof useQueryClient>) {
+  qc.invalidateQueries({ queryKey: ['work_requests'] });
+  invalidateWorkOrders(qc);
+}
+
 export function useWorkRequests() {
   return useQuery({ queryKey: ['work_requests'], queryFn: () => ds.listWorkRequests() });
 }
@@ -318,18 +325,15 @@ export function useCreateWorkRequest() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: WorkRequestForm) => ds.createWorkRequest(input),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['work_requests'] }),
+    onSuccess: () => invalidateRequests(qc),
   });
 }
 
-export function useConvertWorkRequest() {
+export function useAcceptWorkRequest() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (requestId: string) => ds.convertWorkRequest(requestId),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['work_requests'] });
-      invalidateWorkOrders(qc);
-    },
+    mutationFn: (requestId: string) => ds.acceptWorkRequest(requestId),
+    onSuccess: () => invalidateRequests(qc),
   });
 }
 
@@ -337,7 +341,7 @@ export function useDeclineWorkRequest() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (requestId: string) => ds.declineWorkRequest(requestId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['work_requests'] }),
+    onSuccess: () => invalidateRequests(qc),
   });
 }
 
