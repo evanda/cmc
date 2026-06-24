@@ -61,12 +61,15 @@ yourself once:
   in **#14** — until then `db:seed` covers buildings/floors/assets.
 
 ## 5. Run the app against the backend
+The root `.env` is **not** auto-loaded (Vite reads from `apps/web/`), so export
+it into the shell first; `VITE_DEMO` must be UNSET so it uses the real client:
 ```bash
-# VITE_DEMO must be UNSET so it uses the real client:
-pnpm --filter @cmc/web dev
+set -a && source .env && set +a     # load root .env into the shell
+pnpm --filter @cmc/web dev          # http://localhost:5173
 ```
 Sign in with your admin user. The header should show your org name from
-`org_settings`.
+`org_settings`. (More dev-run detail — demo mode, restart, ports — in
+[`CONTRIBUTING.md`](../CONTRIBUTING.md).)
 
 ## 6. Validate RLS & Storage (the point of all this — issue #17)
 Create a couple of test users (Dashboard → Auth) and set their roles via SQL

@@ -39,11 +39,32 @@ Demo mode fakes a signed-in admin and serves data from an in-memory store
 
 ## Running with Supabase
 
+Full first-time setup (hosted project, keys, RLS/Storage validation) lives in
+[`docs/SUPABASE_SETUP.md`](./docs/SUPABASE_SETUP.md). The short version:
+
 1. `cp .env.example .env` and fill `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`
    (plus `SUPABASE_SERVICE_ROLE_KEY` for seeding). **Never commit `.env`.**
-2. Apply the schema: `pnpm db:reset` (needs the Supabase CLI + Docker), or push
-   `supabase/migrations/` to a hosted project.
-3. Load a sample facility: `pnpm db:seed <tiny|bigcampus>`.
+2. Apply the schema — either CLI (`pnpm db:push`, against the linked project) or
+   `pnpm db:reset` (needs the Supabase CLI + Docker for the local stack).
+3. Load a sample facility: `pnpm db:seed bigcampus` (local stack), or
+   `pnpm db:seed bigcampus --no-reset` against a hosted project (skips the
+   Docker-only `db reset`).
+
+> **`.env` lives at the repo root, but it is not auto-loaded.** Vite reads env
+> from `apps/web/` (no `envDir` override) and the seed script reads Node's
+> `process.env` — so export the root `.env` into your shell first. It picks up
+> `VITE_`-prefixed vars automatically once they're in the environment.
+
+```bash
+set -a && source .env && set +a     # load root .env into the shell (run once per shell)
+pnpm --filter @cmc/web dev          # http://localhost:5173, against your Supabase project
+```
+
+`VITE_DEMO` must be **unset** for the real client (it's not in `.env`, so a clean
+shell is correct). To point the same shell at demo data instead, prefix the
+command with `VITE_DEMO=1` (see above). To restart, stop the server (Ctrl-C) and
+re-run `pnpm --filter @cmc/web dev`; if a stale process is holding the port,
+`fuser -k 5173/tcp` clears it.
 
 ### Migration hygiene
 
