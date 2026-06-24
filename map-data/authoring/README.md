@@ -63,6 +63,68 @@ For surveyed-ish placement and to **georeference floorplan drawings** into
 
 ---
 
+## Track C — License-clean PMTiles basemap (own aerial)
+
+The default basemap (`meta.json → basemap_tiles`) streams Esri World Imagery live.
+Esri's terms forbid caching it, so for an offline-capable or self-hosted deployment
+you need imagery you own. This track tiles it into a single **PMTiles** archive that
+the viewer and the web app serve directly — no tile server, no CDN, works offline.
+
+### 1. Obtain the imagery
+
+- A county/municipality aerial (GIS department or USGS EarthExplorer).
+- A church-commissioned drone survey.
+- Any georeferenced raster you have rights to distribute.
+
+The image must cover the campus at enough resolution to be useful (≥30 cm/px).
+A GeoTIFF with embedded CRS is ideal; if it's just a JPG, georeference it first
+(QGIS → `Raster → Georeferencer…`, ≥4 GCPs matching recognizable ground features).
+
+### 2. Convert to PMTiles
+
+Install **GDAL** and **rio-tiler / cogeo-mosaic** (or use **QGIS**):
+
+```bash
+# Reproject to web mercator and build a Cloud-Optimized GeoTIFF:
+gdalwarp -t_srs EPSG:3857 -r lanczos input.tif campus_cog.tif
+gdal_translate -of COG -co COMPRESS=JPEG -co QUALITY=85 campus_cog.tif campus_cog_compressed.tif
+
+# Tile to XYZ then pack into PMTiles with `go-pmtiles`:
+#   brew install protomaps/homebrew-protomaps/go-pmtiles   (macOS)
+#   https://github.com/protomaps/go-pmtiles/releases       (other)
+go-pmtiles convert campus_cog_compressed.tif basemap.pmtiles \
+  --min-zoom=14 --max-zoom=20 --tile-type=jpeg
+```
+
+Alternatively use **QGIS Raster → Miscellaneous → Merge** and the QGIS
+Python Console to export tiles, then pack them with `go-pmtiles`.
+
+### 3. Deploy the archive
+
+- **Alongside the facility data:** host the file on the same web server and reference it
+  via an absolute URL (e.g. `https://your-instance.example.com/campus/basemap.pmtiles`).
+- **Supabase Storage:** upload `basemap.pmtiles` to the `facility-assets` bucket, set
+  public read; the public URL is in the bucket → object detail.
+
+### 4. Update meta.json
+
+```json
+{
+  "basemap_tiles": "pmtiles://https://your-instance.example.com/campus/basemap.pmtiles",
+  "basemap_attribution": "Aerial imagery © Your County GIS, 2024"
+}
+```
+
+Remove `basemap_minzoom` / `basemap_maxzoom` — they are read automatically from the
+PMTiles archive header. The `pmtiles://` prefix tells the viewer and app to use the
+PMTiles protocol handler instead of the XYZ tile template.
+
+**Result:** the viewer and the web app map both load the archive natively. MapLibre
+caches tiles in memory; the archive can be pre-cached by a service worker for full
+offline use.
+
+---
+
 ## Conventions to preserve
 
 - Geometry in **EPSG:4326 (lng, lat)**.

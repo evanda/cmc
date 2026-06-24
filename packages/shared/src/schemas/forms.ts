@@ -196,6 +196,7 @@ export type PmScheduleForm = z.infer<typeof pmScheduleFormSchema>;
 export const orgSettingsFormSchema = z.object({
   facility_name: z.string().trim().min(1, 'Facility name is required').max(200),
   address: optionalText,
+  maintenance_contact_email: optionalEmail,
   locale: z.string().trim().min(2).max(10).default('en-US'),
   distance_unit: z.enum(['mi', 'km']).default('mi'),
   currency: z.string().trim().length(3).default('USD'),

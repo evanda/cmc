@@ -22,6 +22,7 @@ import { fileURLToPath } from 'node:url';
 const ROOT = fileURLToPath(new URL('.', import.meta.url)); // map-data/
 const PORT = Number(process.env.PORT || 8000);
 const FACILITY_RE = /^[a-z0-9_-]+$/i;
+const GEOJSON_FILE_RE = /^[a-z0-9_-]+\.geojson$/i;
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -50,9 +51,14 @@ const server = http.createServer(async (req, res) => {
   // ── write-back endpoint ──────────────────────────────────────────────────
   if (req.method === 'POST' && url.pathname === '/save') {
     const facility = url.searchParams.get('facility') || '';
+    const file = url.searchParams.get('file') || 'pois.geojson';
     if (!FACILITY_RE.test(facility)) {
       res.writeHead(400, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({ ok: false, error: 'bad facility id' }));
+    }
+    if (!GEOJSON_FILE_RE.test(file)) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: 'bad file name (must be *.geojson)' }));
     }
     try {
       const body = await readBody(req);
@@ -60,13 +66,13 @@ const server = http.createServer(async (req, res) => {
       if (!fc || fc.type !== 'FeatureCollection' || !Array.isArray(fc.features)) {
         throw new Error('not a FeatureCollection');
       }
-      const dest = join(ROOT, 'facilities', facility, 'pois.geojson');
+      const dest = join(ROOT, 'facilities', facility, file);
       await access(dest).then(
         () => copyFile(dest, dest + '.bak'),
         () => {}, // first write — nothing to back up
       );
       await writeFile(dest, JSON.stringify(fc, null, 2) + '\n');
-      console.log(`saved ${fc.features.length} features → facilities/${facility}/pois.geojson`);
+      console.log(`saved ${fc.features.length} features → facilities/${facility}/${file}`);
       res.writeHead(200, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({ ok: true, count: fc.features.length }));
     } catch (e) {
@@ -94,6 +100,7 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, '127.0.0.1', () => {
-  console.log(`\n  Asset placement tool:  http://localhost:${PORT}/place.html`);
+  console.log(`\n  Asset placement:  http://localhost:${PORT}/place.html`);
+  console.log(`  Area editing:     http://localhost:${PORT}/area.html`);
   console.log(`  (saves write back to map-data/facilities/<id>/pois.geojson)\n`);
 });

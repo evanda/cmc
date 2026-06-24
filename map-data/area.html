@@ -1,0 +1,455 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CMC — Edit campus areas</title>
+<link href="./vendor/maplibre-gl.css" rel="stylesheet" />
+<script src="./vendor/maplibre-gl.js"></script>
+<style>
+  html, body { margin: 0; height: 100%; }
+  body { font: 14px/1.4 system-ui, sans-serif; display: flex; }
+  #map { flex: 1; height: 100vh; }
+  #panel {
+    width: 300px; height: 100vh; box-sizing: border-box; overflow-y: auto;
+    background: #0f172a; color: #e2e8f0; padding: 14px; display: flex; flex-direction: column; gap: 10px;
+  }
+  h1 { font-size: 15px; margin: 0; }
+  .sub { color: #94a3b8; font-size: 12px; }
+  .card { background: #1e293b; border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 7px; }
+  label.fld { font-size: 11px; color: #94a3b8; }
+  input[type=text], select {
+    background: #0b1220; color: #e2e8f0; border: 1px solid #334155;
+    border-radius: 6px; padding: 6px; font: inherit; width: 100%; box-sizing: border-box;
+  }
+  .row { display: flex; gap: 6px; }
+  button.act {
+    border: 0; border-radius: 7px; padding: 8px 10px; cursor: pointer;
+    font-weight: 600; font: inherit; background: #334155; color: #e2e8f0; flex: 1;
+  }
+  button.act:hover { background: #475569; }
+  button.act.primary { background: #2563eb; }
+  button.act.primary:hover { background: #1d4ed8; }
+  button.act.save { background: #16a34a; }
+  button.act.save:hover { background: #15803d; }
+  button.act.danger { background: #7f1d1d; color: #fca5a5; }
+  button.act.danger:hover { background: #991b1b; }
+  button.act:disabled { opacity: .4; cursor: default; }
+  #hint { font-size: 12.5px; color: #fde68a; min-height: 1.2em; }
+  #status { font-size: 12px; color: #94a3b8; }
+  #list { flex: 1; overflow-y: auto; border-top: 1px solid #334155; padding-top: 8px; display: flex; flex-direction: column; gap: 2px; }
+  .area-item {
+    display: flex; align-items: center; gap: 8px; padding: 7px 9px;
+    border-radius: 7px; cursor: pointer; font-size: 13px;
+  }
+  .area-item:hover { background: #1e293b; }
+  .area-item.active { background: #2563eb; }
+  .area-item .sq { width: 12px; height: 12px; border-radius: 3px; border: 1px solid #0006; flex: none; }
+  .area-item .nm { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .area-item .ft { font-size: 11px; color: #94a3b8; flex: none; }
+  .area-item.active .ft { color: #dbeafe; }
+  /* vertex + draw markers */
+  .vx {
+    width: 13px; height: 13px; border-radius: 50%; background: #fde047;
+    border: 2px solid #fff; box-shadow: 0 0 0 2px #000a;
+    cursor: grab; transform: translate(-50%,-50%);
+  }
+  .vx.first { background: #ef4444; }
+  body.drawing #map { cursor: crosshair; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div id="panel">
+  <div>
+    <h1 id="title">Campus areas</h1>
+    <div class="sub" id="subtitle">loading…</div>
+  </div>
+
+  <div id="card-none" class="card">
+    <div class="sub">
+      Select an area from the list to edit its polygon. Drag the yellow vertex
+      handles to reposition. Use "Draw new area" to trace a new polygon.
+    </div>
+  </div>
+
+  <div id="card-area" class="card" style="display:none">
+    <label class="fld">Name</label>
+    <input type="text" id="area-name" placeholder="e.g. Nursery Playground" />
+    <label class="fld">Type</label>
+    <select id="area-type">
+      <option value="playground">playground</option>
+      <option value="cemetery">cemetery</option>
+      <option value="garden">garden</option>
+      <option value="carport">carport</option>
+      <option value="parking">parking</option>
+      <option value="field">field</option>
+      <option value="pavilion">pavilion</option>
+    </select>
+    <div class="row" style="margin-top:2px">
+      <button class="act danger" id="btn-delete">Delete area</button>
+    </div>
+  </div>
+
+  <div id="card-draw" class="card" style="display:none">
+    <div id="hint"></div>
+    <div class="row">
+      <button class="act primary" id="btn-finish" disabled>Finish (↵)</button>
+      <button class="act" id="btn-cancel">Cancel (Esc)</button>
+    </div>
+  </div>
+
+  <div id="row-draw" class="row">
+    <button class="act primary" id="btn-draw">Draw new area</button>
+  </div>
+
+  <div class="row">
+    <button class="act save" id="btn-save">Save to repo</button>
+  </div>
+  <div id="status"></div>
+
+  <div id="list"></div>
+</div>
+
+<script>
+// ── constants ──────────────────────────────────────────────────────────────
+const AREA_COLORS = {
+  playground: '#f59e0b', cemetery: '#94a3b8', garden: '#22c55e',
+  carport: '#38bdf8', parking: '#64748b', field: '#84cc16', pavilion: '#fb923c',
+};
+const FEATURE_TYPES = Object.keys(AREA_COLORS);
+const ESRI = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+const round = n => Math.round(n * 1e7) / 1e7;
+const facility = new URLSearchParams(location.search).get('facility') || 'midwaypca';
+const FDIR = `./facilities/${facility}`;
+const getJSON = u => fetch(u).then(r => r.ok ? r.json() : null).catch(() => null);
+const areaColorExpr = () => ['match', ['get', 'feature_type'], ...Object.entries(AREA_COLORS).flat(), '#64748b'];
+
+// ── state ──────────────────────────────────────────────────────────────────
+let areas = { type: 'FeatureCollection', features: [] };
+let activeIdx = null;
+let vxMarkers = [];      // vertex markers for selected polygon
+let drawing = false;
+let drawCoords = [];
+let drawMarkers = [];
+let dirty = false;
+
+// ── map ────────────────────────────────────────────────────────────────────
+const map = new maplibregl.Map({
+  container: 'map',
+  style: { version: 8, sources: {}, layers: [{ id: 'bg', type: 'background', paint: { 'background-color': '#0b1220' } }] },
+  center: [-84.6878, 33.9437], zoom: 17,
+});
+map.addControl(new maplibregl.NavigationControl(), 'top-right');
+
+// ── load ───────────────────────────────────────────────────────────────────
+async function load() {
+  const [meta, buildings, areasData] = await Promise.all([
+    getJSON(`${FDIR}/meta.json`),
+    getJSON(`${FDIR}/buildings.geojson`),
+    getJSON(`${FDIR}/areas.geojson`),
+  ]);
+
+  document.getElementById('title').textContent = `Campus areas — ${(meta && meta.name) || facility}`;
+  document.getElementById('subtitle').textContent =
+    'Select an area to edit its shape. Drag vertex handles to reposition.';
+
+  // satellite basemap (full-colour for placement clarity)
+  const bt = meta && meta.basemap_tiles;
+  const tilesUrl = bt ? (bt.startsWith('http') ? bt : `${FDIR}/${bt}`) : ESRI;
+  map.addSource('satellite', {
+    type: 'raster', tileSize: 256, tiles: [tilesUrl],
+    minzoom: (meta && meta.basemap_minzoom) || 0,
+    maxzoom: (meta && meta.basemap_maxzoom) || 19,
+    attribution: (meta && meta.basemap_attribution) || '© Esri, Maxar, Earthstar Geographics',
+  });
+  map.addLayer({ id: 'satellite', type: 'raster', source: 'satellite' });
+
+  // building footprints (reference)
+  if (buildings) {
+    map.addSource('buildings', { type: 'geojson', data: buildings });
+    map.addLayer({ id: 'bldg-fill', type: 'fill', source: 'buildings', paint: { 'fill-color': '#1e293b', 'fill-opacity': 0.15 } });
+    map.addLayer({ id: 'bldg-line', type: 'line', source: 'buildings', paint: { 'line-color': '#e2e8f0', 'line-width': 1.5 } });
+    const bounds = new maplibregl.LngLatBounds();
+    buildings.features.forEach(f => f.geometry.coordinates[0].forEach(c => bounds.extend(c)));
+    if (!bounds.isEmpty()) map.fitBounds(bounds, { padding: 80, duration: 0 });
+  }
+
+  // areas source — features include a temporary _idx property for click detection
+  areas = areasData && areasData.type === 'FeatureCollection' ? areasData : { type: 'FeatureCollection', features: [] };
+  map.addSource('areas', { type: 'geojson', data: withIdx(areas) });
+  map.addLayer({ id: 'area-fill', type: 'fill', source: 'areas',
+    paint: { 'fill-color': areaColorExpr(), 'fill-opacity': 0.25 } });
+  map.addLayer({ id: 'area-line', type: 'line', source: 'areas',
+    paint: { 'line-color': areaColorExpr(), 'line-width': 1.5, 'line-opacity': 0.9 } });
+
+  // highlight selected area (separate source)
+  map.addSource('area-sel', { type: 'geojson', data: emptyFC() });
+  map.addLayer({ id: 'area-sel-line', type: 'line', source: 'area-sel',
+    paint: { 'line-color': '#fde047', 'line-width': 3 } });
+  map.addLayer({ id: 'area-sel-fill', type: 'fill', source: 'area-sel',
+    paint: { 'fill-color': '#fde047', 'fill-opacity': 0.08 } });
+
+  // draw-preview source (shown while tracing a new polygon)
+  map.addSource('draw', { type: 'geojson', data: emptyFC() });
+  map.addLayer({ id: 'draw-line', type: 'line', source: 'draw',
+    paint: { 'line-color': '#fde047', 'line-width': 2, 'line-dasharray': [3, 2] } });
+  map.addLayer({ id: 'draw-fill', type: 'fill', source: 'draw',
+    paint: { 'fill-color': '#fde047', 'fill-opacity': 0.08 } });
+
+  // click on fill to select
+  map.on('click', 'area-fill', e => {
+    if (drawing) return;
+    const idx = Number(e.features[0].properties._idx);
+    if (!Number.isNaN(idx)) { selectArea(idx); e.originalEvent.stopPropagation(); }
+  });
+  map.on('mouseenter', 'area-fill', () => { if (!drawing) map.getCanvas().style.cursor = 'pointer'; });
+  map.on('mouseleave', 'area-fill', () => { if (!drawing) map.getCanvas().style.cursor = ''; });
+
+  // click on empty map → add draw vertex
+  map.on('click', e => {
+    if (!drawing) return;
+    addDrawVertex([round(e.lngLat.lng), round(e.lngLat.lat)]);
+  });
+
+  renderList();
+}
+
+// ── helpers ────────────────────────────────────────────────────────────────
+function emptyFC() { return { type: 'FeatureCollection', features: [] }; }
+
+function withIdx(fc) {
+  return {
+    type: 'FeatureCollection',
+    features: fc.features.map((f, i) => ({
+      ...f, properties: { ...f.properties, _idx: i },
+    })),
+  };
+}
+
+function refreshAreas() {
+  map.getSource('areas').setData(withIdx(areas));
+}
+
+// ── list ───────────────────────────────────────────────────────────────────
+function renderList() {
+  const el = document.getElementById('list');
+  el.innerHTML = '';
+  areas.features.forEach((f, i) => {
+    const p = f.properties;
+    const ft = p.feature_type || '';
+    const color = AREA_COLORS[ft] || '#64748b';
+    const row = document.createElement('div');
+    row.className = 'area-item' + (i === activeIdx ? ' active' : '');
+    row.innerHTML =
+      `<span class="sq" style="background:${color}"></span>` +
+      `<span class="nm">${p.name || '(unnamed)'}</span>` +
+      `<span class="ft">${ft}</span>`;
+    row.onclick = () => selectArea(i);
+    el.appendChild(row);
+  });
+  if (!areas.features.length)
+    el.innerHTML = '<div class="sub" style="padding:8px">No areas yet. Click "Draw new area" to trace the first polygon.</div>';
+}
+
+// ── select ─────────────────────────────────────────────────────────────────
+function selectArea(idx) {
+  if (drawing) return;
+  clearVxMarkers();
+  activeIdx = (idx != null && idx >= 0 && idx < areas.features.length) ? idx : null;
+
+  if (activeIdx == null) {
+    map.getSource('area-sel').setData(emptyFC());
+    document.getElementById('card-none').style.display = '';
+    document.getElementById('card-area').style.display = 'none';
+    renderList();
+    return;
+  }
+
+  const f = areas.features[activeIdx];
+  const p = f.properties;
+  map.getSource('area-sel').setData({ type: 'FeatureCollection', features: [f] });
+  document.getElementById('area-name').value = p.name || '';
+  document.getElementById('area-type').value = p.feature_type || 'playground';
+  document.getElementById('card-none').style.display = 'none';
+  document.getElementById('card-area').style.display = '';
+  createVxMarkers(activeIdx);
+  renderList();
+
+  // pan to selected
+  const coords = f.geometry.coordinates[0];
+  const bounds = new maplibregl.LngLatBounds();
+  coords.forEach(c => bounds.extend(c));
+  if (!bounds.isEmpty()) map.fitBounds(bounds, { padding: 100, maxZoom: 20, duration: 400 });
+}
+
+// ── vertex markers ──────────────────────────────────────────────────────────
+function createVxMarkers(areaIdx) {
+  clearVxMarkers();
+  const ring = areas.features[areaIdx].geometry.coordinates[0];
+  // last coord duplicates first in a closed ring — skip it
+  vxMarkers = ring.slice(0, -1).map((coord, vi) => {
+    const el = document.createElement('div');
+    el.className = 'vx';
+    const marker = new maplibregl.Marker({ element: el, draggable: true })
+      .setLngLat(coord).addTo(map);
+    marker.on('dragend', () => {
+      const ll = marker.getLngLat();
+      const nc = [round(ll.lng), round(ll.lat)];
+      const r = areas.features[areaIdx].geometry.coordinates[0];
+      r[vi] = nc;
+      if (vi === 0) r[r.length - 1] = nc; // keep ring closed
+      refreshAreas();
+      map.getSource('area-sel').setData({ type: 'FeatureCollection', features: [areas.features[areaIdx]] });
+      setDirty(true);
+    });
+    return marker;
+  });
+}
+
+function clearVxMarkers() {
+  vxMarkers.forEach(m => m.remove());
+  vxMarkers = [];
+}
+
+// ── name / type ─────────────────────────────────────────────────────────────
+document.getElementById('area-name').addEventListener('input', e => {
+  if (activeIdx == null) return;
+  areas.features[activeIdx].properties.name = e.target.value;
+  refreshAreas();
+  renderList();
+  setDirty(true);
+});
+document.getElementById('area-type').addEventListener('change', e => {
+  if (activeIdx == null) return;
+  areas.features[activeIdx].properties.feature_type = e.target.value;
+  refreshAreas();
+  renderList();
+  setDirty(true);
+});
+
+// ── delete ──────────────────────────────────────────────────────────────────
+document.getElementById('btn-delete').onclick = () => {
+  if (activeIdx == null) return;
+  const name = areas.features[activeIdx].properties.name || 'this area';
+  if (!confirm(`Delete "${name}"?`)) return;
+  clearVxMarkers();
+  areas.features.splice(activeIdx, 1);
+  refreshAreas();
+  selectArea(null);
+  setDirty(true);
+};
+
+// ── draw mode ──────────────────────────────────────────────────────────────
+function startDraw() {
+  if (drawing) return;
+  drawing = true;
+  drawCoords = []; drawMarkers = [];
+  clearVxMarkers();
+  selectArea(null);
+  document.body.classList.add('drawing');
+  document.getElementById('row-draw').style.display = 'none';
+  document.getElementById('card-draw').style.display = '';
+  document.getElementById('btn-finish').disabled = true;
+  setHint('Click the map to place the first vertex.');
+  map.getSource('draw').setData(emptyFC());
+}
+
+function addDrawVertex(lnglat) {
+  drawCoords.push(lnglat);
+  const el = document.createElement('div');
+  el.className = 'vx' + (drawCoords.length === 1 ? ' first' : '');
+  drawMarkers.push(new maplibregl.Marker({ element: el }).setLngLat(lnglat).addTo(map));
+
+  const n = drawCoords.length;
+  if (n >= 3) {
+    document.getElementById('btn-finish').disabled = false;
+    setHint(`${n} vertices placed. Click "Finish" (or keep clicking) to close the polygon.`);
+  } else {
+    setHint(`${n} ${n === 1 ? 'vertex' : 'vertices'} — need at least 3 to close.`);
+  }
+
+  // preview: line (< 3 pts) or filled polygon preview (≥ 3 pts)
+  const preview = n >= 3
+    ? [{ type: 'Feature', geometry: { type: 'Polygon', coordinates: [[...drawCoords, drawCoords[0]]] } }]
+    : [{ type: 'Feature', geometry: { type: 'LineString', coordinates: drawCoords } }];
+  map.getSource('draw').setData({ type: 'FeatureCollection', features: preview });
+}
+
+function finishDraw() {
+  if (drawCoords.length < 3) return;
+  const ring = [...drawCoords, drawCoords[0]];
+  const name = prompt('Name for this area (e.g. "Nursery Playground"):', '') || '';
+  const ft = prompt(`Type — one of:\n${FEATURE_TYPES.join(', ')}`, 'playground') || 'playground';
+  const feature = {
+    type: 'Feature',
+    properties: { name, feature_type: ft },
+    geometry: { type: 'Polygon', coordinates: [ring] },
+  };
+  areas.features.push(feature);
+  refreshAreas();
+  cancelDraw(/* skipReset */ true);
+  selectArea(areas.features.length - 1);
+  setDirty(true);
+}
+
+function cancelDraw(skipReset) {
+  drawing = false;
+  if (!skipReset) { drawCoords = []; }
+  drawMarkers.forEach(m => m.remove()); drawMarkers = [];
+  map.getSource('draw').setData(emptyFC());
+  document.body.classList.remove('drawing');
+  document.getElementById('row-draw').style.display = '';
+  document.getElementById('card-draw').style.display = 'none';
+  setHint('');
+}
+
+function setHint(msg) { document.getElementById('hint').textContent = msg; }
+
+document.getElementById('btn-draw').onclick = startDraw;
+document.getElementById('btn-finish').onclick = finishDraw;
+document.getElementById('btn-cancel').onclick = () => cancelDraw(false);
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') cancelDraw(false);
+  if (e.key === 'Enter' && drawing) finishDraw();
+});
+
+// ── save ────────────────────────────────────────────────────────────────────
+async function save() {
+  const el = document.getElementById('status');
+  el.textContent = 'Saving…'; el.style.color = '#94a3b8';
+  // strip the _idx helper property before writing to disk
+  const clean = {
+    type: 'FeatureCollection',
+    features: areas.features.map(f => ({
+      type: 'Feature',
+      geometry: f.geometry,
+      properties: Object.fromEntries(
+        Object.entries(f.properties).filter(([k]) => k !== '_idx')
+      ),
+    })),
+  };
+  try {
+    const r = await fetch(
+      `/save?facility=${encodeURIComponent(facility)}&file=areas.geojson`,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(clean) }
+    );
+    const j = await r.json();
+    if (!j.ok) throw new Error(j.error || 'save failed');
+    el.textContent = `Saved ✓ ${j.count} areas → areas.geojson`; el.style.color = '#4ade80';
+    setDirty(false);
+  } catch (e) {
+    el.textContent = `Save failed: ${e.message}. Is place-server running?`; el.style.color = '#f87171';
+  }
+}
+function setDirty(v) {
+  dirty = v;
+  document.getElementById('btn-save').textContent = v ? 'Save to repo •' : 'Save to repo';
+}
+window.addEventListener('beforeunload', e => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
+document.getElementById('btn-save').onclick = save;
+
+map.on('load', load);
+</script>
+</body>
+</html>

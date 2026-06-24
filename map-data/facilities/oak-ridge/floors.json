@@ -1,0 +1,62 @@
+[
+  {
+    "building_code": "SAN",
+    "building": "Sanctuary",
+    "name": "Main",
+    "level": 1,
+    "floorplan_image_url": null,
+    "geo_corners_geojson": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [-84.27035, 36.01075],
+          [-84.26975, 36.01075],
+          [-84.26975, 36.01140],
+          [-84.27035, 36.01140],
+          [-84.27035, 36.01075]
+        ]
+      ]
+    },
+    "rotation_deg": 0
+  },
+  {
+    "building_code": "SAN",
+    "building": "Sanctuary",
+    "name": "Balcony",
+    "level": 2,
+    "floorplan_image_url": null,
+    "geo_corners_geojson": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [-84.27035, 36.01075],
+          [-84.26975, 36.01075],
+          [-84.26975, 36.01140],
+          [-84.27035, 36.01140],
+          [-84.27035, 36.01075]
+        ]
+      ]
+    },
+    "rotation_deg": 0
+  },
+  {
+    "building_code": "EDU",
+    "building": "Education Wing",
+    "name": "Main",
+    "level": 1,
+    "floorplan_image_url": null,
+    "geo_corners_geojson": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [-84.26965, 36.01090],
+          [-84.26910, 36.01090],
+          [-84.26910, 36.01135],
+          [-84.26965, 36.01135],
+          [-84.26965, 36.01090]
+        ]
+      ]
+    },
+    "rotation_deg": 0
+  }
+]

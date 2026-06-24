@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import QRCode from 'qrcode';
 import type { Asset } from '@cmc/shared';
 import { useEnsureAssetQrToken } from '../lib/queries';
@@ -11,17 +11,22 @@ import { Button, Modal } from '../components/ui';
  */
 export function QrLabelModal({ asset, onClose }: { asset: Asset; onClose: () => void }) {
   const ensure = useEnsureAssetQrToken(asset.id);
+  const mutateRef = useRef(ensure.mutateAsync);
+  mutateRef.current = ensure.mutateAsync;
   const [dataUrl, setDataUrl] = useState<string | null>(null);
   const [link, setLink] = useState('');
 
   useEffect(() => {
+    let cancelled = false;
     (async () => {
-      const token = asset.qr_token ?? (await ensure.mutateAsync());
+      const token = asset.qr_token ?? (await mutateRef.current());
+      if (cancelled) return;
       const url = `${window.location.origin}/a/${token}`;
       setLink(url);
       setDataUrl(await QRCode.toDataURL(url, { width: 320, margin: 1 }));
     })();
-  }, [asset.id]);
+    return () => { cancelled = true; };
+  }, [asset.id, asset.qr_token]);
 
   return (
     <Modal title="QR label" onClose={onClose}>

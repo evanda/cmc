@@ -1,0 +1,43 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "feature_type": "parking",
+        "name": "Main Parking Lot"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-84.27035, 36.01045],
+            [-84.26895, 36.01045],
+            [-84.26895, 36.01072],
+            [-84.27035, 36.01072],
+            [-84.27035, 36.01045]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "feature_type": "playground",
+        "name": "Children's Playground"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-84.26895, 36.01090],
+            [-84.26860, 36.01090],
+            [-84.26860, 36.01135],
+            [-84.26895, 36.01135],
+            [-84.26895, 36.01090]
+          ]
+        ]
+      }
+    }
+  ]
+}
