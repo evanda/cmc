@@ -121,6 +121,14 @@ export function AssetDetailPage() {
               <Row label="Location" value={locName ?? 'Unplaced'} />
               <Row label="Make / Model" value={[a.make, a.model].filter(Boolean).join(' ') || '—'} />
               <Row label="Serial" value={a.serial ?? '—'} />
+              {a.geometry_geojson && (
+                <Row
+                  label="Map location"
+                  value={`${a.geometry_geojson.coordinates[1].toFixed(5)}, ${a.geometry_geojson.coordinates[0].toFixed(5)}${
+                    a.level != null ? ` · level ${a.level}` : ''
+                  }`}
+                />
+              )}
             </dl>
             {a.notes && <p className="mt-3 text-sm text-slate-600">{a.notes}</p>}
           </section>

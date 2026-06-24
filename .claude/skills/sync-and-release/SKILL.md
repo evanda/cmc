@@ -160,6 +160,21 @@ git pull --ff-only
 Confirm the merge succeeded and report which issues were auto-closed
 (look for `Closes #N` in the PR description).
 
+**Safety net — close stragglers.** GitHub only auto-closes on a closing keyword
+(`Closes/Fixes/Resolves #N`); a bare `#N` reference does not. After merging,
+cross-check every issue the PR addressed against the still-open list and close
+any that were fully delivered but didn't auto-close:
+
+```bash
+# Issues referenced anywhere in the PR body, still open after merge:
+gh pr view #PR --repo evanda/cmc --json body -q '.body' | grep -oE '#[0-9]+' | sort -u
+gh issue list --repo evanda/cmc --state open --assignee '*' --json number,title
+```
+
+For each that the merge fully resolved:
+`gh issue close <N> --repo evanda/cmc --comment "Delivered in PR #<PR> (merged)."`
+Leave issues only partially addressed open (and note what remains).
+
 ---
 
 ## Phase 5 — Push Supabase Migrations

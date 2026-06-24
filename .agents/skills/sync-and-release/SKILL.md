@@ -182,6 +182,13 @@ git pull --ff-only
 Confirm the merge succeeded and report which issues were auto-closed (look for
 `Closes #N` / `Closes evanda/cmc-feedback#N` in the PR description).
 
+**Safety net — close stragglers.** GitHub only auto-closes on a closing keyword
+(`Closes/Fixes/Resolves #N`); a bare `#N` reference does not. After merging,
+cross-check the issues the PR addressed against the still-open list and close any
+fully-delivered ones that didn't auto-close
+(`gh issue close <N> --repo evanda/cmc --comment "Delivered in PR #<PR> (merged)."`),
+leaving partially-addressed issues open.
+
 ---
 
 ## Phase 5 — Close External Feedback Issues

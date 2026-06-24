@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   WORK_ORDER_PRIORITIES,
   WORK_ORDER_TYPES,
@@ -49,6 +50,18 @@ export function WorkOrdersPage() {
   const [open, setOpen] = useState<WorkOrder | null>(null);
   const [showNew, setShowNew] = useState(false);
   const [view, setView] = useState<View>('board');
+
+  // Deep link from the map: /work-orders?asset=<id> opens the New WO modal
+  // pre-linked to that asset (plan §5.4, #37). Only staff can create WOs.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const assetParam = searchParams.get('asset');
+  useEffect(() => {
+    if (assetParam && canEdit) setShowNew(true);
+  }, [assetParam, canEdit]);
+  const closeNew = () => {
+    setShowNew(false);
+    if (assetParam) setSearchParams({}, { replace: true });
+  };
 
   const assetName = (id: string | null) =>
     id ? (assets.data?.find((a) => a.id === id)?.name ?? null) : null;
@@ -148,7 +161,8 @@ export function WorkOrdersPage() {
         <NewWorkOrderModal
           assets={(assets.data ?? []).map((a) => ({ id: a.id, name: a.name }))}
           users={users.data ?? []}
-          onClose={() => setShowNew(false)}
+          initialAssetId={assetParam}
+          onClose={closeNew}
         />
       )}
     </div>
@@ -158,21 +172,26 @@ export function WorkOrdersPage() {
 function NewWorkOrderModal({
   assets,
   users,
+  initialAssetId,
   onClose,
 }: {
   assets: { id: string; name: string }[];
   users: { id: string; name: string | null; email: string }[];
+  initialAssetId?: string | null;
   onClose: () => void;
 }) {
   const create = useCreateWorkOrderFromForm();
   const locations = useLocations();
   const vendors = useVendors();
+  // Pre-link to an asset when opened from the map (#37); seed the title with its
+  // name so the WO reads e.g. "AC1 — " ready for the rest of the summary.
+  const initialAsset = initialAssetId ? assets.find((a) => a.id === initialAssetId) : undefined;
   const [f, setF] = useState({
-    title: '',
+    title: initialAsset ? `${initialAsset.name} — ` : '',
     description: '',
     type: 'reactive',
     priority: 'medium',
-    linked_asset_id: '',
+    linked_asset_id: initialAsset?.id ?? '',
     location_id: '',
     assignee_user_id: '',
     vendor_id: '',

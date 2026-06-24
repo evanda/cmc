@@ -101,6 +101,14 @@ export type Asset = BaseRow & {
   /** Per-asset point of contact (plan §4.5); falls back to org maintenance email. */
   contact_name: string | null;
   contact_email: string | null;
+  /**
+   * Intrinsic map point for fixed assets (AC units, AEDs, shutoffs) — null until
+   * placed. Lets a non-moving asset sit on the map directly, without a shadow POI
+   * (plan §5.4, issue #38). Set via loader/seed, not the hand-edited asset form.
+   */
+  geometry_geojson: GeoJsonPoint | null;
+  /** Floor level for the map point: -1=B1, 0/1=ground, 2…; null = unplaced/site. */
+  level: number | null;
 };
 
 /** One photo of an asset; multiple per asset, one primary (plan §4.1, §6). */
@@ -228,7 +236,7 @@ export type Poi = BaseRow & {
   building_id: string | null;
   floor_id: string | null;
   level: number | null;
-  geometry_geojson: { type: 'Point'; coordinates: number[] };
+  geometry_geojson: GeoJsonPoint;
   poi_type: string;
   linked_asset_id: string | null;
   label: string | null;
@@ -249,4 +257,9 @@ export type WorkOrderAttachment = BaseRow & {
 export type GeoJsonPolygon = {
   type: 'Polygon';
   coordinates: number[][][];
+};
+
+export type GeoJsonPoint = {
+  type: 'Point';
+  coordinates: number[];
 };

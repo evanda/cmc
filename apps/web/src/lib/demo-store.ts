@@ -166,6 +166,8 @@ export function seedAsset(
     notes: null,
     contact_name: null,
     contact_email: null,
+    geometry_geojson: null,
+    level: null,
     ...fields,
   });
 }
