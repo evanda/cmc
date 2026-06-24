@@ -12,7 +12,7 @@ What you described is, in industry terms, a **CMMS** (Computerized Maintenance M
 
 - **Asset** — a maintainable thing (an AC unit, a roof section, a water fountain, a bus, a ladder).
 - **Location** — where an asset lives (Building → Floor → Room/Area).
-- **Work Request** — a raw "something's wrong / something's needed" report, often from a non-maintenance person.
+- **Work Request** — a raw "something's wrong / something's needed" report, often from a non-maintenance person. *(Implemented as a work order in `requested` status, not a separate entity — see §3.1.)*
 - **Work Order (WO)** — a triaged, assignable, trackable unit of work. Requests become WOs.
 - **Preventive Maintenance (PM)** — recurring scheduled work, triggered by *time* (every 6 months) or by a *meter* (every 5,000 miles).
 - **Reactive / Corrective Maintenance** — fix-it-when-it-breaks work.
@@ -48,7 +48,7 @@ You can ignore the parts of the market you don't need: heavy ERP/accounting inte
 
 These come straight from how real facility teams (and insurers) operate. Each is cheap to add if the data model anticipates it.
 
-1. **Separate Work *Request* intake from Work *Orders.*** Let any staff member / volunteer submit a request ("AC out in Room 12") via a dead-simple form. Maintenance triages requests into proper WOs. Keeps the WO list clean and gives requesters status visibility without giving them edit rights.
+1. **Lightweight request intake, modeled as a work-order status (not a separate table).** Let any staff member / volunteer submit a request ("AC out in Room 12") via a dead-simple form. **Implemented decision:** rather than a separate `work_requests` table + a convert-to-WO step, a request *is* a work order created in `requested` status; maintenance triages it in place (accept → `open`, decline → `cancelled`). A `BEFORE INSERT` guard forces non-staff inserts clean (sets `requested_by`, strips cost/assignee/schedule), and RLS scopes requesters to their own rows — so you keep the dead-simple intake form, clean list, and requester status-visibility-without-edit-rights, without the second table or the duplicate-row hop. (The separate-table approach only earns its keep with genuinely untrusted reporters; this is single-tenant per deployment, where everyone with access is staff — see §7.6.)
 2. **QR-code asset tags (opt-in per asset).** Print a sticker for the assets worth tagging — rooftop AC units, the boiler, major equipment — each encoding a deep link to that asset. Scanning jumps straight to the asset record: who maintains it, its history, or file a work request on the spot. You don't have to tag everything; tag where standing-in-front-of-it lookup is useful. **Design detail:** the sticker encodes a URL like `https://<instance>/a/<qr_token>` (a stable, unguessable slug, not the raw DB id, so codes survive reprints and don't leak ids). Because it's a plain URL, a phone's **native camera** opens it in the browser — so scanning works on day one, before the React Native app exists; the mobile app later handles the same links natively. Complements the map: browse spatially, or scan for direct physical-world access.
 3. **Asset hierarchy (parent/child).** *Building → Rooftop Unit RTU-3 → Compressor.* A WO on the compressor rolls up into the RTU's and the building's cost history.
 4. **Meter-based scheduling.** Buses (mileage), generators (run-hours), maybe HVAC filters (runtime). Needed for the fleet to be useful.
@@ -214,14 +214,16 @@ vehicles(id, asset_id, vin, plate, year, make, model,
 pois(id, building_id, floor_id, level, geometry_geojson,    -- single lng/lat coord system; level for floor filtering
      poi_type, linked_asset_id, label, icon, notes)
 
-work_requests(id, title, description, requested_by, location_id,
-              linked_asset_id, status, photo_url, created_at)
-work_orders(id, title, description, type, priority, status,
+-- NOTE (implemented): there is no separate work_requests table. Intake is a
+-- work order created in 'requested' status (see §3.1); triage advances it in
+-- place (accept → open, decline → cancelled). A BEFORE INSERT guard forces
+-- non-staff inserts clean (requested_by = self; cost/assignee/schedule nulled).
+work_orders(id, title, description, type, priority, status,         -- status starts 'requested' for self-reported intake
             requested_by, assignee_user_id, vendor_id,
             linked_asset_id, location_id,
             estimate_cost, actual_parts_cost, actual_labor_cost, actual_vendor_cost,
             labor_hours, scheduled_date, due_date, completed_date,
-            completion_notes, source_request_id, source_pm_id)
+            completion_notes, source_pm_id)
 work_order_comments(id, work_order_id, author_user_id, body, created_at)
 work_order_attachments(id, work_order_id, url, kind, caption)
 
@@ -323,8 +325,8 @@ REST (or Supabase auto-generated + a few RPC/Edge Functions for non-CRUD logic):
 
 ```
 GET/POST  /assets            GET /assets/:id (incl. history, PMs, meters)
-GET/POST  /work-requests     POST /work-requests/:id/convert  -> work_order
 GET/POST  /work-orders       PATCH /work-orders/:id  (status/assign/cost)
+                             (intake = POST a WO in 'requested' status; triage = PATCH status open/cancelled)
                              POST  /work-orders/:id/comments
                              POST  /work-orders/:id/attachments
 GET/POST  /pm-schedules      (engine runs server-side on cron)
@@ -339,7 +341,7 @@ GET       /dashboard          (open/overdue WOs, upcoming PMs, expiries, MTD spe
 POST      /inspections/runs
 ```
 
-Custom server logic worth isolating in `packages/shared` + Edge Functions: **PM next-due calculation**, **request→WO conversion**, **capital-forecast projection**, **expiry sweep**.
+Custom server logic worth isolating in `packages/shared` + Edge Functions: **PM next-due calculation**, **capital-forecast projection**, **expiry sweep**. (Request intake needs no conversion logic — it's a WO created in `requested` status, triaged via a status change.)
 
 ---
 
@@ -384,7 +386,7 @@ A small React + MapLibre app sharing `packages/shared` types so its exports drop
 
 **Phase 0 — Foundation.** Monorepo, Supabase project, auth + roles (RLS), schema (§6), seed asset categories, single-row `org_settings`/`facilities`. Buildings / floors / locations CRUD. **Dev:** seedable facility fixtures + `reset && seed <name>` (see §7.6).
 
-**Phase 1 — MVP (the core loop).** Asset Registry (incl. tools, `qr_token` + printable QR labels generated from the web app — scannable via native camera deep links from day one). Work Requests → Work Orders: create, assign, comment, status, complete-with-cost (estimate + actual + labor). Vendor & Contact directory. List view + Calendar view. Basic dashboard. *Web first.* This is a usable tool on its own.
+**Phase 1 — MVP (the core loop).** Asset Registry (incl. tools, `qr_token` + printable QR labels generated from the web app — scannable via native camera deep links from day one). Work Orders incl. lightweight request intake (a WO created in `requested` status; triaged in place — see §3.1): create, assign, comment, status, complete-with-cost (estimate + actual + labor). Vendor & Contact directory. List view + Calendar view. Basic dashboard. *Web first.* This is a usable tool on its own.
 
 **Phase 2 — Spatial.** Loader tool (§10). Single MapLibre map: satellite base + building footprints + georeferenced interior floor overlays + POIs, with a **level switcher** for floor up/down. Map view wired into WOs (click a POI/building → its assets and open WOs). **Facility export/import** (§7.6) — once the spatial schema settles, since maps/images are the hardest part to serialize; gives you backup, support-repro, and starter-campus bundles.
 
