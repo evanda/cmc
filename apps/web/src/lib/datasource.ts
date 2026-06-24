@@ -54,6 +54,8 @@ export interface DataSource {
   deleteLocation(id: string): Promise<void>;
   listUsers(): Promise<User[]>;
   updateUserRole(userId: string, role: UserRole): Promise<User>;
+  inviteUser(email: string, role: UserRole): Promise<void>;
+  deactivateUser(userId: string): Promise<void>;
   listAssetCategories(): Promise<AssetCategory[]>;
   listAssets(): Promise<Asset[]>;
   getAsset(id: string): Promise<Asset | null>;
@@ -347,6 +349,18 @@ const supabaseDataSource: DataSource = {
     unwrap<User>(
       await supabase.from('users').update({ role }).eq('id', userId).select().single(),
     ),
+  inviteUser: async (email, role) => {
+    const { error } = await supabase.functions.invoke('invite-user', { body: { email, role } });
+    if (error) throw new Error(error.message);
+  },
+  deactivateUser: async (userId) => {
+    unwrap(
+      await supabase
+        .from('users')
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', userId),
+    );
+  },
 
   listAssetCategories: async () =>
     unwrap<AssetCategory[]>(

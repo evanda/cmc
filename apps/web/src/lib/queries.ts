@@ -207,6 +207,23 @@ export function useUpdateUserRole() {
   });
 }
 
+export function useInviteUser() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ email, role }: { email: string; role: import('@cmc/shared').UserRole }) =>
+      ds.inviteUser(email, role),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['users'] }),
+  });
+}
+
+export function useDeactivateUser() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (userId: string) => ds.deactivateUser(userId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['users'] }),
+  });
+}
+
 export function useAsset(id: string) {
   return useQuery({ queryKey: ['asset', id], queryFn: () => ds.getAsset(id) });
 }

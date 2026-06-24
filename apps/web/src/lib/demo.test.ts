@@ -151,6 +151,29 @@ describe('demo data source — work log (asset history)', () => {
   });
 });
 
+describe('demo data source — user management', () => {
+  it('inviteUser adds a user visible in listUsers', async () => {
+    const before = (await ds.listUsers()).length;
+    await ds.inviteUser('newperson@test.org', 'technician');
+    const after = await ds.listUsers();
+    expect(after.length).toBe(before + 1);
+    const invited = after.find((u) => u.email === 'newperson@test.org');
+    expect(invited?.role).toBe('technician');
+    expect(invited?.name).toBeNull();
+  });
+
+  it('deactivateUser removes the user from listUsers', async () => {
+    await ds.inviteUser('todeactivate@test.org', 'requester');
+    const before = await ds.listUsers();
+    const target = before.find((u) => u.email === 'todeactivate@test.org')!;
+    expect(target).toBeTruthy();
+
+    await ds.deactivateUser(target.id);
+    const after = await ds.listUsers();
+    expect(after.find((u) => u.id === target.id)).toBeUndefined();
+  });
+});
+
 describe('map-utils — level filter', () => {
   it('returns null for the site level (show all POIs)', () => {
     expect(poiLevelFilter('site')).toBeNull();

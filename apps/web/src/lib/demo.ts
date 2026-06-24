@@ -204,11 +204,21 @@ export const demoDataSource: DataSource = {
     if (l) l.deleted_at = now;
   },
 
-  listUsers: async () => [...users].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '')),
+  listUsers: async () =>
+    users
+      .filter((u) => u.deleted_at === null)
+      .sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '')),
   updateUserRole: async (uid, role) => {
     const u = users.find((x) => x.id === uid)!;
     u.role = role;
     return u;
+  },
+  inviteUser: async (email, role) => {
+    users.push({ id: id(), ...base(), name: null, email, role });
+  },
+  deactivateUser: async (uid) => {
+    const u = users.find((x) => x.id === uid);
+    if (u) u.deleted_at = now;
   },
 
   listAssetCategories: async () => [...categories].sort((a, b) => a.name.localeCompare(b.name)),
