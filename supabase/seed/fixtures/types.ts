@@ -32,9 +32,30 @@ export interface FixtureOrg {
   timezone?: string;
 }
 
+export interface FixturePmSchedule {
+  name: string;
+  /** Task instructions; also creates a task_template row. */
+  instructions?: string;
+  trigger_type: 'calendar' | 'fixed_date';
+  interval_value?: number;
+  interval_unit?: 'day' | 'week' | 'month' | 'year';
+  /** fixed_date: month 1–12. */
+  fixed_month?: number;
+  /** fixed_date: day 1–31. */
+  fixed_day?: number;
+  lead_time_days?: number;
+  advance_from?: 'completion' | 'scheduled';
+  is_compliance?: boolean;
+  category?: string;
+  /** Optional: pin to a location by building + location name. */
+  building?: string;
+  location?: string;
+}
+
 export interface Fixture {
   /** CLI key, e.g. `pnpm db:seed tiny`. */
   key: string;
   org: FixtureOrg;
   buildings: FixtureBuilding[];
+  pmSchedules?: FixturePmSchedule[];
 }

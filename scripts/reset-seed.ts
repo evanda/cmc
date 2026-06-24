@@ -91,6 +91,9 @@ async function seed() {
   let floorCount = 0;
   let locationCount = 0;
 
+  // "BuildingName::LocationName" → location_id; used when seeding PM schedules.
+  const locationIdByKey = new Map<string, string>();
+
   for (const b of fixture.buildings) {
     const { data: building, error: bErr } = await db
       .from('buildings')
@@ -113,19 +116,65 @@ async function seed() {
     }
 
     for (const l of b.locations) {
-      const { error: lErr } = await db.from('locations').insert({
-        building_id: building.id,
-        floor_id: l.floor ? (floorIdByName.get(l.floor) ?? null) : null,
-        name: l.name,
-        type: l.type ?? null,
-      });
-      if (lErr) fail(`location "${l.name}" insert failed: ${lErr.message}`);
+      const { data: loc, error: lErr } = await db
+        .from('locations')
+        .insert({
+          building_id: building.id,
+          floor_id: l.floor ? (floorIdByName.get(l.floor) ?? null) : null,
+          name: l.name,
+          type: l.type ?? null,
+        })
+        .select()
+        .single();
+      if (lErr || !loc) fail(`location "${l.name}" insert failed: ${lErr?.message}`);
+      locationIdByKey.set(`${b.name}::${l.name}`, loc.id);
       locationCount++;
     }
   }
 
+  // PM schedules (plan §4.3): task_template + pm_schedule pairs.
+  let pmCount = 0;
+  const today = new Date().toISOString().split('T')[0];
+  for (const pm of fixture.pmSchedules ?? []) {
+    let taskTemplateId: string | null = null;
+    if (pm.instructions) {
+      const { data: tmpl, error: tmplErr } = await db
+        .from('task_templates')
+        .insert({ name: pm.name, instructions: pm.instructions })
+        .select()
+        .single();
+      if (tmplErr || !tmpl) fail(`task_template "${pm.name}" insert failed: ${tmplErr?.message}`);
+      taskTemplateId = tmpl.id;
+    }
+
+    const locationId =
+      pm.building && pm.location
+        ? (locationIdByKey.get(`${pm.building}::${pm.location}`) ?? null)
+        : null;
+
+    const { error: pmErr } = await db.from('pm_schedules').insert({
+      name: pm.name,
+      task_template_id: taskTemplateId,
+      trigger_type: pm.trigger_type,
+      interval_value: pm.interval_value ?? null,
+      interval_unit: pm.interval_unit ?? null,
+      fixed_month: pm.fixed_month ?? null,
+      fixed_day: pm.fixed_day ?? null,
+      lead_time_days: pm.lead_time_days ?? 14,
+      advance_from: pm.advance_from ?? 'completion',
+      is_compliance: pm.is_compliance ?? false,
+      category: pm.category ?? null,
+      location_id: locationId,
+      anchor_date: today,
+      active: true,
+    });
+    if (pmErr) fail(`pm_schedule "${pm.name}" insert failed: ${pmErr.message}`);
+    pmCount++;
+  }
+
+  const pmMsg = pmCount > 0 ? `, ${pmCount} PM schedules` : '';
   console.log(
-    `✓ seeded "${fixture.key}": ${buildingCount} buildings, ${floorCount} floors, ${locationCount} locations.`,
+    `✓ seeded "${fixture.key}": ${buildingCount} buildings, ${floorCount} floors, ${locationCount} locations${pmMsg}.`,
   );
 }
 

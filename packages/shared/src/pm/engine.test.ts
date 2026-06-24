@@ -100,6 +100,45 @@ describe('shouldGenerateWorkOrder', () => {
       true,
     );
   });
+
+  it('meter: does not double-generate when an open WO already exists', () => {
+    const r = shouldGenerateWorkOrder(meter, today, {
+      today,
+      leadTimeDays: 0,
+      hasOpenWorkOrder: true,
+      meterSinceLastService: 9999,
+    });
+    expect(r).toBe(false);
+  });
+
+  it('fixed_date: generates when the next annual date is within lead window', () => {
+    // fixed April 15; today March 25 → 21 days out; lead 30 → should generate
+    const r = shouldGenerateWorkOrder(fixed, new Date('2025-04-15T00:00:00Z'), {
+      today,
+      leadTimeDays: 30,
+      hasOpenWorkOrder: false,
+    });
+    expect(r).toBe(true);
+  });
+
+  it('fixed_date: does not generate when beyond the lead window', () => {
+    // fixed April 15; today March 25 → 21 days out; lead 7 → skip
+    const r = shouldGenerateWorkOrder(fixed, new Date('2025-04-15T00:00:00Z'), {
+      today,
+      leadTimeDays: 7,
+      hasOpenWorkOrder: false,
+    });
+    expect(r).toBe(false);
+  });
+
+  it('fixed_date: does not double-generate when an open WO exists', () => {
+    const r = shouldGenerateWorkOrder(fixed, new Date('2025-04-15T00:00:00Z'), {
+      today,
+      leadTimeDays: 60,
+      hasOpenWorkOrder: true,
+    });
+    expect(r).toBe(false);
+  });
 });
 
 describe('advanceAnchor', () => {
