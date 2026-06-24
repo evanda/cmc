@@ -55,7 +55,7 @@ export function DashboardPage() {
     return Math.ceil((due.getTime() - now.getTime()) / 86_400_000) <= s.lead_time_days;
   }).length;
 
-  const openRequests = requests.data?.filter((r) => r.status === 'open').length;
+  const openRequests = requests.data?.length;
   const activeWorkOrders = workOrders.data?.filter((w) =>
     ACTIVE_WORK_ORDER_STATUSES.includes(w.status),
   ).length;
