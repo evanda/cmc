@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { demoDataSource as ds } from './demo';
-import { buildLevels, countOpenWosByBuilding, levelLabel, poiLevelFilter } from './map-utils';
+import {
+  buildLevels,
+  countOpenWosByBuilding,
+  levelLabel,
+  poiLevelFilter,
+  resolveBasemapUrl,
+} from './map-utils';
 
 // The in-memory demo DataSource backs offline mode + screenshots. These guard
 // the seed shape and the core write flows the UI relies on.
@@ -256,5 +262,44 @@ describe('map-utils — countOpenWosByBuilding', () => {
 
   it('returns empty object when there are no active WOs', () => {
     expect(countOpenWosByBuilding([], locations)).toEqual({});
+  });
+});
+
+describe('map-utils — resolveBasemapUrl', () => {
+  const base = 'https://app.example.com/facilities/midwaypca';
+
+  it('returns null when basemapTiles is absent', () => {
+    expect(resolveBasemapUrl(undefined, base)).toBeNull();
+    expect(resolveBasemapUrl('', base)).toBeNull();
+  });
+
+  it('detects a pmtiles:// URL and passes it through as-is', () => {
+    const result = resolveBasemapUrl(
+      'pmtiles://https://storage.example.com/basemap.pmtiles',
+      base,
+    );
+    expect(result).toEqual({
+      isPMTiles: true,
+      url: 'pmtiles://https://storage.example.com/basemap.pmtiles',
+    });
+  });
+
+  it('passes an https:// XYZ template through as-is', () => {
+    const result = resolveBasemapUrl(
+      'https://server.arcgisonline.com/z/y/x',
+      base,
+    );
+    expect(result).toEqual({
+      isPMTiles: false,
+      url: 'https://server.arcgisonline.com/z/y/x',
+    });
+  });
+
+  it('resolves a relative path against the facility base', () => {
+    const result = resolveBasemapUrl('tiles/cache/{z}/{y}/{x}.jpg', base);
+    expect(result).toEqual({
+      isPMTiles: false,
+      url: 'https://app.example.com/facilities/midwaypca/tiles/cache/{z}/{y}/{x}.jpg',
+    });
   });
 });

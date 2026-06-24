@@ -7,6 +7,7 @@
 <!-- Vendored locally so the demo runs with no CDN / API key for the library. -->
 <link href="./vendor/maplibre-gl.css" rel="stylesheet" />
 <script src="./vendor/maplibre-gl.js"></script>
+<script src="./vendor/pmtiles.js"></script>
 <style>
   html, body, #map { margin: 0; height: 100%; }
   body { font: 14px/1.4 system-ui, sans-serif; }
@@ -90,6 +91,11 @@ const LEVELS = [
 const facility = new URLSearchParams(location.search).get('facility') || 'midwaypca';
 const FDIR = `./facilities/${facility}`;
 
+// PMTiles protocol: allows basemap_tiles = "pmtiles://https://…/basemap.pmtiles"
+// in meta.json — serves raster tiles directly from the archive, no tile server needed.
+const _pmProtocol = new pmtiles.Protocol();
+maplibregl.addProtocol('pmtiles', _pmProtocol.tile);
+
 const ESRI = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
 // Dark fallback layer renders even if the basemap tiles are unreachable. The
 // satellite source itself is added in load() once meta.json is known — so a
@@ -122,16 +128,26 @@ async function load() {
   document.getElementById('t-sub').textContent =
     'Buildings traced on satellite (real coords). Points auto-placed per floor — nudge to exact spots.';
 
-  // Basemap: a local checked-in tile cache (meta.basemap_tiles) if present,
-  // else live Esri imagery. Relative templates resolve against the facility dir.
+  // Basemap: PMTiles archive (pmtiles://…), a local XYZ tile cache, or live Esri.
+  // PMTiles sources use `url` so the protocol handler auto-reads zoom/bounds from
+  // the archive header; XYZ sources use `tiles` with an {z}/{y}/{x} template.
   const bt = meta && meta.basemap_tiles;
-  const tilesUrl = bt ? (bt.startsWith('http') ? bt : `${FDIR}/${bt}`) : ESRI;
-  map.addSource('satellite', {
-    type: 'raster', tileSize: 256, tiles: [tilesUrl],
-    minzoom: (meta && meta.basemap_minzoom) || 0,
-    maxzoom: (meta && meta.basemap_maxzoom) || 19,
-    attribution: (meta && meta.basemap_attribution) || 'Imagery © Esri, Maxar, Earthstar Geographics',
-  });
+  const isPMTiles = bt && bt.startsWith('pmtiles://');
+  const tilesUrl = bt
+    ? (isPMTiles || bt.startsWith('http') ? bt : `${FDIR}/${bt}`)
+    : ESRI;
+  map.addSource('satellite', isPMTiles
+    ? {
+        type: 'raster', tileSize: 256, url: tilesUrl,
+        attribution: (meta && meta.basemap_attribution) || '',
+      }
+    : {
+        type: 'raster', tileSize: 256, tiles: [tilesUrl],
+        minzoom: (meta && meta.basemap_minzoom) || 0,
+        maxzoom: (meta && meta.basemap_maxzoom) || 19,
+        attribution: (meta && meta.basemap_attribution) || 'Imagery © Esri, Maxar, Earthstar Geographics',
+      },
+  );
   map.addLayer({ id: 'satellite', type: 'raster', source: 'satellite' });
 
   const bounds = new maplibregl.LngLatBounds();

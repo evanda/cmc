@@ -5,7 +5,8 @@ import maplibregl, {
   type Map as MlMap,
 } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { buildLevels, levelLabel, poiLevelFilter, type Level } from '../lib/map-utils';
+import { Protocol } from 'pmtiles';
+import { buildLevels, levelLabel, poiLevelFilter, resolveBasemapUrl, type Level } from '../lib/map-utils';
 
 interface SelectedPoi {
   label: string;
@@ -66,6 +67,9 @@ export function MapView({
 
   useEffect(() => {
     if (!containerRef.current) return;
+    // Register PMTiles protocol once per page load so pmtiles:// basemap URLs work.
+    const pmProtocol = new Protocol();
+    maplibregl.addProtocol('pmtiles', pmProtocol.tile);
     const map = new maplibregl.Map({
       container: containerRef.current,
       style: {
@@ -96,18 +100,27 @@ export function MapView({
       // Optional subtle satellite basemap — grayscale + faded so it reads as
       // ground context behind the vectors, not a competing layer. Church-specific
       // (configured per facility in meta.json, plan §7.6); generic in code.
-      if (meta?.basemap_tiles) {
-        const tilesUrl: string = /^https?:\/\//.test(meta.basemap_tiles)
-          ? meta.basemap_tiles
-          : `${base}/${meta.basemap_tiles}`;
-        map.addSource('satellite', {
-          type: 'raster',
-          tiles: [tilesUrl],
-          tileSize: 256,
-          minzoom: meta.basemap_minzoom ?? 0,
-          maxzoom: meta.basemap_maxzoom ?? 22,
-          attribution: meta.basemap_attribution ?? '',
-        });
+      // Supports pmtiles:// archives (no tile server needed) and https:// XYZ templates.
+      const basemap = resolveBasemapUrl(meta?.basemap_tiles, base);
+      if (basemap) {
+        map.addSource(
+          'satellite',
+          basemap.isPMTiles
+            ? {
+                type: 'raster',
+                url: basemap.url,
+                tileSize: 256,
+                attribution: meta.basemap_attribution ?? '',
+              }
+            : {
+                type: 'raster',
+                tiles: [basemap.url],
+                tileSize: 256,
+                minzoom: meta.basemap_minzoom ?? 0,
+                maxzoom: meta.basemap_maxzoom ?? 22,
+                attribution: meta.basemap_attribution ?? '',
+              },
+        );
         map.addLayer({
           id: 'satellite',
           type: 'raster',
@@ -300,7 +313,10 @@ export function MapView({
       }
     });
 
-    return () => map.remove();
+    return () => {
+      map.remove();
+      maplibregl.removeProtocol('pmtiles');
+    };
   }, [base]);
 
   // Apply the level filter to POIs, floor outlines, and image overlays.

@@ -22,6 +22,29 @@ export function buildLevels(poiLevels: number[], floorLevels: number[]): number[
 }
 
 /**
+ * Resolve a `meta.json` basemap_tiles value into a MapLibre source descriptor.
+ *
+ * Returns `null` when `basemapTiles` is absent — no satellite source should be added.
+ * Returns `{ isPMTiles: true, url }` for `pmtiles://…` archives (use MapLibre `url`
+ * property so the protocol handler reads zoom/bounds from the archive header).
+ * Returns `{ isPMTiles: false, url }` for XYZ tile templates (use `tiles: [url]`).
+ *
+ * Relative paths (no scheme) are resolved against `base` (the facility dir URL).
+ */
+export function resolveBasemapUrl(
+  basemapTiles: string | undefined,
+  base: string,
+): { isPMTiles: boolean; url: string } | null {
+  if (!basemapTiles) return null;
+  const isPMTiles = basemapTiles.startsWith('pmtiles://');
+  const url =
+    isPMTiles || /^https?:\/\//.test(basemapTiles)
+      ? basemapTiles
+      : `${base}/${basemapTiles}`;
+  return { isPMTiles, url };
+}
+
+/**
  * Count active (non-completed/cancelled) work orders per building.
  * Joins via location_id → building_id (plan §4.6 — building map click).
  */
