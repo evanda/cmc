@@ -1,0 +1,81 @@
+# Deploys the Supabase backend (migrations, Edge Functions, Auth config) to the
+# linked hosted project. The web frontend deploys separately via Vercel's Git
+# integration — this workflow is the backend half of the release (see WORKFLOW.md
+# and docs/DEPLOY.md).
+#
+# Required repo secrets (Settings → Secrets and variables → Actions):
+#   SUPABASE_ACCESS_TOKEN  — account access token (supabase.com/dashboard/account/tokens)
+#   SUPABASE_DB_PASSWORD   — the project's Postgres password (Project Settings → Database)
+#
+# CI (ci.yml) only *validates* migrations against a throwaway Postgres; this
+# workflow is the only thing that *applies* them to the hosted DB.
+name: Deploy backend (Supabase)
+
+on:
+  # Manual run — lets you also (re)configure Auth Site URL / Edge Functions.
+  workflow_dispatch:
+    inputs:
+      deploy_functions:
+        description: 'Also deploy Edge Functions (invite-user)'
+        type: boolean
+        default: true
+      app_url:
+        description: 'App origin for Auth Site URL + SITE_URL secret (#39). Blank = leave auth config untouched.'
+        type: string
+        default: 'https://cmc-web-sandy.vercel.app'
+  # Auto-run when the backend changes on main. Migrations + functions only;
+  # auth config is intentionally manual-only (app_url is empty on push).
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/**'
+      - 'supabase/functions/**'
+
+# Single-tenant per deployment: this ref is the one church instance this repo is
+# linked to. A fork for another church changes this (or promotes it to a secret).
+env:
+  SUPABASE_PROJECT_REF: fynevwffzebqygoxajae
+
+# Never run two backend deploys at once.
+concurrency:
+  group: deploy-backend
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Link project
+        run: supabase link --project-ref "$SUPABASE_PROJECT_REF"
+
+      - name: Push migrations
+        run: supabase db push
+
+      - name: Deploy Edge Functions
+        if: ${{ github.event_name == 'push' || inputs.deploy_functions }}
+        run: supabase functions deploy invite-user --project-ref "$SUPABASE_PROJECT_REF"
+
+      # --- Auth config for #39 (manual runs only, when an app_url is given) ---
+      # invite-user reads SITE_URL to build the /accept-invite redirect; Auth
+      # needs the origin allow-listed or login/invite redirects break.
+      - name: Set SITE_URL function secret
+        if: ${{ inputs.app_url != '' }}
+        run: supabase secrets set SITE_URL="${{ inputs.app_url }}" --project-ref "$SUPABASE_PROJECT_REF"
+
+      - name: Configure Auth Site URL + redirect allow-list
+        if: ${{ inputs.app_url != '' }}
+        run: |
+          curl -fsS -X PATCH \
+            "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/config/auth" \
+            -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"site_url\":\"${{ inputs.app_url }}\",\"uri_allow_list\":\"${{ inputs.app_url }}/**,http://localhost:5173/**,http://127.0.0.1:5173/**\"}"

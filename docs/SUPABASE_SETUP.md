@@ -90,10 +90,14 @@ Create a couple of test users (Dashboard → Auth) and set their roles via SQL
 If any boundary is wrong, the policy lives in the matching migration
 (`0002_rls.sql` for core; `0004`/`0006`/`0008`/`0009`/`0010`/`0011` per table).
 
-## 7. Deploy (later)
-- Web → Vercel project with the two `VITE_SUPABASE_*` env vars.
-- The daily PM job + expiry sweep (issue #18) and user email invites (#13) are
-  Edge Functions / `pg_cron` — set up once the basics above are confirmed.
+## 7. Deploy
+
+Putting the instance online (Vercel + hosted Supabase, env vars, the
+`deploy-backend` workflow, and Auth URL config) is its own runbook:
+**[`DEPLOY.md`](./DEPLOY.md)**.
+
+- The daily PM job + expiry sweep (issue #18) are Edge Functions / `pg_cron` —
+  set up once the basics above are confirmed.
 
 ---
 
