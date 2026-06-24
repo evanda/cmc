@@ -8,4 +8,12 @@ export default defineConfig({
   // Load env from there so `pnpm --filter @cmc/web dev` Just Works without
   // exporting vars into the shell. Only VITE_*-prefixed vars reach the client.
   envDir: '../../',
+  build: {
+    rollupOptions: {
+      output: {
+        // MapLibre GL JS is ~2 MB — split it so the app chunk stays cacheable.
+        manualChunks: { maplibre: ['maplibre-gl'] },
+      },
+    },
+  },
 });

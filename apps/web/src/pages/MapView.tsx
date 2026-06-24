@@ -5,6 +5,7 @@ import maplibregl, {
   type Map as MlMap,
 } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
+import { levelLabel, poiLevelFilter, type Level } from '../lib/map-utils';
 
 interface SelectedPoi {
   label: string;
@@ -25,8 +26,6 @@ const POI_COLORS: Record<string, string> = {
   fountain: '#0891b2',
   fire_extinguisher: '#ea580c',
 };
-
-type Level = 'site' | number;
 
 export function MapView({
   facility = 'midwaypca',
@@ -197,13 +196,11 @@ export function MapView({
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !map.getLayer('poi')) return;
-    map.setFilter('poi', level === 'site' ? null : ['==', ['get', 'level'], level]);
+    map.setFilter('poi', poiLevelFilter(level) as Parameters<typeof map.setFilter>[1]);
     const areaVis = level === 'site' ? 'visible' : 'none';
     if (map.getLayer('area-fill')) map.setLayoutProperty('area-fill', 'visibility', areaVis);
     if (map.getLayer('area-line')) map.setLayoutProperty('area-line', 'visibility', areaVis);
   }, [level]);
-
-  const levelLabel = (n: number) => (n < 0 ? `B${-n}` : String(n));
 
   return (
     <div className="relative h-[calc(100vh-9rem)] overflow-hidden rounded-lg border border-slate-200">
