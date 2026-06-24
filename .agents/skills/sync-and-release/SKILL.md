@@ -110,14 +110,34 @@ supabase db reset         # re-applies all migrations + seed onto the local DB
 > `pnpm db:seed <facility-fixture>` (the `reset && seed <name>` dev workflow,
 > plan §7.6).
 
-### 2b. Web (apps/web)
+### 2b. Web (apps/web) — choose where to test, and advise the user explicitly
 
-```bash
-pnpm --filter web dev      # Vite dev server, typically http://localhost:5173
-```
+Three targets, all on the **same single Supabase project** (backend behaviour is
+identical; the choice is frontend build + env). **Pick the right one and tell the
+user exactly which URL to open and how to reach it — every time, never assume
+localhost:**
 
-Tell the user the URL and to exercise the "Surfaces to test manually" list while
-you start mobile (if requested).
+- **Vercel preview** (default for the gate) — the PR's `*.vercel.app` URL. Real
+  prod build + env; **required** for auth/invite-redirect/Site-URL/env/build-output
+  changes. Get it once the Vercel check is green:
+  ```bash
+  gh pr checks <PR> --repo evanda/cmc
+  gh pr view <PR> --repo evanda/cmc --json comments \
+    -q '.comments[].body' | grep -ioE 'https://[a-z0-9-]+\.vercel\.app' | tail -1
+  ```
+  If the build isn't done, tell the user to wait for the check — don't silently
+  fall back to localhost.
+- **Local** — `pnpm --filter web dev` (http://localhost:5173). Pure UI/map/client
+  changes, fast iteration, or no preview available.
+- **Vercel prod** (`main` domain) — AFTER merge only, to verify what shipped.
+
+**Auth/invite/redirect flows:** the test origin must be in Supabase → Auth →
+Redirect URLs and match the function's `SITE_URL`; for a Vercel preview, that URL
+(+ `/accept-invite`) must be allowlisted first. For local it falls back to
+`127.0.0.1:5173`. Name the exact origin to allowlist when the change touches these.
+
+**Shared-backend caveat:** test data + migrations are shared across local/preview/
+prod (one Supabase project) — flag destructive tests.
 
 ### 2c. Mobile (apps/mobile) — only if requested / touched
 
@@ -136,9 +156,12 @@ Tell the user both surfaces are ready and repeat the manual-test list.
 
 ## Phase 3 — User Testing Gate
 
-**Stop here.** Tell the user:
+**Stop here.** Tell the user **the exact URL you chose in 2b and how to reach it**
+(e.g. "wait for the Vercel check on PR #N to go green, then open `https://…vercel.app`"
+— or "run `pnpm --filter web dev` and open http://localhost:5173"). Then:
 
-> Running and ready. Here's what to check manually:
+> Testing on **<the URL you chose>** (<one line: why this target + how you got there>).
+> Here's what to check manually:
 > [repeat the "Surfaces to test manually" bullets from Phase 1]
 >
 > Reply **"looks good"** (or describe any issues) when you're done.

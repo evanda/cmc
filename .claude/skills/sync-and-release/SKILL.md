@@ -103,22 +103,62 @@ supabase migration list
 
 If there are pending migrations, note them for Phase 6.
 
-### 2c. Start the web dev server
+### 2c. Choose where to test — and tell the user exactly where
+
+There are three test targets. **You must pick the right one for the change and
+tell the user explicitly, every time: which URL to open and what to do to reach
+it.** Never leave them to guess or assume localhost. All three hit the **same
+single Supabase project**, so backend behaviour (RLS, data, migrations,
+functions) is identical — the choice is about the *frontend build + environment*.
+
+| Target | URL | Use when |
+|--------|-----|----------|
+| **Vercel preview** (default for the gate) | the PR's `*.vercel.app` preview | Real prod build + prod env. **Required** for anything touching auth/invite redirects, Site URL, env vars, or build output (chunking). |
+| **Local dev** | `http://localhost:5173` (`pnpm --filter web dev`) | Pure UI / map / client-logic changes with no prod-only behaviour; fast iteration; or when no preview is available. |
+| **Vercel prod** | the production domain (`main`) | AFTER merge only — verify what actually shipped. |
+
+**Get the preview URL** (Vercel posts it as a PR comment / commit status once the
+branch build finishes):
 
 ```bash
-pnpm --filter web dev &
+# Wait for the Vercel check, then grab the preview URL:
+gh pr checks <PR> --repo evanda/cmc            # is the Vercel build green yet?
+gh pr view <PR> --repo evanda/cmc --json comments \
+  -q '.comments[].body' | grep -ioE 'https://[a-z0-9-]+\.vercel\.app' | tail -1
 ```
 
-Tell the user the app is at `http://localhost:5173` and to use it for
-manual testing.
+If the build isn't done, **tell the user to wait for the Vercel check to go
+green**, then re-fetch — don't silently fall back to localhost.
+
+**For local instead:**
+
+```bash
+pnpm --filter web dev   # runs at http://localhost:5173
+```
+
+**Auth / invite / redirect flows (#39-style):** the test origin must be in
+Supabase → Auth → URL Configuration → **Redirect URLs**, and the `invite-user`
+function's `SITE_URL` must match the origin. For a Vercel preview, the user (or
+the #41 owner) must add that preview URL (+ `/accept-invite`) to the allowlist
+**before** testing. For local, the function falls back to `127.0.0.1:5173`. If
+the change touches these flows, say so and name the exact origin to allowlist.
+
+**Shared-backend caveat — state this when relevant:** local, preview, and prod
+all share ONE Supabase project. Test data you create (work orders, invited
+users) appears everywhere, and a migration applies to all three. Flag any
+destructive test before the user runs it.
 
 ---
 
 ## Phase 3 — User Testing Gate
 
-**Stop here.** Tell the user:
+**Stop here.** Tell the user **the exact URL you chose in 2c and how to reach
+it** (e.g. "wait for the Vercel check on PR #N to go green, then open
+`https://…vercel.app`" — or "run `pnpm --filter web dev` and open
+http://localhost:5173"). Then:
 
-> The web app is running at http://localhost:5173. Here's what to check:
+> Testing on **<the URL you chose>** (<one line: why this target + how you got there>).
+> Here's what to check:
 > [repeat the "Surfaces to test manually" bullets from Phase 1]
 >
 > Reply **"looks good"** (or describe any issues) when you're done.
