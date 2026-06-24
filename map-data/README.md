@@ -56,6 +56,29 @@ areas by `feature_type`, with a legend that lists whatever types are present —
 so a new type shows up automatically. New colors: one line each in `viewer.html`
 (`POI_TYPE_COLORS` / `AREA_COLORS`). Field definitions: `authoring/fields.md`.
 
+## Place assets by clicking (guided tool)
+
+The fastest way to get POIs onto their real spots. Starts a small local server,
+then walks you through every point one at a time over the satellite imagery.
+
+```sh
+pnpm map:place           # or: node map-data/place-server.mjs   (PORT=8123 to override)
+# open http://localhost:8000/place.html   (?facility=<id> for another church)
+```
+
+- The right panel lists every POI (the 52 HVAC units + any others). Click one (or
+  use **Skip/Prev**) to make it active — it shows the unit's **notes hint** and
+  jumps the map to its floor.
+- **Click the map** where the unit really is → drops the pin and auto-advances to
+  the next unplaced item. **Drag a pin** to fine-tune. Change a unit's floor with
+  the **level** dropdown.
+- **+ Add point** creates a new feature (shutoff, network, sound, fountain, …) —
+  name it, pick a type, then click to drop it.
+- **Save to repo** writes straight back to `facilities/<id>/pois.geojson` (the
+  source of truth; a one-deep `.bak` is kept). The web app picks it up on the next
+  `pnpm dev` / `pnpm build`. Full-colour imagery is used here for clarity; the app
+  renders the faded grayscale version.
+
 ## Basemap (cache it so it isn't re-fetched)
 
 By default the viewer streams Esri World Imagery live. To check the imagery into

@@ -19,8 +19,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.6881526,
-          33.9441116
+          -84.6882541,
+          33.9441536
         ]
       }
     },
@@ -42,8 +42,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.687981,
-          33.9441116
+          -84.6883057,
+          33.9439678
         ]
       }
     },
@@ -56,8 +56,8 @@
         "label": "HP9",
         "building": "2009 Building (Church)",
         "building_code": "09",
-        "level": -1,
-        "level_name": "Basement",
+        "level": 1,
+        "level_name": "Main",
         "linked_asset_id": null,
         "icon": "hvac",
         "notes": "Narthex / front-lobby control. Basement: nursery playground, unit closest to the nursery entry."
@@ -65,8 +65,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.6878094,
-          33.9441116
+          -84.6878915,
+          33.9440395
         ]
       }
     },
@@ -79,8 +79,8 @@
         "label": "HP11",
         "building": "2009 Building (Church)",
         "building_code": "09",
-        "level": -1,
-        "level_name": "Basement",
+        "level": 1,
+        "level_name": "Main",
         "linked_asset_id": null,
         "icon": "hvac",
         "notes": "Narthex / front-lobby control. Basement: nursery playground, unit closest to the nursery entry."
@@ -88,8 +88,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.6881526,
-          33.9439034
+          -84.6878826,
+          33.9440941
         ]
       }
     },
@@ -111,8 +111,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.687981,
-          33.9439034
+          -84.6878901,
+          33.9440794
         ]
       }
     },
@@ -134,8 +134,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.6878094,
-          33.9439034
+          -84.6879118,
+          33.9440319
         ]
       }
     },
@@ -148,8 +148,8 @@
         "label": "AC1",
         "building": "2009 Building (Church)",
         "building_code": "09",
-        "level": 1,
-        "level_name": "Main",
+        "level": -1,
+        "level_name": "Lower",
         "linked_asset_id": null,
         "icon": "hvac",
         "notes": "Special-needs nursery 1 control. Main level: catwalk behind the 2009 sanctuary pulpit."
@@ -157,8 +157,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.6881526,
-          33.9441116
+          -84.6882276,
+          33.9439872
         ]
       }
     },
@@ -171,8 +171,8 @@
         "label": "AC2",
         "building": "2009 Building (Church)",
         "building_code": "09",
-        "level": 1,
-        "level_name": "Main",
+        "level": -1,
+        "level_name": "Lower",
         "linked_asset_id": null,
         "icon": "hvac",
         "notes": "Infant nursery 2 control. Main level: catwalk behind the 2009 sanctuary pulpit."
@@ -180,8 +180,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.687981,
-          33.9441116
+          -84.6881548,
+          33.9441064
         ]
       }
     },
@@ -194,8 +194,8 @@
         "label": "AC3",
         "building": "2009 Building (Church)",
         "building_code": "09",
-        "level": 1,
-        "level_name": "Main",
+        "level": -1,
+        "level_name": "Lower",
         "linked_asset_id": null,
         "icon": "hvac",
         "notes": "Children nursery 3 control. Main level: catwalk behind the 2009 sanctuary pulpit."
@@ -203,8 +203,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.6878094,
-          33.9441116
+          -84.6880776,
+          33.94409
         ]
       }
     },
@@ -217,8 +217,8 @@
         "label": "AC4",
         "building": "2009 Building (Church)",
         "building_code": "09",
-        "level": 1,
-        "level_name": "Main",
+        "level": -1,
+        "level_name": "Lower",
         "linked_asset_id": null,
         "icon": "hvac",
         "notes": "Youth ministry room 4 control. Main level: catwalk behind the 2009 sanctuary pulpit."
@@ -226,8 +226,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.6881526,
-          33.9439034
+          -84.6880617,
+          33.9440055
         ]
       }
     },
@@ -249,8 +249,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.687981,
-          33.9439034
+          -84.6880304,
+          33.9438957
         ]
       }
     },
@@ -272,8 +272,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.6878094,
-          33.9439034
+          -84.6880485,
+          33.9438284
         ]
       }
     },
@@ -295,8 +295,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.6881526,
-          33.9441116
+          -84.6878932,
+          33.9438982
         ]
       }
     },
@@ -318,8 +318,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.687981,
-          33.9441116
+          -84.6878769,
+          33.9439634
         ]
       }
     },
@@ -341,8 +341,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.6878094,
-          33.9441116
+          -84.6878791,
+          33.9439034
         ]
       }
     },
@@ -364,8 +364,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.6881526,
-          33.9440075
+          -84.687865,
+          33.9439771
         ]
       }
     },
@@ -378,8 +378,8 @@
         "label": "AC9",
         "building": "2009 Building (Church)",
         "building_code": "09",
-        "level": 2,
-        "level_name": "Upper",
+        "level": 1,
+        "level_name": "Main",
         "linked_asset_id": null,
         "icon": "hvac",
         "notes": "Narthex / front-lobby control. Upper level: above the women's robing room in the choir practice room (ladder entry)."
@@ -387,8 +387,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.687981,
-          33.9440075
+          -84.6878734,
+          33.9440415
         ]
       }
     },
@@ -401,8 +401,8 @@
         "label": "AC11",
         "building": "2009 Building (Church)",
         "building_code": "09",
-        "level": 2,
-        "level_name": "Upper",
+        "level": 1,
+        "level_name": "Main",
         "linked_asset_id": null,
         "icon": "hvac",
         "notes": "Narthex / front-lobby control. Upper level: above the women's robing room in the choir practice room (ladder entry)."
@@ -410,8 +410,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.6878094,
-          33.9440075
+          -84.6878641,
+          33.9440972
         ]
       }
     },
@@ -424,8 +424,8 @@
         "label": "AH16A",
         "building": "2009 Building (Church)",
         "building_code": "09",
-        "level": 2,
-        "level_name": "Upper",
+        "level": 1,
+        "level_name": "Main",
         "linked_asset_id": null,
         "icon": "hvac",
         "notes": "Sanctuary air handler. Upper level: behind mechanical-room doors on the balcony, either side of the 2009 pulpit."
@@ -433,8 +433,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.6881526,
-          33.9439034
+          -84.6881958,
+          33.9441153
         ]
       }
     },
@@ -447,8 +447,8 @@
         "label": "AH16B",
         "building": "2009 Building (Church)",
         "building_code": "09",
-        "level": 2,
-        "level_name": "Upper",
+        "level": 1,
+        "level_name": "Main",
         "linked_asset_id": null,
         "icon": "hvac",
         "notes": "Sanctuary air handler. Upper level: behind mechanical-room doors on the balcony, either side of the 2009 pulpit."
@@ -456,8 +456,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.687981,
-          33.9439034
+          -84.6882431,
+          33.9439631
         ]
       }
     },
@@ -479,8 +479,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.6878028,
-          33.9437686
+          -84.6878937,
+          33.9435633
         ]
       }
     },
@@ -502,8 +502,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.687648,
-          33.9437686
+          -84.6878809,
+          33.9435669
         ]
       }
     },
@@ -525,8 +525,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.6874932,
-          33.9437686
+          -84.6878541,
+          33.9435582
         ]
       }
     },
@@ -543,13 +543,13 @@
         "level_name": "Main",
         "linked_asset_id": null,
         "icon": "hvac",
-        "notes": "Pastors' offices \u2014 Marc's office. Main level: outside, next to the head pastor's office."
+        "notes": "Pastors' offices — Marc's office. Main level: outside, next to the head pastor's office."
       },
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.6878028,
-          33.94366
+          -84.687771,
+          33.9437262
         ]
       }
     },
@@ -566,13 +566,13 @@
         "level_name": "Main",
         "linked_asset_id": null,
         "icon": "hvac",
-        "notes": "Pastors' offices \u2014 David's office. Main level: outside, next to the head pastor's office."
+        "notes": "Pastors' offices — David's office. Main level: outside, next to the head pastor's office."
       },
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.687648,
-          33.94366
+          -84.687828,
+          33.9435879
         ]
       }
     },
@@ -594,8 +594,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.6874932,
-          33.94366
+          -84.6877517,
+          33.9435967
         ]
       }
     },
@@ -617,8 +617,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.6878028,
-          33.9435514
+          -84.6877199,
+          33.9437135
         ]
       }
     },
@@ -640,8 +640,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.687648,
-          33.9435514
+          -84.6877609,
+          33.9435584
         ]
       }
     },
@@ -663,8 +663,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.6874932,
-          33.9435514
+          -84.6876653,
+          33.943652
         ]
       }
     },
@@ -686,8 +686,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.687373,
-          33.9438982
+          -84.6873978,
+          33.9434364
         ]
       }
     },
@@ -709,8 +709,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.687079,
-          33.9438982
+          -84.6873834,
+          33.9435995
         ]
       }
     },
@@ -732,8 +732,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.687373,
-          33.9435298
+          -84.6872725,
+          33.9438702
         ]
       }
     },
@@ -755,8 +755,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.687079,
-          33.9435298
+          -84.6872198,
+          33.9436338
         ]
       }
     },
@@ -769,8 +769,8 @@
         "label": "BGF1",
         "building": "1987 Building (School)",
         "building_code": "87",
-        "level": -1,
-        "level_name": "Lower",
+        "level": 1,
+        "level_name": "Main",
         "linked_asset_id": null,
         "icon": "hvac",
         "notes": "Lower-level music room. Outside, behind the kitchen and dumpster (smaller than BG)."
@@ -778,8 +778,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.687373,
-          33.9438982
+          -84.6873743,
+          33.9434326
         ]
       }
     },
@@ -792,17 +792,17 @@
         "label": "BGF2",
         "building": "1987 Building (School)",
         "building_code": "87",
-        "level": -1,
-        "level_name": "Lower",
+        "level": 1,
+        "level_name": "Main",
         "linked_asset_id": null,
         "icon": "hvac",
-        "notes": "Lower-level classrooms, kindergarten\u20133rd grade. Outside, behind the kitchen and dumpster."
+        "notes": "Lower-level classrooms, kindergarten–3rd grade. Outside, behind the kitchen and dumpster."
       },
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.687226,
-          33.9438982
+          -84.6873507,
+          33.9434259
         ]
       }
     },
@@ -815,17 +815,17 @@
         "label": "BGF3",
         "building": "1987 Building (School)",
         "building_code": "87",
-        "level": -1,
-        "level_name": "Lower",
+        "level": 1,
+        "level_name": "Main",
         "linked_asset_id": null,
         "icon": "hvac",
-        "notes": "Lower-level classrooms, kindergarten\u20133rd grade. Outside, behind the kitchen and dumpster."
+        "notes": "Lower-level classrooms, kindergarten–3rd grade. Outside, behind the kitchen and dumpster."
       },
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.687079,
-          33.9438982
+          -84.6873298,
+          33.9434226
         ]
       }
     },
@@ -847,8 +847,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.687373,
-          33.943714
+          -84.6871195,
+          33.9437335
         ]
       }
     },
@@ -870,8 +870,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.687226,
-          33.943714
+          -84.687112,
+          33.9439259
         ]
       }
     },
@@ -893,8 +893,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.687079,
-          33.943714
+          -84.6871112,
+          33.943966
         ]
       }
     },
@@ -916,8 +916,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.687373,
-          33.9435298
+          -84.6870847,
+          33.9439787
         ]
       }
     },
@@ -939,8 +939,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.687226,
-          33.9435298
+          -84.6872367,
+          33.9436839
         ]
       }
     },
@@ -962,8 +962,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.688866,
-          33.9438542
+          -84.6889585,
+          33.9439137
         ]
       }
     },
@@ -985,8 +985,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.68878,
-          33.9438542
+          -84.6889704,
+          33.9438904
         ]
       }
     },
@@ -1008,8 +1008,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.688694,
-          33.9438542
+          -84.6889703,
+          33.9438648
         ]
       }
     },
@@ -1031,8 +1031,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.688608,
-          33.9438542
+          -84.6885798,
+          33.943867
         ]
       }
     },
@@ -1054,8 +1054,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.688866,
-          33.943733
+          -84.6888982,
+          33.9438815
         ]
       }
     },
@@ -1077,8 +1077,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.68878,
-          33.943733
+          -84.6889222,
+          33.9437669
         ]
       }
     },
@@ -1100,8 +1100,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.688694,
-          33.943733
+          -84.6886269,
+          33.9438648
         ]
       }
     },
@@ -1123,8 +1123,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.688608,
-          33.943733
+          -84.6889553,
+          33.9435455
         ]
       }
     },
@@ -1146,8 +1146,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.688866,
-          33.9436118
+          -84.6889124,
+          33.9435383
         ]
       }
     },
@@ -1169,8 +1169,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.68878,
-          33.9436118
+          -84.6888792,
+          33.9435356
         ]
       }
     },
@@ -1192,8 +1192,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.688694,
-          33.9436118
+          -84.6885599,
+          33.9437792
         ]
       }
     },
@@ -1206,17 +1206,17 @@
         "label": "Main Water Shutoff",
         "building": null,
         "building_code": null,
-        "level": 1,
-        "level_name": "Main",
+        "level": -1,
+        "level_name": "Lower",
         "linked_asset_id": null,
         "icon": "shutoff",
-        "notes": "Example non-HVAC POI \u2014 main water shutoff. Reposition in geojson.io."
+        "notes": "Example non-HVAC POI — main water shutoff. Reposition in geojson.io."
       },
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.68795,
-          33.94385
+          -84.6882169,
+          33.9441392
         ]
       }
     }

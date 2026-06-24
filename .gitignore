@@ -28,6 +28,9 @@ screenshots/
 # source of truth is map-data/facilities/; this copy is rebuilt on dev/build)
 apps/web/public/facilities/
 
+# Placement-tool save backups (place-server.mjs writes pois.geojson.bak)
+map-data/facilities/*/*.bak
+
 # Claude Code local overrides
 .claude/settings.local.json
 

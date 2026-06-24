@@ -21,6 +21,7 @@
     "db:push": "supabase db push",
     "db:diff": "supabase db diff --linked",
     "db:seed": "tsx scripts/reset-seed.ts",
+    "map:place": "node map-data/place-server.mjs",
     "screenshots": "node scripts/screenshot.mjs"
   },
   "devDependencies": {

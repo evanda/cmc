@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CMC — Place assets on the map</title>
+<link href="./vendor/maplibre-gl.css" rel="stylesheet" />
+<script src="./vendor/maplibre-gl.js"></script>
+<style>
+  html, body { margin: 0; height: 100%; }
+  body { font: 14px/1.4 system-ui, sans-serif; display: flex; }
+  #map { flex: 1; height: 100vh; }
+  #panel {
+    width: 340px; height: 100vh; box-sizing: border-box; overflow-y: auto;
+    background: #0f172a; color: #e2e8f0; padding: 14px; display: flex; flex-direction: column; gap: 12px;
+  }
+  #panel h1 { font-size: 15px; margin: 0; }
+  #panel .sub { color: #94a3b8; font-size: 12px; margin-top: -6px; }
+  #levels {
+    position: absolute; top: 12px; left: 12px; z-index: 2; background: #fff;
+    border-radius: 10px; box-shadow: 0 1px 6px rgba(0,0,0,.25); padding: 6px;
+    display: flex; flex-direction: column; gap: 4px; width: 96px;
+  }
+  #levels button {
+    border: 0; border-radius: 7px; padding: 8px 10px; cursor: pointer;
+    background: #f1f5f9; color: #0f172a; font-weight: 600; text-align: left;
+  }
+  #levels button.active { background: #2563eb; color: #fff; }
+
+  .card { background: #1e293b; border-radius: 10px; padding: 12px; }
+  .card .lbl { font-size: 20px; font-weight: 700; }
+  .card .kind { color: #93c5fd; font-size: 12px; margin: 2px 0 6px; }
+  .card .hint { color: #cbd5e1; font-size: 13px; background: #0b1220; border-radius: 7px; padding: 8px; }
+  .card .meta { color: #94a3b8; font-size: 12px; margin-top: 6px; }
+  .instr { color: #fde68a; font-size: 12.5px; margin-top: 8px; min-height: 1.2em; }
+
+  .row { display: flex; gap: 6px; align-items: center; }
+  .row.wrap { flex-wrap: wrap; }
+  button.act {
+    border: 0; border-radius: 7px; padding: 8px 10px; cursor: pointer; font-weight: 600;
+    background: #334155; color: #e2e8f0; flex: 1;
+  }
+  button.act:hover { background: #475569; }
+  button.act.primary { background: #2563eb; }
+  button.act.primary:hover { background: #1d4ed8; }
+  button.act.save { background: #16a34a; }
+  button.act.save:hover { background: #15803d; }
+  button.act:disabled { opacity: .4; cursor: default; }
+  select, input[type=text] {
+    background: #0b1220; color: #e2e8f0; border: 1px solid #334155; border-radius: 6px; padding: 6px;
+    font: inherit; width: 100%; box-sizing: border-box;
+  }
+  label.fld { font-size: 11px; color: #94a3b8; display: block; margin: 6px 0 2px; }
+
+  #progress { font-size: 12px; color: #94a3b8; }
+  #progress b { color: #e2e8f0; }
+  #search { margin: 0; }
+  #list { flex: 1; overflow-y: auto; border-top: 1px solid #334155; padding-top: 8px; }
+  .item {
+    display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 7px; cursor: pointer; font-size: 13px;
+  }
+  .item:hover { background: #1e293b; }
+  .item.active { background: #2563eb; }
+  .item .dot { width: 11px; height: 11px; border-radius: 50%; border: 1px solid #0006; flex: none; }
+  .item .nm { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .item .st { font-size: 11px; color: #94a3b8; }
+  .item.done .st { color: #4ade80; }
+  .item.active .st { color: #dbeafe; }
+
+  /* map markers */
+  .poi { transform: translate(-50%, -50%); text-align: center; cursor: pointer; }
+  .poi .dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid #fff; margin: 0 auto; box-shadow: 0 0 0 1px #0006; }
+  .poi.active .dot { width: 18px; height: 18px; border-color: #fde047; box-shadow: 0 0 0 3px #fde04788, 0 0 0 1px #000; }
+  .poi .nm { font-weight: 600; color: #f8fafc; font-size: 11px; margin-top: 2px; text-shadow: 0 0 3px #000, 0 0 3px #000; white-space: nowrap; }
+  .bname { transform: translate(-50%, -50%); font-size: 12px; font-weight: 700; color: #f8fafc; text-shadow: 0 0 3px #000, 0 0 3px #000; pointer-events: none; }
+  #saved { font-size: 12px; }
+</style>
+</head>
+<body>
+<div id="map"><div id="levels"></div></div>
+<div id="panel">
+  <div>
+    <h1 id="title">Place assets</h1>
+    <div class="sub" id="subtitle">loading…</div>
+  </div>
+
+  <div class="card" id="card">
+    <div class="lbl" id="c-label">—</div>
+    <div class="kind" id="c-kind"></div>
+    <div class="hint" id="c-hint"></div>
+    <label class="fld">Floor / level</label>
+    <select id="c-level"></select>
+    <div class="instr" id="instr">Pick an item below to start.</div>
+  </div>
+
+  <div class="row">
+    <button class="act" id="btn-prev">◀ Prev</button>
+    <button class="act" id="btn-skip">Skip ▶</button>
+  </div>
+  <div class="row">
+    <button class="act primary" id="btn-locate">Center on building</button>
+    <button class="act" id="btn-add">+ Add point</button>
+  </div>
+
+  <div id="progress"></div>
+  <input type="text" id="search" placeholder="Filter list…" />
+  <div id="list"></div>
+
+  <div class="row">
+    <button class="act save" id="btn-save">Save to repo</button>
+  </div>
+  <div id="saved"></div>
+</div>
+
+<script>
+const KIND_COLORS = {
+  air_conditioner: '#2563eb', heat_pump: '#16a34a', air_handler: '#9333ea',
+  packaged_unit: '#ea580c', wall_unit: '#0891b2', boiler: '#dc2626',
+};
+const POI_TYPE_COLORS = {
+  shutoff: '#facc15', door_controller: '#f472b6', network_hardware: '#38bdf8',
+  sound_system: '#a78bfa', fountain: '#22d3ee', fire_extinguisher: '#ef4444',
+  building: '#94a3b8', area: '#64748b', hvac: '#0d9488',
+};
+// level value → display name + switcher order
+const LEVELS = [
+  { level: 2,  name: 'Upper',   id: 'up' },
+  { level: 1,  name: 'Main',    id: 'main' },
+  { level: -1, name: 'Lower',   id: 'b1' },
+  { level: null, name: 'Site',  id: 'site' },
+];
+const NAME_BY_LEVEL = { 2: 'Upper', 1: 'Main', '-1': 'Lower', '-2': 'B2' };
+const POI_TYPES = ['hvac','shutoff','door_controller','network_hardware','sound_system','fountain','fire_extinguisher'];
+
+const ESRI = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+const facility = new URLSearchParams(location.search).get('facility') || 'midwaypca';
+const FDIR = `./facilities/${facility}`;
+
+const getJSON = (u) => fetch(u).then(r => r.ok ? r.json() : null).catch(() => null);
+const round = (n) => Math.round(n * 1e7) / 1e7;
+const poiColor = (p) => p.poi_type === 'hvac'
+  ? (KIND_COLORS[p.kind] || '#0d9488') : (POI_TYPE_COLORS[p.poi_type] || '#64748b');
+
+const map = new maplibregl.Map({
+  container: 'map',
+  style: { version: 8, sources: {}, layers: [{ id: 'bg', type: 'background', paint: { 'background-color': '#0b1220' } }] },
+  center: [-84.6878, 33.9437], zoom: 17,
+});
+map.addControl(new maplibregl.NavigationControl(), 'top-right');
+
+let fc = { type: 'FeatureCollection', features: [] };
+let buildingCenters = {};      // code -> [lng,lat]
+let entries = [];              // { feature, marker }
+let activeIdx = null;
+let curLevel = 1;
+const touched = new Set();     // feature indices placed/edited this session
+let dirty = false;
+
+async function load() {
+  const [meta, buildings, areas, pois] = await Promise.all([
+    getJSON(`${FDIR}/meta.json`), getJSON(`${FDIR}/buildings.geojson`),
+    getJSON(`${FDIR}/areas.geojson`), getJSON(`${FDIR}/pois.geojson`),
+  ]);
+  document.getElementById('title').textContent = `Place assets — ${(meta && meta.name) || facility}`;
+  document.getElementById('subtitle').textContent = 'Select an item, pick its floor, then click the map where it really is. Drag a pin to fine-tune.';
+
+  // full-colour satellite (placement wants clarity, not the app's faded look)
+  const bt = meta && meta.basemap_tiles;
+  const tilesUrl = bt ? (bt.startsWith('http') ? bt : `${FDIR}/${bt}`) : ESRI;
+  map.addSource('satellite', { type: 'raster', tileSize: 256, tiles: [tilesUrl],
+    minzoom: (meta && meta.basemap_minzoom) || 0, maxzoom: (meta && meta.basemap_maxzoom) || 19,
+    attribution: (meta && meta.basemap_attribution) || 'Imagery © Esri, Maxar, Earthstar Geographics' });
+  map.addLayer({ id: 'satellite', type: 'raster', source: 'satellite' });
+
+  const bounds = new maplibregl.LngLatBounds();
+  if (areas && areas.features) {
+    map.addSource('areas', { type: 'geojson', data: areas });
+    map.addLayer({ id: 'area-fill', type: 'fill', source: 'areas', paint: { 'fill-color': '#64748b', 'fill-opacity': 0.18 } });
+    map.addLayer({ id: 'area-line', type: 'line', source: 'areas', paint: { 'line-color': '#94a3b8', 'line-dasharray': [2,1] } });
+  }
+  if (buildings) {
+    map.addSource('buildings', { type: 'geojson', data: buildings });
+    map.addLayer({ id: 'bldg-fill', type: 'fill', source: 'buildings', paint: { 'fill-color': '#1e293b', 'fill-opacity': 0.18 } });
+    map.addLayer({ id: 'bldg-line', type: 'line', source: 'buildings', paint: { 'line-color': '#e2e8f0', 'line-width': 2 } });
+    buildings.features.forEach(f => {
+      f.geometry.coordinates[0].forEach(c => bounds.extend(c));
+      const c = f.properties.label_lnglat || ringCenter(f.geometry.coordinates[0]);
+      buildingCenters[f.properties.code] = c;
+      const el = document.createElement('div'); el.className = 'bname'; el.textContent = f.properties.name;
+      new maplibregl.Marker({ element: el }).setLngLat(c).addTo(map);
+    });
+  }
+  fc = pois && pois.type === 'FeatureCollection' ? pois : { type: 'FeatureCollection', features: [] };
+  fc.features.forEach(f => bounds.extend(f.geometry.coordinates));
+  if (!bounds.isEmpty()) map.fitBounds(bounds, { padding: 90, duration: 0 });
+
+  buildLevelSwitcher();
+  buildLevelSelect();
+  renderMarkers();
+  renderList();
+  applyLevel(1, 'main');
+  if (fc.features.length) setActive(0);
+}
+
+function ringCenter(ring) {
+  const xs = ring.map(p => p[0]), ys = ring.map(p => p[1]);
+  return [(Math.min(...xs)+Math.max(...xs))/2, (Math.min(...ys)+Math.max(...ys))/2];
+}
+
+// ── markers ──────────────────────────────────────────────────────────────
+function renderMarkers() {
+  entries.forEach(e => e.marker.remove());
+  entries = fc.features.map((feature, idx) => {
+    const el = document.createElement('div'); el.className = 'poi';
+    el.innerHTML = `<div class="dot"></div><div class="nm"></div>`;
+    el.querySelector('.dot').style.background = poiColor(feature.properties);
+    el.querySelector('.nm').textContent = feature.properties.label || '';
+    el.addEventListener('click', (ev) => { ev.stopPropagation(); setActive(idx); });
+    const marker = new maplibregl.Marker({ element: el, draggable: true })
+      .setLngLat(feature.geometry.coordinates).addTo(map);
+    marker.on('dragend', () => {
+      const ll = marker.getLngLat();
+      feature.geometry.coordinates = [round(ll.lng), round(ll.lat)];
+      markTouched(idx); setDirty(true); renderList();
+    });
+    return { feature, marker };
+  });
+  applyLevelToMarkers();
+}
+
+function applyLevelToMarkers() {
+  entries.forEach((e, idx) => {
+    const lvl = e.feature.properties.level ?? null;
+    const visible = idx === activeIdx || curLevel === null || lvl === curLevel;
+    e.marker.getElement().style.display = visible ? '' : 'none';
+    e.marker.getElement().classList.toggle('active', idx === activeIdx);
+  });
+}
+
+// ── level switcher (view) ──────────────────────────────────────────────────
+function buildLevelSwitcher() {
+  const el = document.getElementById('levels'); el.innerHTML = '';
+  LEVELS.forEach(l => {
+    const b = document.createElement('button'); b.textContent = `${l.id === 'site' ? '' : (l.level<0?'B'+(-l.level):l.level)+' · '}${l.name}`.trim();
+    b.dataset.id = l.id; b.onclick = () => applyLevel(l.level, l.id); el.appendChild(b);
+  });
+}
+function applyLevel(level, id) {
+  curLevel = level;
+  document.querySelectorAll('#levels button').forEach(b => b.classList.toggle('active', b.dataset.id === id));
+  applyLevelToMarkers();
+}
+
+// ── current-item card ──────────────────────────────────────────────────────
+function buildLevelSelect() {
+  const sel = document.getElementById('c-level'); sel.innerHTML = '';
+  LEVELS.forEach(l => { const o = document.createElement('option'); o.value = String(l.level); o.textContent = l.name; sel.appendChild(o); });
+  sel.onchange = () => {
+    if (activeIdx == null) return;
+    const v = sel.value === 'null' ? null : Number(sel.value);
+    const f = fc.features[activeIdx];
+    f.properties.level = v;
+    f.properties.level_name = v == null ? null : (NAME_BY_LEVEL[v] || String(v));
+    markTouched(activeIdx); setDirty(true);
+    const lid = (LEVELS.find(l => l.level === v) || {}).id || 'site';
+    applyLevel(v, lid); renderList();
+  };
+}
+function setActive(idx) {
+  activeIdx = idx;
+  const f = fc.features[idx]; const p = f.properties;
+  document.getElementById('c-label').textContent = p.label || '(unnamed)';
+  document.getElementById('c-kind').textContent = [p.poi_type, p.kind].filter(Boolean).join(' · ');
+  document.getElementById('c-hint').textContent = p.notes || '(no location hint)';
+  document.getElementById('c-level').value = String(p.level ?? null);
+  document.getElementById('instr').textContent = `Click the map where “${p.label}” really is.`;
+  const lvl = p.level ?? null;
+  const lid = (LEVELS.find(l => l.level === lvl) || { id: 'site' }).id;
+  applyLevel(lvl, lid);
+  flyToActive();
+  renderList();
+}
+function flyToActive() {
+  const f = fc.features[activeIdx]; if (!f) return;
+  const center = f.geometry.coordinates;
+  map.easeTo({ center, zoom: Math.max(map.getZoom(), 19), duration: 500 });
+}
+function placeActiveAt(lnglat) {
+  if (activeIdx == null) return;
+  const f = fc.features[activeIdx];
+  f.geometry.coordinates = [round(lnglat[0]), round(lnglat[1])];
+  entries[activeIdx].marker.setLngLat(f.geometry.coordinates);
+  markTouched(activeIdx); setDirty(true);
+  nextUnplaced();
+}
+function markTouched(idx) { touched.add(idx); renderProgress(); }
+
+function nextUnplaced() {
+  const n = fc.features.length;
+  for (let i = 1; i <= n; i++) {
+    const idx = (activeIdx + i) % n;
+    if (!touched.has(idx)) return setActive(idx);
+  }
+  // none left untouched — just advance one
+  setActive((activeIdx + 1) % n);
+}
+function prev() { if (activeIdx != null) setActive((activeIdx - 1 + fc.features.length) % fc.features.length); }
+function skip() { if (activeIdx != null) setActive((activeIdx + 1) % fc.features.length); }
+
+// ── worklist ───────────────────────────────────────────────────────────────
+function renderList() {
+  const q = document.getElementById('search').value.toLowerCase();
+  const el = document.getElementById('list'); el.innerHTML = '';
+  fc.features.forEach((f, idx) => {
+    const p = f.properties;
+    if (q && !(`${p.label} ${p.building||''} ${p.poi_type||''} ${p.notes||''}`.toLowerCase().includes(q))) return;
+    const row = document.createElement('div');
+    row.className = 'item' + (idx === activeIdx ? ' active' : '') + (touched.has(idx) ? ' done' : '');
+    row.innerHTML = `<span class="dot" style="background:${poiColor(p)}"></span>` +
+      `<span class="nm">${p.label || '(unnamed)'}</span>` +
+      `<span class="st">${touched.has(idx) ? '✓' : (p.level_name || '')}</span>`;
+    row.onclick = () => setActive(idx);
+    el.appendChild(row);
+  });
+  renderProgress();
+}
+function renderProgress() {
+  document.getElementById('progress').innerHTML =
+    `Placed this session: <b>${touched.size}</b> / ${fc.features.length}`;
+}
+
+// ── add a new point ──────────────────────────────────────────────────────
+function addPoint() {
+  const label = prompt('Label for the new point (e.g. "Main Water Shutoff"):');
+  if (!label) return;
+  const poi_type = prompt(`Type — one of:\n${POI_TYPES.join(', ')}`, 'shutoff') || 'shutoff';
+  const lvl = curLevel;
+  const feature = {
+    type: 'Feature',
+    properties: {
+      id: `poi-${Date.now()}`, poi_type, kind: null, label,
+      building: null, building_code: null, level: lvl,
+      level_name: lvl == null ? null : (NAME_BY_LEVEL[lvl] || String(lvl)),
+      linked_asset_id: null, icon: poi_type, notes: '(added in placement tool)',
+    },
+    geometry: { type: 'Point', coordinates: map.getCenter().toArray().map(round) },
+  };
+  fc.features.push(feature);
+  renderMarkers(); renderList(); setDirty(true);
+  setActive(fc.features.length - 1);
+  document.getElementById('instr').textContent = `Click the map to drop “${label}”.`;
+}
+
+// ── save ───────────────────────────────────────────────────────────────────
+async function save() {
+  const el = document.getElementById('saved'); el.textContent = 'Saving…'; el.style.color = '#94a3b8';
+  try {
+    const r = await fetch(`/save?facility=${encodeURIComponent(facility)}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(fc),
+    });
+    const j = await r.json();
+    if (!j.ok) throw new Error(j.error || 'save failed');
+    el.textContent = `Saved ✓ ${j.count} features → pois.geojson`; el.style.color = '#4ade80';
+    setDirty(false);
+  } catch (e) {
+    el.textContent = `Save failed: ${e.message}. Is place-server running?`; el.style.color = '#f87171';
+  }
+}
+function setDirty(v) {
+  dirty = v;
+  document.getElementById('btn-save').textContent = v ? 'Save to repo •' : 'Save to repo';
+}
+window.addEventListener('beforeunload', (e) => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
+
+// ── wiring ───────────────────────────────────────────────────────────────
+map.on('click', (e) => placeActiveAt([e.lngLat.lng, e.lngLat.lat]));
+document.getElementById('btn-prev').onclick = prev;
+document.getElementById('btn-skip').onclick = skip;
+document.getElementById('btn-add').onclick = addPoint;
+document.getElementById('btn-locate').onclick = () => {
+  const f = fc.features[activeIdx]; if (!f) return;
+  const c = buildingCenters[f.properties.building_code];
+  if (c) map.easeTo({ center: c, zoom: 18.5, duration: 500 }); else flyToActive();
+};
+document.getElementById('btn-save').onclick = save;
+document.getElementById('search').oninput = renderList;
+
+map.on('load', load);
+</script>
+</body>
+</html>
