@@ -1,7 +1,7 @@
 {
   "name": "cmc",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Campus Facilities Maintenance System — CMMS monorepo (web + mobile + loader + shared)",
   "packageManager": "pnpm@9.0.0",
   "engines": {
