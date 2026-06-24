@@ -1,0 +1,51 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "kind": "building",
+        "code": "SAN",
+        "name": "Sanctuary",
+        "description": "Main worship space, foyer, and nursery wing.",
+        "levels": [1, 2],
+        "label_lnglat": [-84.27005, 36.01148]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-84.27035, 36.01075],
+            [-84.26975, 36.01075],
+            [-84.26975, 36.01140],
+            [-84.27035, 36.01140],
+            [-84.27035, 36.01075]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "kind": "building",
+        "code": "EDU",
+        "name": "Education Wing",
+        "description": "Sunday school classrooms, library, and kitchen.",
+        "levels": [1],
+        "label_lnglat": [-84.26937, 36.01128]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-84.26965, 36.01090],
+            [-84.26910, 36.01090],
+            [-84.26910, 36.01135],
+            [-84.26965, 36.01135],
+            [-84.26965, 36.01090]
+          ]
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,141 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-001",
+        "poi_type": "shutoff",
+        "label": "Main Water Shutoff",
+        "building": "Sanctuary",
+        "building_code": "SAN",
+        "level": null,
+        "level_name": "Site",
+        "linked_asset_id": null,
+        "icon": "shutoff",
+        "notes": "Main campus water shutoff. Located at the NW corner of the Sanctuary building near the utility meter."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-84.27038, 36.01142]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-002",
+        "poi_type": "hvac",
+        "kind": "packaged_unit",
+        "label": "RTU-1",
+        "building": "Sanctuary",
+        "building_code": "SAN",
+        "level": 1,
+        "level_name": "Main",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "Packaged rooftop unit serving the main sanctuary nave."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-84.27010, 36.01120]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-003",
+        "poi_type": "hvac",
+        "kind": "air_handler",
+        "label": "AH-1",
+        "building": "Sanctuary",
+        "building_code": "SAN",
+        "level": 1,
+        "level_name": "Main",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "Air handler in the mechanical closet behind the nursery wing."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-84.26982, 36.01085]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-004",
+        "poi_type": "hvac",
+        "kind": "packaged_unit",
+        "label": "RTU-2",
+        "building": "Education Wing",
+        "building_code": "EDU",
+        "level": 1,
+        "level_name": "Main",
+        "linked_asset_id": null,
+        "icon": "hvac",
+        "notes": "Packaged rooftop unit serving the classrooms and kitchen."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-84.26938, 36.01112]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-005",
+        "poi_type": "network_hardware",
+        "label": "Network Rack",
+        "building": "Education Wing",
+        "building_code": "EDU",
+        "level": 1,
+        "level_name": "Main",
+        "linked_asset_id": null,
+        "icon": "network_hardware",
+        "notes": "Main network rack in the IT closet near Room 105."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-84.26955, 36.01128]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-006",
+        "poi_type": "sound_system",
+        "label": "A/V Rack",
+        "building": "Sanctuary",
+        "building_code": "SAN",
+        "level": 1,
+        "level_name": "Main",
+        "linked_asset_id": null,
+        "icon": "sound_system",
+        "notes": "Sound and video equipment rack in the AV booth at the rear of the sanctuary."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-84.26980, 36.01134]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "poi-007",
+        "poi_type": "fire_extinguisher",
+        "label": "Fire Ext — Foyer",
+        "building": "Sanctuary",
+        "building_code": "SAN",
+        "level": 1,
+        "level_name": "Main",
+        "linked_asset_id": null,
+        "icon": "fire_extinguisher",
+        "notes": "ABC fire extinguisher mounted by the main entrance doors."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-84.27005, 36.01076]
+      }
+    }
+  ]
+}
