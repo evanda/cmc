@@ -16,6 +16,7 @@ import { ReportsPage } from './pages/ReportsPage';
 import { BuildingsPage } from './pages/BuildingsPage';
 import { FloorsPage } from './pages/FloorsPage';
 import { LocationsPage } from './pages/LocationsPage';
+import { SettingsPage } from './pages/SettingsPage';
 
 export function App() {
   const { session, loading } = useAuth();
@@ -49,6 +50,7 @@ export function App() {
         <Route path="buildings" element={<BuildingsPage />} />
         <Route path="floors" element={<FloorsPage />} />
         <Route path="locations" element={<LocationsPage />} />
+        <Route path="settings" element={<SettingsPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

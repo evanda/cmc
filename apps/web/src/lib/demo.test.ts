@@ -18,6 +18,48 @@ describe('demo data source — seed', () => {
   });
 });
 
+describe('demo data source — updateOrgSettings', () => {
+  it('updates the facility name and address', async () => {
+    const updated = await ds.updateOrgSettings({
+      facility_name: 'New Name Church',
+      address: '999 Test Ave',
+      locale: 'en-US',
+      distance_unit: 'km',
+      currency: 'USD',
+      timezone: 'America/Chicago',
+    });
+    expect(updated.facility_name).toBe('New Name Church');
+    expect(updated.distance_unit).toBe('km');
+    expect(updated.timezone).toBe('America/Chicago');
+
+    const fetched = await ds.getOrgSettings();
+    expect(fetched?.facility_name).toBe('New Name Church');
+  });
+
+  it('stores maintenance_contact_email', async () => {
+    const updated = await ds.updateOrgSettings({
+      facility_name: 'Test Church',
+      maintenance_contact_email: 'maint@test.org',
+      locale: 'en-US',
+      distance_unit: 'mi',
+      currency: 'USD',
+      timezone: 'America/New_York',
+    });
+    expect(updated.maintenance_contact_email).toBe('maint@test.org');
+  });
+
+  it('clears maintenance_contact_email when omitted', async () => {
+    const updated = await ds.updateOrgSettings({
+      facility_name: 'Test Church',
+      locale: 'en-US',
+      distance_unit: 'mi',
+      currency: 'USD',
+      timezone: 'America/New_York',
+    });
+    expect(updated.maintenance_contact_email).toBeNull();
+  });
+});
+
 describe('demo data source — request intake + triage', () => {
   it('files a request as a "requested" work order', async () => {
     const req = await ds.createWorkRequest({ title: 'AC out in Room 12', description: 'hot' });

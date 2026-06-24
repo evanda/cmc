@@ -17,6 +17,7 @@ import type {
   Location,
   LocationForm,
   OrgSettings,
+  OrgSettingsForm,
   PmSchedule,
   PmScheduleForm,
   ServiceContract,
@@ -38,6 +39,7 @@ import { demoDataSource } from './demo';
 
 export interface DataSource {
   getOrgSettings(): Promise<OrgSettings | null>;
+  updateOrgSettings(input: OrgSettingsForm): Promise<OrgSettings>;
   listBuildings(): Promise<Building[]>;
   createBuilding(input: BuildingForm): Promise<Building>;
   updateBuilding(id: string, input: BuildingForm): Promise<Building>;
@@ -241,6 +243,29 @@ function unwrap<T>(res: { data: T | null; error: { message: string } | null }): 
 const supabaseDataSource: DataSource = {
   getOrgSettings: async () =>
     unwrap<OrgSettings | null>(await supabase.from('org_settings').select('*').maybeSingle()),
+  updateOrgSettings: async (input) => {
+    // Singleton table — fetch the row id first, then update by id.
+    const current = unwrap<{ id: string } | null>(
+      await supabase.from('org_settings').select('id').maybeSingle(),
+    );
+    if (!current) throw new Error('No org_settings row — run the seed first.');
+    return unwrap<OrgSettings>(
+      await supabase
+        .from('org_settings')
+        .update({
+          facility_name: input.facility_name,
+          address: input.address ?? null,
+          maintenance_contact_email: input.maintenance_contact_email ?? null,
+          locale: input.locale,
+          distance_unit: input.distance_unit,
+          currency: input.currency,
+          timezone: input.timezone,
+        })
+        .eq('id', current.id)
+        .select()
+        .single(),
+    );
+  },
 
   listBuildings: async () =>
     unwrap<Building[]>(

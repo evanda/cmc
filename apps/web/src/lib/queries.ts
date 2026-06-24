@@ -5,6 +5,7 @@ import type {
   ContactForm,
   FloorForm,
   LocationForm,
+  OrgSettingsForm,
   ServiceContractForm,
   VendorForm,
   WorkLogForm,
@@ -54,6 +55,13 @@ function crudHooks<TRow, TForm>(
 // ── org_settings (single row, plan §7.6) ─────────────────────────────────────
 export function useOrgSettings() {
   return useQuery({ queryKey: ['org_settings'], queryFn: () => ds.getOrgSettings() });
+}
+export function useUpdateOrgSettings() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: OrgSettingsForm) => ds.updateOrgSettings(input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['org_settings'] }),
+  });
 }
 
 // ── buildings ────────────────────────────────────────────────────────────────

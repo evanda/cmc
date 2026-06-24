@@ -20,7 +20,10 @@ const navItems = [
 export function Layout() {
   const { role, signOut } = useAuth();
   const { data: org } = useOrgSettings();
-  const items = role === 'admin' ? [...navItems, { to: '/users', label: 'Users' }] : navItems;
+  const items =
+    role === 'admin'
+      ? [...navItems, { to: '/users', label: 'Users' }, { to: '/settings', label: 'Settings' }]
+      : navItems;
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
