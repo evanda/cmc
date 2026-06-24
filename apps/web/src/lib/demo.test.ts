@@ -65,6 +65,56 @@ describe('demo data source — updateOrgSettings', () => {
     });
     expect(updated.maintenance_contact_email).toBeNull();
   });
+
+  it('stores logo_url', async () => {
+    const updated = await ds.updateOrgSettings({
+      facility_name: 'Test Church',
+      logo_url: 'https://example.org/logo.png',
+      locale: 'en-US',
+      distance_unit: 'mi',
+      currency: 'USD',
+      timezone: 'America/New_York',
+    });
+    expect(updated.logo_url).toBe('https://example.org/logo.png');
+
+    const fetched = await ds.getOrgSettings();
+    expect(fetched?.logo_url).toBe('https://example.org/logo.png');
+  });
+
+  it('clears logo_url when omitted', async () => {
+    const updated = await ds.updateOrgSettings({
+      facility_name: 'Test Church',
+      locale: 'en-US',
+      distance_unit: 'mi',
+      currency: 'USD',
+      timezone: 'America/New_York',
+    });
+    expect(updated.logo_url).toBeNull();
+  });
+
+  it('stores theme brand colours', async () => {
+    const updated = await ds.updateOrgSettings({
+      facility_name: 'Test Church',
+      locale: 'en-US',
+      distance_unit: 'mi',
+      currency: 'USD',
+      timezone: 'America/New_York',
+      theme: { primaryColor: '#1e3a5f', accentColor: '#c8a84b' },
+    });
+    expect(updated.theme?.primaryColor).toBe('#1e3a5f');
+    expect(updated.theme?.accentColor).toBe('#c8a84b');
+  });
+
+  it('clears theme when omitted', async () => {
+    const updated = await ds.updateOrgSettings({
+      facility_name: 'Test Church',
+      locale: 'en-US',
+      distance_unit: 'mi',
+      currency: 'USD',
+      timezone: 'America/New_York',
+    });
+    expect(updated.theme).toBeNull();
+  });
 });
 
 describe('demo data source — request intake + triage', () => {

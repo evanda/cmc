@@ -193,13 +193,26 @@ export const pmScheduleFormSchema = z.object({
 });
 export type PmScheduleForm = z.infer<typeof pmScheduleFormSchema>;
 
+const hexColor = z
+  .string()
+  .trim()
+  .regex(/^#[0-9a-fA-F]{6}$/, 'Must be a 6-digit hex colour, e.g. #1e3a5f')
+  .optional();
+
 export const orgSettingsFormSchema = z.object({
   facility_name: z.string().trim().min(1, 'Facility name is required').max(200),
+  logo_url: z.string().trim().url('Must be a valid URL').nullish(),
   address: optionalText,
   maintenance_contact_email: optionalEmail,
   locale: z.string().trim().min(2).max(10).default('en-US'),
   distance_unit: z.enum(['mi', 'km']).default('mi'),
   currency: z.string().trim().length(3).default('USD'),
   timezone: z.string().trim().min(1).default('America/New_York'),
+  theme: z
+    .object({
+      primaryColor: hexColor,
+      accentColor: hexColor,
+    })
+    .nullish(),
 });
 export type OrgSettingsForm = z.infer<typeof orgSettingsFormSchema>;

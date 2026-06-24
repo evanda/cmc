@@ -256,12 +256,14 @@ const supabaseDataSource: DataSource = {
         .from('org_settings')
         .update({
           facility_name: input.facility_name,
+          logo_url: input.logo_url ?? null,
           address: input.address ?? null,
           maintenance_contact_email: input.maintenance_contact_email ?? null,
           locale: input.locale,
           distance_unit: input.distance_unit,
           currency: input.currency,
           timezone: input.timezone,
+          theme: input.theme ?? null,
         })
         .eq('id', current.id)
         .select()

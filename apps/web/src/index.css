@@ -1,3 +1,11 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Per-church brand colours (plan §7.6). Defaults match the slate-800 / sky-500
+   Tailwind palette. The Layout component overrides these from org_settings.theme. */
+:root {
+  --color-primary: #1e293b;
+  --color-primary-fg: #ffffff;
+  --color-accent: #0ea5e9;
+}

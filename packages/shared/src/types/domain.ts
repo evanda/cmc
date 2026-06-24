@@ -28,6 +28,12 @@ export type BaseRow = {
   deleted_at: string | null;
 };
 
+/** Per-church brand colours stored in org_settings.theme (plan §7.6). */
+export type OrgTheme = {
+  primaryColor?: string;  // hex, e.g. "#1e3a5f"
+  accentColor?: string;   // hex, e.g. "#c8a84b"
+};
+
 /** Single-row church identity / branding (plan §7.6). NOT church-hardcoded. */
 export type OrgSettings = BaseRow & {
   facility_name: string;
@@ -38,7 +44,7 @@ export type OrgSettings = BaseRow & {
   distance_unit: string;
   currency: string;
   timezone: string;
-  theme: Record<string, unknown> | null;
+  theme: OrgTheme | null;
   /** Org-wide maintenance contact (a mail list); per-asset contact overrides it. */
   maintenance_contact_email: string | null;
 };
