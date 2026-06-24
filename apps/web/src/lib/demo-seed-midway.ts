@@ -97,6 +97,9 @@ export function applyMidwayReseed() {
       criticality: a.criticality as Asset['criticality'],
       make: a.make,
       notes: a.notes,
+      // Intrinsic map placement (plan §5.4, #38) — sourced from pois.geojson.
+      geometry_geojson: (a.geometry_geojson as Asset['geometry_geojson']) ?? null,
+      level: a.level ?? null,
       ...(isHvac
         ? {
             install_date: `${installYear}-06-01`,

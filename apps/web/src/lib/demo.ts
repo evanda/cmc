@@ -255,6 +255,8 @@ export const demoDataSource: DataSource = {
       notes: input.notes ?? null,
       contact_name: input.contact_name ?? null,
       contact_email: input.contact_email ?? null,
+      geometry_geojson: null,
+      level: null,
     } as (typeof assets)[0];
     assets.push(a);
     return a;

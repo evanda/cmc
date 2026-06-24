@@ -44,11 +44,14 @@ export function MapView({
   assets = [],
   buildings = [],
   openWoCountByBuilding = {},
+  onCreateWorkOrder,
 }: {
   facility?: string;
   assets?: { id: string; name: string }[];
   buildings?: { id: string; name: string }[];
   openWoCountByBuilding?: Record<string, number>;
+  /** Open a new work order pre-linked to this asset (plan §5.4, #37). */
+  onCreateWorkOrder?: (assetId: string) => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MlMap | null>(null);
@@ -410,12 +413,22 @@ export function MapView({
           </div>
           {selected.notes && <p className="mt-2 text-xs text-slate-600">{selected.notes}</p>}
           {assetIdByName.get(selected.label) ? (
-            <Link
-              to={`/assets/${assetIdByName.get(selected.label)}`}
-              className="mt-3 inline-block rounded bg-slate-800 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-700"
-            >
-              Open asset record →
-            </Link>
+            <div className="mt-3 flex flex-col gap-1.5">
+              <Link
+                to={`/assets/${assetIdByName.get(selected.label)}`}
+                className="rounded bg-slate-800 px-3 py-1.5 text-center text-xs font-medium text-white hover:bg-slate-700"
+              >
+                Open asset record →
+              </Link>
+              {onCreateWorkOrder && (
+                <button
+                  onClick={() => onCreateWorkOrder(assetIdByName.get(selected.label)!)}
+                  className="rounded border border-slate-300 px-3 py-1.5 text-center text-xs font-medium text-slate-700 hover:bg-slate-50"
+                >
+                  + Create work order
+                </button>
+              )}
+            </div>
           ) : (
             <p className="mt-3 text-xs text-slate-400">No linked asset.</p>
           )}

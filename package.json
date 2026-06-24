@@ -21,6 +21,7 @@
     "db:push": "supabase db push",
     "db:diff": "supabase db diff --linked",
     "db:seed": "tsx scripts/reset-seed.ts",
+    "assets:seed": "tsx scripts/seed-assets-from-pois.ts",
     "map:place": "node map-data/place-server.mjs",
     "map:areas": "node map-data/place-server.mjs",
     "facility:export": "node scripts/facility-export.mjs",

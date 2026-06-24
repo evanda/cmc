@@ -412,7 +412,15 @@
       "building": "2009 Building (Church)",
       "criticality": "medium",
       "make": "AC unit",
-      "notes": "Sanctuary control (basement). In big white fencing outside the emergency-exit stairwell behind the 2009 pulpit."
+      "notes": "Sanctuary control (basement). In big white fencing outside the emergency-exit stairwell behind the 2009 pulpit.",
+      "geometry_geojson": {
+        "type": "Point",
+        "coordinates": [
+          -84.6882541,
+          33.9441536
+        ]
+      },
+      "level": -1
     },
     {
       "name": "AC16B",
@@ -420,7 +428,15 @@
       "building": "2009 Building (Church)",
       "criticality": "medium",
       "make": "AC unit",
-      "notes": "Sanctuary control (basement). In big white fencing outside the emergency-exit stairwell behind the 2009 pulpit."
+      "notes": "Sanctuary control (basement). In big white fencing outside the emergency-exit stairwell behind the 2009 pulpit.",
+      "geometry_geojson": {
+        "type": "Point",
+        "coordinates": [
+          -84.6883057,
+          33.9439678
+        ]
+      },
+      "level": -1
     },
     {
       "name": "HP9",
@@ -428,7 +444,15 @@
       "building": "2009 Building (Church)",
       "criticality": "medium",
       "make": "Heat pump",
-      "notes": "Narthex / front-lobby control. Basement: nursery playground, unit closest to the nursery entry."
+      "notes": "Narthex / front-lobby control. Basement: nursery playground, unit closest to the nursery entry.",
+      "geometry_geojson": {
+        "type": "Point",
+        "coordinates": [
+          -84.6878915,
+          33.9440395
+        ]
+      },
+      "level": 1
     },
     {
       "name": "HP11",
@@ -436,7 +460,15 @@
       "building": "2009 Building (Church)",
       "criticality": "medium",
       "make": "Heat pump",
-      "notes": "Narthex / front-lobby control. Basement: nursery playground, unit closest to the nursery entry."
+      "notes": "Narthex / front-lobby control. Basement: nursery playground, unit closest to the nursery entry.",
+      "geometry_geojson": {
+        "type": "Point",
+        "coordinates": [
+          -84.6878826,
+          33.9440941
+        ]
+      },
+      "level": 1
     },
     {
       "name": "HP5",
@@ -444,7 +476,15 @@
       "building": "2009 Building (Church)",
       "criticality": "medium",
       "make": "Heat pump",
-      "notes": "Children's ministry room & hallway control. Basement: nursery playground, unit closest to the main-level lobby entry."
+      "notes": "Children's ministry room & hallway control. Basement: nursery playground, unit closest to the main-level lobby entry.",
+      "geometry_geojson": {
+        "type": "Point",
+        "coordinates": [
+          -84.6878901,
+          33.9440794
+        ]
+      },
+      "level": -1
     },
     {
       "name": "AC5",
@@ -452,7 +492,15 @@
       "building": "2009 Building (Church)",
       "criticality": "medium",
       "make": "AC unit",
-      "notes": "Children's ministry room & hallway control. Basement: mechanical room, end of hall near the concession-style kitchen."
+      "notes": "Children's ministry room & hallway control. Basement: mechanical room, end of hall near the concession-style kitchen.",
+      "geometry_geojson": {
+        "type": "Point",
+        "coordinates": [
+          -84.6879118,
+          33.9440319
+        ]
+      },
+      "level": -1
     },
     {
       "name": "AC1",
@@ -460,7 +508,15 @@
       "building": "2009 Building (Church)",
       "criticality": "medium",
       "make": "AC unit",
-      "notes": "Special-needs nursery 1 control. Main level: catwalk behind the 2009 sanctuary pulpit."
+      "notes": "Special-needs nursery 1 control. Main level: catwalk behind the 2009 sanctuary pulpit.",
+      "geometry_geojson": {
+        "type": "Point",
+        "coordinates": [
+          -84.6882276,
+          33.9439872
+        ]
+      },
+      "level": -1
     },
     {
       "name": "AC2",
@@ -468,7 +524,15 @@
       "building": "2009 Building (Church)",
       "criticality": "medium",
       "make": "AC unit",
-      "notes": "Infant nursery 2 control. Main level: catwalk behind the 2009 sanctuary pulpit."
+      "notes": "Infant nursery 2 control. Main level: catwalk behind the 2009 sanctuary pulpit.",
+      "geometry_geojson": {
+        "type": "Point",
+        "coordinates": [
+          -84.6881548,
+          33.9441064
+        ]
+      },
+      "level": -1
     },
     {
       "name": "AC3",
@@ -476,7 +540,15 @@
       "building": "2009 Building (Church)",
       "criticality": "medium",
       "make": "AC unit",
-      "notes": "Children nursery 3 control. Main level: catwalk behind the 2009 sanctuary pulpit."
+      "notes": "Children nursery 3 control. Main level: catwalk behind the 2009 sanctuary pulpit.",
+      "geometry_geojson": {
+        "type": "Point",
+        "coordinates": [
+          -84.6880776,
+          33.94409
+        ]
+      },
+      "level": -1
     },
     {
       "name": "AC4",
@@ -484,7 +556,15 @@
       "building": "2009 Building (Church)",
       "criticality": "medium",
       "make": "AC unit",
-      "notes": "Youth ministry room 4 control. Main level: catwalk behind the 2009 sanctuary pulpit."
+      "notes": "Youth ministry room 4 control. Main level: catwalk behind the 2009 sanctuary pulpit.",
+      "geometry_geojson": {
+        "type": "Point",
+        "coordinates": [
+          -84.6880617,
+          33.9440055
+        ]
+      },
+      "level": -1
     },
     {
       "name": "AC15",
@@ -492,7 +572,15 @@
       "building": "2009 Building (Church)",
       "criticality": "medium",
       "make": "AC unit",
-      "notes": "Long hallway connecting church with school. Main level: in ceiling in front of the men's restroom by the 2009 sanctuary."
+      "notes": "Long hallway connecting church with school. Main level: in ceiling in front of the men's restroom by the 2009 sanctuary.",
+      "geometry_geojson": {
+        "type": "Point",
+        "coordinates": [
+          -84.6880304,
+          33.9438957
+        ]
+      },
+      "level": 1
     },
     {
       "name": "HP15",
@@ -500,7 +588,15 @@
       "building": "2009 Building (Church)",
       "criticality": "medium",
       "make": "Heat pump",
-      "notes": "Long hallway connecting church with school. Main level: outside the southern lobby entrance toward the nursery entrance."
+      "notes": "Long hallway connecting church with school. Main level: outside the southern lobby entrance toward the nursery entrance.",
+      "geometry_geojson": {
+        "type": "Point",
+        "coordinates": [
+          -84.6880485,
+          33.9438284
+        ]
+      },
+      "level": 1
     },
     {
       "name": "HP12",
@@ -508,7 +604,15 @@
       "building": "2009 Building (Church)",
       "criticality": "medium",
       "make": "Heat pump",
-      "notes": "Choir practice room & music-ministry offices control. Upper level: roof access off the stairwell by the elevator."
+      "notes": "Choir practice room & music-ministry offices control. Upper level: roof access off the stairwell by the elevator.",
+      "geometry_geojson": {
+        "type": "Point",
+        "coordinates": [
+          -84.6878932,
+          33.9438982
+        ]
+      },
+      "level": 2
     },
     {
       "name": "HP13",
@@ -516,7 +620,15 @@
       "building": "2009 Building (Church)",
       "criticality": "medium",
       "make": "Heat pump",
-      "notes": "Choir practice room & music-ministry offices control. Upper level: roof access off the stairwell by the elevator."
+      "notes": "Choir practice room & music-ministry offices control. Upper level: roof access off the stairwell by the elevator.",
+      "geometry_geojson": {
+        "type": "Point",
+        "coordinates": [
+          -84.6878769,
+          33.9439634
+        ]
+      },
+      "level": 2
     },
     {
       "name": "AC12",
@@ -524,7 +636,15 @@
       "building": "2009 Building (Church)",
       "criticality": "medium",
       "make": "AC unit",
-      "notes": "Choir practice room & music-ministry offices. Upper level: above the men's robing room (ladder entry)."
+      "notes": "Choir practice room & music-ministry offices. Upper level: above the men's robing room (ladder entry).",
+      "geometry_geojson": {
+        "type": "Point",
+        "coordinates": [
+          -84.6878791,
+          33.9439034
+        ]
+      },
+      "level": 2
     },
     {
       "name": "AC13",
@@ -532,7 +652,15 @@
       "building": "2009 Building (Church)",
       "criticality": "medium",
       "make": "AC unit",
-      "notes": "Choir practice room & music-ministry offices. Upper level: above the men's robing room (ladder entry)."
+      "notes": "Choir practice room & music-ministry offices. Upper level: above the men's robing room (ladder entry).",
+      "geometry_geojson": {
+        "type": "Point",
+        "coordinates": [
+          -84.687865,
+          33.9439771
+        ]
+      },
+      "level": 2
     },
     {
       "name": "AC9",
@@ -540,7 +668,15 @@
       "building": "2009 Building (Church)",
       "criticality": "medium",
       "make": "AC unit",
-      "notes": "Narthex / front-lobby control. Upper level: above the women's robing room in the choir practice room (ladder entry)."
+      "notes": "Narthex / front-lobby control. Upper level: above the women's robing room in the choir practice room (ladder entry).",
+      "geometry_geojson": {
+        "type": "Point",
+        "coordinates": [
+          -84.6878734,
+          33.9440415
+        ]
+      },
+      "level": 1
     },
     {
       "name": "AC11",
@@ -548,7 +684,15 @@
       "building": "2009 Building (Church)",
       "criticality": "medium",
       "make": "AC unit",
-      "notes": "Narthex / front-lobby control. Upper level: above the women's robing room in the choir practice room (ladder entry)."
+      "notes": "Narthex / front-lobby control. Upper level: above the women's robing room in the choir practice room (ladder entry).",
+      "geometry_geojson": {
+        "type": "Point",
+        "coordinates": [
+          -84.6878641,
+          33.9440972
+        ]
+      },
+      "level": 1
     },
     {
       "name": "AH16A",
@@ -556,7 +700,15 @@
       "building": "2009 Building (Church)",
       "criticality": "medium",
       "make": null,
-      "notes": "Sanctuary air handler. Upper level: behind mechanical-room doors on the balcony, either side of the 2009 pulpit."
+      "notes": "Sanctuary air handler. Upper level: behind mechanical-room doors on the balcony, either side of the 2009 pulpit.",
+      "geometry_geojson": {
+        "type": "Point",
+        "coordinates": [
+          -84.6881958,
+          33.9441153
+        ]
+      },
+      "level": 1
     },
     {
       "name": "AH16B",
@@ -564,7 +716,15 @@
       "building": "2009 Building (Church)",
       "criticality": "medium",
       "make": null,
-      "notes": "Sanctuary air handler. Upper level: behind mechanical-room doors on the balcony, either side of the 2009 pulpit."
+      "notes": "Sanctuary air handler. Upper level: behind mechanical-room doors on the balcony, either side of the 2009 pulpit.",
+      "geometry_geojson": {
+        "type": "Point",
+        "coordinates": [
+          -84.6882431,
+          33.9439631
+        ]
+      },
+      "level": 1
     },
     {
       "name": "HP7",
@@ -572,7 +732,15 @@
       "building": "Fellowship Hall",
       "criticality": "medium",
       "make": "Heat pump",
-      "notes": "Fellowship-hall classrooms. Main level: outside, next to the head pastor's office."
+      "notes": "Fellowship-hall classrooms. Main level: outside, next to the head pastor's office.",
+      "geometry_geojson": {
+        "type": "Point",
+        "coordinates": [
+          -84.6878937,
+          33.9435633
+        ]
+      },
+      "level": 1
     },
     {
       "name": "HP8",
@@ -580,7 +748,15 @@
       "building": "Fellowship Hall",
       "criticality": "medium",
       "make": "Heat pump",
-      "notes": "Fellowship-hall classrooms. Main level: outside, next to the head pastor's office."
+      "notes": "Fellowship-hall classrooms. Main level: outside, next to the head pastor's office.",
+      "geometry_geojson": {
+        "type": "Point",
+        "coordinates": [
+          -84.6878809,
+          33.9435669
+        ]
+      },
+      "level": 1
     },
     {
       "name": "HP10",
@@ -588,7 +764,15 @@
       "building": "Fellowship Hall",
       "criticality": "medium",
       "make": "Heat pump",
-      "notes": "Back-hallway access to Explorers/Harvesters/Light classrooms. Main level: outside, next to the head pastor's office."
+      "notes": "Back-hallway access to Explorers/Harvesters/Light classrooms. Main level: outside, next to the head pastor's office.",
+      "geometry_geojson": {
+        "type": "Point",
+        "coordinates": [
+          -84.6878541,
+          33.9435582
+        ]
+      },
+      "level": 1
     },
     {
       "name": "HP14A",
@@ -596,7 +780,15 @@
       "building": "Fellowship Hall",
       "criticality": "medium",
       "make": "Heat pump",
-      "notes": "Pastors' offices — Marc's office. Main level: outside, next to the head pastor's office."
+      "notes": "Pastors' offices — Marc's office. Main level: outside, next to the head pastor's office.",
+      "geometry_geojson": {
+        "type": "Point",
+        "coordinates": [
+          -84.687771,
+          33.9437262
+        ]
+      },
+      "level": 1
     },
     {
       "name": "HP14B",
@@ -604,7 +796,15 @@
       "building": "Fellowship Hall",
       "criticality": "medium",
       "make": "Heat pump",
-      "notes": "Pastors' offices — David's office. Main level: outside, next to the head pastor's office."
+      "notes": "Pastors' offices — David's office. Main level: outside, next to the head pastor's office.",
+      "geometry_geojson": {
+        "type": "Point",
+        "coordinates": [
+          -84.687828,
+          33.9435879
+        ]
+      },
+      "level": 1
     },
     {
       "name": "AC7",
@@ -612,7 +812,15 @@
       "building": "Fellowship Hall",
       "criticality": "medium",
       "make": "AC unit",
-      "notes": "Fellowship-hall classrooms. Main level: in ceiling, long drop tiles in the pastor-offices hallway."
+      "notes": "Fellowship-hall classrooms. Main level: in ceiling, long drop tiles in the pastor-offices hallway.",
+      "geometry_geojson": {
+        "type": "Point",
+        "coordinates": [
+          -84.6877517,
+          33.9435967
+        ]
+      },
+      "level": 1
     },
     {
       "name": "AC8",
@@ -620,7 +828,15 @@
       "building": "Fellowship Hall",
       "criticality": "medium",
       "make": "AC unit",
-      "notes": "Fellowship-hall classrooms. Main level: in ceiling, long drop tiles in the pastor-offices hallway."
+      "notes": "Fellowship-hall classrooms. Main level: in ceiling, long drop tiles in the pastor-offices hallway.",
+      "geometry_geojson": {
+        "type": "Point",
+        "coordinates": [
+          -84.6877199,
+          33.9437135
+        ]
+      },
+      "level": 1
     },
     {
       "name": "AC10",
@@ -628,7 +844,15 @@
       "building": "Fellowship Hall",
       "criticality": "medium",
       "make": "AC unit",
-      "notes": "Explorers/Harvesters/Light classrooms. Main level: Light classroom storage closet, back-left corner."
+      "notes": "Explorers/Harvesters/Light classrooms. Main level: Light classroom storage closet, back-left corner.",
+      "geometry_geojson": {
+        "type": "Point",
+        "coordinates": [
+          -84.6877609,
+          33.9435584
+        ]
+      },
+      "level": 1
     },
     {
       "name": "AC6",
@@ -636,7 +860,15 @@
       "building": "Fellowship Hall",
       "criticality": "medium",
       "make": "AC unit",
-      "notes": "Fellowship-hall center. Roof unit: on the roof over the cafeteria kitchen."
+      "notes": "Fellowship-hall center. Roof unit: on the roof over the cafeteria kitchen.",
+      "geometry_geojson": {
+        "type": "Point",
+        "coordinates": [
+          -84.6876653,
+          33.943652
+        ]
+      },
+      "level": 1
     },
     {
       "name": "BG",
@@ -644,7 +876,15 @@
       "building": "1987 Building (School)",
       "criticality": "medium",
       "make": null,
-      "notes": "Kitchen, cafeteria, Latin room, computer lab, library, (main) music room, intern office, Sheri Purdue's office. Outside, behind the kitchen and dumpster."
+      "notes": "Kitchen, cafeteria, Latin room, computer lab, library, (main) music room, intern office, Sheri Purdue's office. Outside, behind the kitchen and dumpster.",
+      "geometry_geojson": {
+        "type": "Point",
+        "coordinates": [
+          -84.6873978,
+          33.9434364
+        ]
+      },
+      "level": 1
     },
     {
       "name": "AC17",
@@ -652,7 +892,15 @@
       "building": "1987 Building (School)",
       "criticality": "medium",
       "make": "AC unit",
-      "notes": "Beverage station / pantry hallway. Roof unit: on the roof over the cafeteria kitchen."
+      "notes": "Beverage station / pantry hallway. Roof unit: on the roof over the cafeteria kitchen.",
+      "geometry_geojson": {
+        "type": "Point",
+        "coordinates": [
+          -84.6873834,
+          33.9435995
+        ]
+      },
+      "level": 1
     },
     {
       "name": "BG2",
@@ -660,7 +908,15 @@
       "building": "1987 Building (School)",
       "criticality": "medium",
       "make": null,
-      "notes": "1987 sanctuary. Fenced-in elementary playground; air handler in the boiler room."
+      "notes": "1987 sanctuary. Fenced-in elementary playground; air handler in the boiler room.",
+      "geometry_geojson": {
+        "type": "Point",
+        "coordinates": [
+          -84.6872725,
+          33.9438702
+        ]
+      },
+      "level": 1
     },
     {
       "name": "BGF4",
@@ -668,7 +924,15 @@
       "building": "1987 Building (School)",
       "criticality": "medium",
       "make": null,
-      "notes": "Matt Ross office (main level). Unit in the elementary-playground corner behind some bushes; AC in the Matt Ross office."
+      "notes": "Matt Ross office (main level). Unit in the elementary-playground corner behind some bushes; AC in the Matt Ross office.",
+      "geometry_geojson": {
+        "type": "Point",
+        "coordinates": [
+          -84.6872198,
+          33.9436338
+        ]
+      },
+      "level": 1
     },
     {
       "name": "BGF1",
@@ -676,7 +940,15 @@
       "building": "1987 Building (School)",
       "criticality": "medium",
       "make": null,
-      "notes": "Lower-level music room. Outside, behind the kitchen and dumpster (smaller than BG)."
+      "notes": "Lower-level music room. Outside, behind the kitchen and dumpster (smaller than BG).",
+      "geometry_geojson": {
+        "type": "Point",
+        "coordinates": [
+          -84.6873743,
+          33.9434326
+        ]
+      },
+      "level": 1
     },
     {
       "name": "BGF2",
@@ -684,7 +956,15 @@
       "building": "1987 Building (School)",
       "criticality": "medium",
       "make": null,
-      "notes": "Lower-level classrooms, kindergarten–3rd grade. Outside, behind the kitchen and dumpster."
+      "notes": "Lower-level classrooms, kindergarten–3rd grade. Outside, behind the kitchen and dumpster.",
+      "geometry_geojson": {
+        "type": "Point",
+        "coordinates": [
+          -84.6873507,
+          33.9434259
+        ]
+      },
+      "level": 1
     },
     {
       "name": "BGF3",
@@ -692,7 +972,15 @@
       "building": "1987 Building (School)",
       "criticality": "medium",
       "make": null,
-      "notes": "Lower-level classrooms, kindergarten–3rd grade. Outside, behind the kitchen and dumpster."
+      "notes": "Lower-level classrooms, kindergarten–3rd grade. Outside, behind the kitchen and dumpster.",
+      "geometry_geojson": {
+        "type": "Point",
+        "coordinates": [
+          -84.6873298,
+          33.9434226
+        ]
+      },
+      "level": 1
     },
     {
       "name": "BGF5",
@@ -700,7 +988,15 @@
       "building": "1987 Building (School)",
       "criticality": "medium",
       "make": null,
-      "notes": "Stairway & teachers'-lounge rooms (lower level). Fenced-in elementary playground."
+      "notes": "Stairway & teachers'-lounge rooms (lower level). Fenced-in elementary playground.",
+      "geometry_geojson": {
+        "type": "Point",
+        "coordinates": [
+          -84.6871195,
+          33.9437335
+        ]
+      },
+      "level": -1
     },
     {
       "name": "BGF6",
@@ -708,7 +1004,15 @@
       "building": "1987 Building (School)",
       "criticality": "medium",
       "make": null,
-      "notes": "Lower-level classrooms: kindergarten, 4th & 5th grade. North side, just past the elementary playground; AC in ceiling of the school hallway (sticker-labeled tiles)."
+      "notes": "Lower-level classrooms: kindergarten, 4th & 5th grade. North side, just past the elementary playground; AC in ceiling of the school hallway (sticker-labeled tiles).",
+      "geometry_geojson": {
+        "type": "Point",
+        "coordinates": [
+          -84.687112,
+          33.9439259
+        ]
+      },
+      "level": -1
     },
     {
       "name": "BGF7",
@@ -716,7 +1020,15 @@
       "building": "1987 Building (School)",
       "criticality": "medium",
       "make": null,
-      "notes": "Lower-level classrooms: kindergarten, 4th & 5th grade. North side, just past the elementary playground; AC in ceiling of the school hallway (sticker-labeled tiles)."
+      "notes": "Lower-level classrooms: kindergarten, 4th & 5th grade. North side, just past the elementary playground; AC in ceiling of the school hallway (sticker-labeled tiles).",
+      "geometry_geojson": {
+        "type": "Point",
+        "coordinates": [
+          -84.6871112,
+          33.943966
+        ]
+      },
+      "level": -1
     },
     {
       "name": "BGF8",
@@ -724,7 +1036,15 @@
       "building": "1987 Building (School)",
       "criticality": "medium",
       "make": null,
-      "notes": "Lower-level classrooms: kindergarten, 4th & 5th grade. North side, just past the elementary playground; AC in ceiling of the school hallway (sticker-labeled tiles)."
+      "notes": "Lower-level classrooms: kindergarten, 4th & 5th grade. North side, just past the elementary playground; AC in ceiling of the school hallway (sticker-labeled tiles).",
+      "geometry_geojson": {
+        "type": "Point",
+        "coordinates": [
+          -84.6870847,
+          33.9439787
+        ]
+      },
+      "level": -1
     },
     {
       "name": "Boiler",
@@ -732,7 +1052,15 @@
       "building": "1987 Building (School)",
       "criticality": "medium",
       "make": null,
-      "notes": "Boiler. In the boiler room (serves the BG2 air handler)."
+      "notes": "Boiler. In the boiler room (serves the BG2 air handler).",
+      "geometry_geojson": {
+        "type": "Point",
+        "coordinates": [
+          -84.6872367,
+          33.9436839
+        ]
+      },
+      "level": -1
     },
     {
       "name": "HPG1",
@@ -740,7 +1068,15 @@
       "building": "Gym / Middle School",
       "criticality": "medium",
       "make": "Heat pump",
-      "notes": "Middle-school gym, locker rooms, concession stand. Outside, farthest side of the building from the church."
+      "notes": "Middle-school gym, locker rooms, concession stand. Outside, farthest side of the building from the church.",
+      "geometry_geojson": {
+        "type": "Point",
+        "coordinates": [
+          -84.6889585,
+          33.9439137
+        ]
+      },
+      "level": 1
     },
     {
       "name": "HPG2",
@@ -748,7 +1084,15 @@
       "building": "Gym / Middle School",
       "criticality": "medium",
       "make": "Heat pump",
-      "notes": "Middle-school gym, locker rooms, concession stand. Outside, farthest side of the building from the church."
+      "notes": "Middle-school gym, locker rooms, concession stand. Outside, farthest side of the building from the church.",
+      "geometry_geojson": {
+        "type": "Point",
+        "coordinates": [
+          -84.6889704,
+          33.9438904
+        ]
+      },
+      "level": 1
     },
     {
       "name": "HPG3",
@@ -756,7 +1100,15 @@
       "building": "Gym / Middle School",
       "criticality": "medium",
       "make": "Heat pump",
-      "notes": "Middle-school gym, locker rooms, concession stand. Outside, farthest side of the building from the church."
+      "notes": "Middle-school gym, locker rooms, concession stand. Outside, farthest side of the building from the church.",
+      "geometry_geojson": {
+        "type": "Point",
+        "coordinates": [
+          -84.6889703,
+          33.9438648
+        ]
+      },
+      "level": 1
     },
     {
       "name": "HPG4",
@@ -764,7 +1116,15 @@
       "building": "Gym / Middle School",
       "criticality": "medium",
       "make": "Heat pump",
-      "notes": "Gym / locker rooms / concession. Outside, corner closest to the church nursery."
+      "notes": "Gym / locker rooms / concession. Outside, corner closest to the church nursery.",
+      "geometry_geojson": {
+        "type": "Point",
+        "coordinates": [
+          -84.6885798,
+          33.943867
+        ]
+      },
+      "level": 1
     },
     {
       "name": "ACG1",
@@ -772,7 +1132,15 @@
       "building": "Gym / Middle School",
       "criticality": "medium",
       "make": "AC unit",
-      "notes": "Locker room 1. In ceiling."
+      "notes": "Locker room 1. In ceiling.",
+      "geometry_geojson": {
+        "type": "Point",
+        "coordinates": [
+          -84.6888982,
+          33.9438815
+        ]
+      },
+      "level": 1
     },
     {
       "name": "ACG2",
@@ -780,7 +1148,15 @@
       "building": "Gym / Middle School",
       "criticality": "medium",
       "make": "AC unit",
-      "notes": "Locker room 2. In ceiling."
+      "notes": "Locker room 2. In ceiling.",
+      "geometry_geojson": {
+        "type": "Point",
+        "coordinates": [
+          -84.6889222,
+          33.9437669
+        ]
+      },
+      "level": 1
     },
     {
       "name": "ACG4",
@@ -788,7 +1164,15 @@
       "building": "Gym / Middle School",
       "criticality": "medium",
       "make": "AC unit",
-      "notes": "Above the concession room. In ceiling."
+      "notes": "Above the concession room. In ceiling.",
+      "geometry_geojson": {
+        "type": "Point",
+        "coordinates": [
+          -84.6886269,
+          33.9438648
+        ]
+      },
+      "level": 1
     },
     {
       "name": "MHPG1",
@@ -796,7 +1180,15 @@
       "building": "Gym / Middle School",
       "criticality": "medium",
       "make": "Heat pump",
-      "notes": "All classrooms except the far end of the building. Outside, side closest to the pavilion and field."
+      "notes": "All classrooms except the far end of the building. Outside, side closest to the pavilion and field.",
+      "geometry_geojson": {
+        "type": "Point",
+        "coordinates": [
+          -84.6889553,
+          33.9435455
+        ]
+      },
+      "level": 1
     },
     {
       "name": "MHPG2",
@@ -804,7 +1196,15 @@
       "building": "Gym / Middle School",
       "criticality": "medium",
       "make": "Heat pump",
-      "notes": "All classrooms except the far end of the building. Outside, side closest to the pavilion and field."
+      "notes": "All classrooms except the far end of the building. Outside, side closest to the pavilion and field.",
+      "geometry_geojson": {
+        "type": "Point",
+        "coordinates": [
+          -84.6889124,
+          33.9435383
+        ]
+      },
+      "level": 1
     },
     {
       "name": "MHPG3",
@@ -812,7 +1212,15 @@
       "building": "Gym / Middle School",
       "criticality": "medium",
       "make": "Heat pump",
-      "notes": "All classrooms except the far end of the building. Outside, side closest to the pavilion and field."
+      "notes": "All classrooms except the far end of the building. Outside, side closest to the pavilion and field.",
+      "geometry_geojson": {
+        "type": "Point",
+        "coordinates": [
+          -84.6888792,
+          33.9435356
+        ]
+      },
+      "level": 1
     },
     {
       "name": "WU1",
@@ -820,7 +1228,15 @@
       "building": "Gym / Middle School",
       "criticality": "medium",
       "make": null,
-      "notes": "Colloquium classroom. Wall unit attached to the wall closest to the church."
+      "notes": "Colloquium classroom. Wall unit attached to the wall closest to the church.",
+      "geometry_geojson": {
+        "type": "Point",
+        "coordinates": [
+          -84.6885599,
+          33.9437792
+        ]
+      },
+      "level": 1
     },
     {
       "name": "Main Water Shutoff",
@@ -828,7 +1244,15 @@
       "building": null,
       "criticality": "high",
       "make": null,
-      "notes": "Example non-HVAC POI — main water shutoff. Reposition in geojson.io."
+      "notes": "Example non-HVAC POI — main water shutoff. Reposition in geojson.io.",
+      "geometry_geojson": {
+        "type": "Point",
+        "coordinates": [
+          -84.6882169,
+          33.9441392
+        ]
+      },
+      "level": -1
     }
   ]
 }

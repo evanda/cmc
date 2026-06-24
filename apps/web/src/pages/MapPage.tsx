@@ -1,9 +1,11 @@
 import { useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { MapView } from './MapView';
 import { useAssets, useAllWorkOrders, useBuildings, useLocations, useOrgSettings } from '../lib/queries';
 import { countOpenWosByBuilding } from '../lib/map-utils';
 
 export function MapPage() {
+  const navigate = useNavigate();
   const { data: org } = useOrgSettings();
   const { data: assets } = useAssets();
   const { data: buildings } = useBuildings();
@@ -29,6 +31,7 @@ export function MapPage() {
         assets={(assets ?? []).map((a) => ({ id: a.id, name: a.name }))}
         buildings={(buildings ?? []).map((b) => ({ id: b.id, name: b.name }))}
         openWoCountByBuilding={openWoCountByBuilding}
+        onCreateWorkOrder={(assetId) => navigate(`/work-orders?asset=${assetId}`)}
       />
     </div>
   );

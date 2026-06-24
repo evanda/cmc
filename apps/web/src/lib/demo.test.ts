@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { demoDataSource as ds } from './demo';
+import midwayData from '../data/midwaypca.json';
 import {
   buildLevels,
   countOpenWosByBuilding,
@@ -301,5 +302,28 @@ describe('map-utils — resolveBasemapUrl', () => {
       isPMTiles: false,
       url: 'https://app.example.com/facilities/midwaypca/tiles/cache/{z}/{y}/{x}.jpg',
     });
+  });
+});
+
+describe('asset intrinsic map coordinates (#38)', () => {
+  it('every midway equipment asset carries a Point geometry + numeric level', () => {
+    expect(midwayData.assets.length).toBeGreaterThan(0);
+    for (const a of midwayData.assets) {
+      expect(a.geometry_geojson?.type).toBe('Point');
+      expect(a.geometry_geojson?.coordinates).toHaveLength(2);
+      expect(typeof a.level).toBe('number');
+    }
+  });
+
+  it('createAsset leaves map coordinates unset by default (only loader/seed place assets)', async () => {
+    const a = await ds.createAsset({
+      name: 'Test ladder',
+      category_id: null,
+      location_id: null,
+      criticality: 'low',
+      status: 'active',
+    });
+    expect(a.geometry_geojson).toBeNull();
+    expect(a.level).toBeNull();
   });
 });
