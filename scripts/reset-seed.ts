@@ -17,6 +17,18 @@ import { execSync } from 'node:child_process';
 import { createCmcClient } from '@cmc/shared';
 import { fixtures, fixtureNames } from '../supabase/seed/fixtures/index.js';
 
+// Auto-load the repo-root .env so `pnpm db:seed` Just Works without exporting
+// vars into the shell. process.loadEnvFile (Node ≥ 20.12) doesn't override vars
+// already in the environment, so an explicit `export` still wins. Missing file
+// (CI / local stack) is fine — ignore and rely on the ambient environment.
+if (!process.env.SUPABASE_URL) {
+  try {
+    process.loadEnvFile('.env');
+  } catch {
+    /* no .env — use whatever is already in the environment */
+  }
+}
+
 // supabase-js builds a Realtime client whose constructor needs a global
 // WebSocket. Node < 22 ships none (Node 20 only behind --experimental-websocket),
 // so polyfill from the `ws` package when it's absent. Seeding never opens a

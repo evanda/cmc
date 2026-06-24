@@ -61,10 +61,9 @@ yourself once:
   in **#14** — until then `db:seed` covers buildings/floors/assets.
 
 ## 5. Run the app against the backend
-The root `.env` is **not** auto-loaded (Vite reads from `apps/web/`), so export
-it into the shell first; `VITE_DEMO` must be UNSET so it uses the real client:
+The web app auto-loads the root `.env` (Vite `envDir`); just make sure
+`VITE_DEMO` is UNSET so it uses the real client:
 ```bash
-set -a && source .env && set +a     # load root .env into the shell
 pnpm --filter @cmc/web dev          # http://localhost:5173
 ```
 Sign in with your admin user. The header should show your org name from
