@@ -38,9 +38,10 @@ areas (playground, cemetery, garden, carport).
      writes `../facilities/<id>/buildings.geojson`), or
    - points/areas: save as `../facilities/<id>/pois.geojson` /
      `areas.geojson`.
-6. After footprints change, re-home the HVAC points + floors:
-   `python3 ../gen_pois.py` (preserves your hand-added non-HVAC points). Reload
-   `../viewer.html`.
+6. Place each HVAC unit / point by hand at its real spot (drag in geojson.io or
+   edit its `coordinates`); keep `level` correct so the floor switcher shows it.
+   `floors.json` is hand-maintained too (its `geo_corners` come from
+   georeferencing — Track B). Reload `../viewer.html`.
 
 ## Track B — QGIS (accurate, incl. interior floorplans)
 
@@ -67,5 +68,6 @@ For surveyed-ish placement and to **georeference floorplan drawings** into
 - Geometry in **EPSG:4326 (lng, lat)**.
 - Don't rename property keys (`fields.md`); `level` drives the floor switcher
   (−1 lower · 1 main · 2 upper).
-- One source of truth: edit the GeoJSON, then `python3 ../gen_pois.py` and
-  `python3 gen_authoring.py` to refresh derived files.
+- One source of truth: edit the GeoJSON here under `../facilities/<id>/`. The web
+  app's copy (`apps/web/public/facilities/`) is generated on `pnpm dev`/`build` —
+  never edit it. Run `python3 gen_authoring.py` to refresh the CSV checklist.

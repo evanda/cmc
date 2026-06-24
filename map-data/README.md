@@ -14,7 +14,6 @@ code — only in these data files.
 map-data/
   viewer.html                 # ?facility=<id> (default: midwaypca)
   vendor/maplibre-gl.{js,css} # vendored lib (no CDN needed for the library)
-  gen_map.py  gen_pois.py     # generators (FACILITY env var, default midwaypca)
   authoring/                  # tools to draw/edit accurately (see authoring/README.md)
   facilities/
     midwaypca/
@@ -77,20 +76,22 @@ basemap you fully own, tile your **own** georeferenced aerial to PMTiles (plan
 
 - **Building footprints — REAL** (traced in geojson.io, imported via
   `authoring/import_buildings.py`).
-- **HVAC points — APPROXIMATE**: auto-gridded per floor inside each real
-  footprint by `gen_pois.py`; nudge to exact spots next (plan §5.3 — navigational
-  aids, not drawings).
+- **HVAC points — placed by hand** in `pois.geojson` (each unit's real lng/lat;
+  see `authoring/pois-<id>.csv` for the label/notes checklist). Drag them in
+  geojson.io or edit coordinates directly — they are navigational aids, not
+  survey drawings (plan §5.3).
 - **Example areas + the sample shutoff POI** are placeholders marked
   "(example — reposition)"; move/replace them with real ones.
 - **Floor overlays (`floors.json`)** — placeholder bbox quad until you
   georeference the floorplan drawings (`authoring/README.md`).
 
-## Regenerate
+## Source of truth & how the app gets it
 
-- `python3 gen_pois.py` — re-distributes the slide-derived HVAC units into the
-  current footprints and rebuilds `floors.json`; **preserves** any hand-added
-  non-HVAC features in `pois.geojson`. Honors `FACILITY=<id>`.
-- `python3 authoring/gen_authoring.py` — refreshes the `authoring/pois-<id>.csv`
-  checklist.
-- `gen_map.py` — the original placeholder generator (writes to
-  `facilities/_placeholder/`; superseded by the real traced data).
+`map-data/facilities/<id>/` is the **single, version-controlled source**. Edit
+the GeoJSON / `floors.json` / `meta.json` here, by hand. The web app reads its own
+copy under `apps/web/public/facilities/` — that copy is **generated** (gitignored)
+by `scripts/sync-map-data.mjs`, which runs automatically on `pnpm dev` and
+`pnpm build`. So you only ever edit one place; never hand-copy into `public/`.
+
+`python3 authoring/gen_authoring.py` refreshes the read-only
+`authoring/pois-<id>.csv` checklist from `pois.geojson` (honors `FACILITY=<id>`).

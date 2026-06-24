@@ -14,8 +14,9 @@ interface SelectedPoi {
   notes: string | null;
 }
 
-// Single-map, level-switchable indoor model (plan §5). No external tiles — a
-// neutral background + georeferenced footprints/POIs renders fully offline.
+// Single-map, level-switchable indoor model (plan §5). A neutral background +
+// georeferenced footprints/POIs renders fully offline; an optional subtle
+// grayscale satellite basemap (meta.json → basemap_tiles) adds ground context.
 const POI_COLORS: Record<string, string> = {
   hvac: '#0d9488',
   shutoff: '#dc2626',
@@ -60,11 +61,43 @@ export function MapView({
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
 
     map.on('load', async () => {
-      const [buildings, areas, pois] = await Promise.all([
+      const [buildings, areas, pois, meta] = await Promise.all([
         fetch(`${base}/buildings.geojson`).then((r) => r.json()),
         fetch(`${base}/areas.geojson`).then((r) => r.json()),
         fetch(`${base}/pois.geojson`).then((r) => r.json()),
+        fetch(`${base}/meta.json`)
+          .then((r) => r.json())
+          .catch(() => ({})),
       ]);
+
+      // Optional subtle satellite basemap — grayscale + faded so it reads as
+      // ground context behind the vectors, not a competing layer. Church-specific
+      // (configured per facility in meta.json, plan §7.6); generic in code.
+      if (meta?.basemap_tiles) {
+        const tilesUrl: string = /^https?:\/\//.test(meta.basemap_tiles)
+          ? meta.basemap_tiles
+          : `${base}/${meta.basemap_tiles}`;
+        map.addSource('satellite', {
+          type: 'raster',
+          tiles: [tilesUrl],
+          tileSize: 256,
+          minzoom: meta.basemap_minzoom ?? 0,
+          maxzoom: meta.basemap_maxzoom ?? 22,
+          attribution: meta.basemap_attribution ?? '',
+        });
+        map.addLayer({
+          id: 'satellite',
+          type: 'raster',
+          source: 'satellite',
+          paint: {
+            'raster-saturation': -1, // grayscale
+            'raster-contrast': -0.15, // flatten so it recedes
+            'raster-brightness-min': 0.35, // lift shadows → lighter
+            'raster-opacity': 0.35, // very subtle; fades into the background
+          },
+        });
+        map.addControl(new maplibregl.AttributionControl({ compact: true }));
+      }
 
       map.addSource('areas', { type: 'geojson', data: areas });
       map.addLayer({
