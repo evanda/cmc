@@ -110,17 +110,22 @@ whole branch. After pushing, check whether a PR already exists:
   gh pr edit <number> --repo evanda/cmc --body "<updated body — see structure below>"
 
 ### PR body structure
-Each run's issue gets its own named section. Keep a running "To verify"
+Each run's issue gets its own named section. Every section MUST carry a
+`Closes #NN` line — a **GitHub closing keyword** — so the squash-merge to `main`
+auto-closes the issue. A bare `(evanda/cmc#NN)` reference does NOT auto-close;
+that gap left a backlog of merged-but-open issues. Keep a running "To verify"
 checklist at the bottom — one item per issue:
 
   ## Changes
 
   ### fix/feat: <issue title> (evanda/cmc#NN)
+  Closes #NN
   <one-paragraph what & why>
 
   ---
 
   ### fix/feat: <next issue title> (evanda/cmc#NN)
+  Closes #NN2
   ...
 
   ---
@@ -129,8 +134,10 @@ checklist at the bottom — one item per issue:
   - [ ] #NN — <one-line description of what to test>
   - [ ] #NN2 — <one-line description>
 
-When appending, insert the new `###` section before the `## To verify` block,
-then add the new checklist item at the end of that block.
+When appending, insert the new `###` section (including its `Closes #NN` line)
+before the `## To verify` block, then add the new checklist item at the end of
+that block. Use one `Closes #NN` per issue the run fully resolves; for a partial
+fix reference it as `Refs #NN` instead so it stays open.
 
 ## 9. Manual-test steps
 Write concrete, click-by-click steps to verify on the running web app — focused
