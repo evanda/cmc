@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { demoDataSource as ds } from './demo';
-import { levelLabel, poiLevelFilter } from './map-utils';
+import { buildLevels, levelLabel, poiLevelFilter } from './map-utils';
 
 // The in-memory demo DataSource backs offline mode + screenshots. These guard
 // the seed shape and the core write flows the UI relies on.
@@ -133,5 +133,26 @@ describe('map-utils — levelLabel', () => {
   it('formats negative floor numbers as B-prefixed basement labels', () => {
     expect(levelLabel(-1)).toBe('B1');
     expect(levelLabel(-2)).toBe('B2');
+  });
+});
+
+describe('map-utils — buildLevels', () => {
+  it('merges poi and floor levels into a sorted list', () => {
+    expect(buildLevels([1, 2], [-1, 1])).toEqual([-1, 1, 2]);
+  });
+
+  it('deduplicates levels present in both sources', () => {
+    expect(buildLevels([1], [1])).toEqual([1]);
+  });
+
+  it('handles one empty source', () => {
+    expect(buildLevels([], [-1, 1])).toEqual([-1, 1]);
+    expect(buildLevels([2], [])).toEqual([2]);
+  });
+
+  it('returns all levels from midway campus (−1, 1, 2)', () => {
+    // Matches the floors.json for midwaypca (Basement, Main, Upper across buildings)
+    const floorLevels = [-1, 1, -1, 1, 1, 2, 1];
+    expect(buildLevels([], floorLevels)).toEqual([-1, 1, 2]);
   });
 });

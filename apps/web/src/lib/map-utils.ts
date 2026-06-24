@@ -12,3 +12,8 @@ export function poiLevelFilter(level: Level): null | unknown[] {
 export function levelLabel(n: number): string {
   return n < 0 ? `B${-n}` : String(n);
 }
+
+/** Merge POI levels and floor levels into a sorted, deduped list. */
+export function buildLevels(poiLevels: number[], floorLevels: number[]): number[] {
+  return [...new Set([...poiLevels, ...floorLevels])].sort((a, b) => a - b);
+}

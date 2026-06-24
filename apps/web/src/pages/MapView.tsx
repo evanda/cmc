@@ -5,7 +5,7 @@ import maplibregl, {
   type Map as MlMap,
 } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { levelLabel, poiLevelFilter, type Level } from '../lib/map-utils';
+import { buildLevels, levelLabel, poiLevelFilter, type Level } from '../lib/map-utils';
 
 interface SelectedPoi {
   label: string;
@@ -13,6 +13,16 @@ interface SelectedPoi {
   building: string | null;
   level_name: string | null;
   notes: string | null;
+}
+
+interface FloorData {
+  building_code: string;
+  building: string;
+  name: string;
+  level: number;
+  floorplan_image_url: string | null;
+  geo_corners_geojson: GeoJSON.Polygon | null;
+  rotation_deg: number;
 }
 
 // Single-map, level-switchable indoor model (plan §5). A neutral background +
@@ -39,6 +49,8 @@ export function MapView({
   const [level, setLevel] = useState<Level>('site');
   const [levels, setLevels] = useState<number[]>([]);
   const [selected, setSelected] = useState<SelectedPoi | null>(null);
+  // Tracks floor image overlay layer IDs + their level for visibility toggling.
+  const floorImageLayersRef = useRef<{ layerId: string; level: number }[]>([]);
   const base = `${import.meta.env.BASE_URL}facilities/${facility}`;
   // POIs are named after their asset (e.g. "AC16A"); link by label.
   const assetIdByName = new Map(assets.map((a) => [a.name, a.id]));
@@ -60,13 +72,16 @@ export function MapView({
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
 
     map.on('load', async () => {
-      const [buildings, areas, pois, meta] = await Promise.all([
+      const [buildings, areas, pois, meta, floorsData] = await Promise.all([
         fetch(`${base}/buildings.geojson`).then((r) => r.json()),
         fetch(`${base}/areas.geojson`).then((r) => r.json()),
         fetch(`${base}/pois.geojson`).then((r) => r.json()),
         fetch(`${base}/meta.json`)
           .then((r) => r.json())
           .catch(() => ({})),
+        fetch(`${base}/floors.json`)
+          .then((r) => r.json())
+          .catch(() => []),
       ]);
 
       // Optional subtle satellite basemap — grayscale + faded so it reads as
@@ -126,6 +141,74 @@ export function MapView({
         paint: { 'line-color': '#475569', 'line-width': 2 },
       });
 
+      // Per-level floor outlines from floors.json geo_corners_geojson (plan §5.2).
+      // At site level: hidden (building footprints are shown instead).
+      // At a numbered level: only the floors matching that level appear.
+      const validFloors = (floorsData as FloorData[]).filter((f) => f.geo_corners_geojson);
+      const floorsGeoJSON: GeoJSON.FeatureCollection = {
+        type: 'FeatureCollection',
+        features: validFloors.map((f) => ({
+          type: 'Feature' as const,
+          geometry: f.geo_corners_geojson as GeoJSON.Polygon,
+          properties: {
+            level: f.level,
+            building: f.building,
+            building_code: f.building_code,
+            name: f.name,
+          },
+        })),
+      };
+      map.addSource('floors', { type: 'geojson', data: floorsGeoJSON });
+      map.addLayer({
+        id: 'floor-fill',
+        type: 'fill',
+        source: 'floors',
+        paint: { 'fill-color': '#bfdbfe', 'fill-opacity': 0.25 },
+        layout: { visibility: 'none' },
+      });
+      map.addLayer({
+        id: 'floor-line',
+        type: 'line',
+        source: 'floors',
+        paint: { 'line-color': '#3b82f6', 'line-width': 1.5, 'line-dasharray': [4, 2] },
+        layout: { visibility: 'none' },
+      });
+
+      // Floorplan image overlays: one image source + raster layer per floor that
+      // has a drawing (floorplan_image_url is non-null). Shown only when the
+      // matching level is active (plan §5.1 — image source with 4 corner coords).
+      const imageOverlays: { layerId: string; level: number }[] = [];
+      for (const floor of floorsData as FloorData[]) {
+        if (!floor.floorplan_image_url || !floor.geo_corners_geojson) continue;
+        const coords = floor.geo_corners_geojson.coordinates[0];
+        if (coords.length < 4) continue;
+        const sourceId = `floor-img-src-${floor.building_code}-${floor.level}`;
+        const layerId = `floor-img-${floor.building_code}-${floor.level}`;
+        const url = /^https?:\/\//.test(floor.floorplan_image_url)
+          ? floor.floorplan_image_url
+          : `${base}/${floor.floorplan_image_url}`;
+        // MapLibre image source takes [topLeft, topRight, bottomRight, bottomLeft].
+        map.addSource(sourceId, {
+          type: 'image',
+          url,
+          coordinates: [
+            coords[0] as [number, number],
+            coords[1] as [number, number],
+            coords[2] as [number, number],
+            coords[3] as [number, number],
+          ],
+        });
+        map.addLayer({
+          id: layerId,
+          type: 'raster',
+          source: sourceId,
+          paint: { 'raster-opacity': 0.8 },
+          layout: { visibility: 'none' },
+        });
+        imageOverlays.push({ layerId, level: floor.level });
+      }
+      floorImageLayersRef.current = imageOverlays;
+
       map.addSource('pois', { type: 'geojson', data: pois });
       map.addLayer({
         id: 'poi',
@@ -176,11 +259,14 @@ export function MapView({
         for (const ring of f.geometry.coordinates) for (const c of ring) b.extend(c);
       map.fitBounds(b, { padding: 60, duration: 0 });
 
-      // Discover levels present in the POI data.
-      const lv = [...new Set(pois.features.map((f: GeoJSON.Feature) => f.properties?.level))]
-        .filter((x): x is number => typeof x === 'number')
-        .sort((a, b) => a - b);
-      setLevels(lv);
+      // Discover levels: union of POI levels + floor levels (plan §5.2).
+      const poiLevels = [
+        ...new Set(pois.features.map((f: GeoJSON.Feature) => f.properties?.level)),
+      ].filter((x): x is number => typeof x === 'number');
+      const floorLevels = (floorsData as FloorData[])
+        .map((f) => f.level)
+        .filter((x): x is number => typeof x === 'number');
+      setLevels(buildLevels(poiLevels, floorLevels));
 
       // Expose for the screenshot harness (project a POI → pixel to click it).
       if (import.meta.env.VITE_DEMO) {
@@ -192,14 +278,44 @@ export function MapView({
     return () => map.remove();
   }, [base]);
 
-  // Apply the level filter to POIs (and areas show only at Site).
+  // Apply the level filter to POIs, floor outlines, and image overlays.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !map.getLayer('poi')) return;
+
     map.setFilter('poi', poiLevelFilter(level) as Parameters<typeof map.setFilter>[1]);
+
+    // Areas only visible at site level (exterior features).
     const areaVis = level === 'site' ? 'visible' : 'none';
     if (map.getLayer('area-fill')) map.setLayoutProperty('area-fill', 'visibility', areaVis);
     if (map.getLayer('area-line')) map.setLayoutProperty('area-line', 'visibility', areaVis);
+
+    // Floor outlines: visible only for a specific level, filtered to that level.
+    if (level !== 'site') {
+      const lvFilter = poiLevelFilter(level) as Parameters<typeof map.setFilter>[1];
+      if (map.getLayer('floor-fill')) {
+        map.setLayoutProperty('floor-fill', 'visibility', 'visible');
+        map.setFilter('floor-fill', lvFilter);
+      }
+      if (map.getLayer('floor-line')) {
+        map.setLayoutProperty('floor-line', 'visibility', 'visible');
+        map.setFilter('floor-line', lvFilter);
+      }
+    } else {
+      if (map.getLayer('floor-fill')) map.setLayoutProperty('floor-fill', 'visibility', 'none');
+      if (map.getLayer('floor-line')) map.setLayoutProperty('floor-line', 'visibility', 'none');
+    }
+
+    // Floorplan image overlays: show only the overlay matching the active level.
+    for (const { layerId, level: overlayLevel } of floorImageLayersRef.current) {
+      if (map.getLayer(layerId)) {
+        map.setLayoutProperty(
+          layerId,
+          'visibility',
+          overlayLevel === level ? 'visible' : 'none',
+        );
+      }
+    }
   }, [level]);
 
   return (
@@ -216,7 +332,7 @@ export function MapView({
               level === l ? 'bg-slate-800 text-white' : 'text-slate-700 hover:bg-slate-100'
             }`}
           >
-            {l === 'site' ? 'Site' : levelLabel(l)}
+            {l === 'site' ? 'Site' : levelLabel(l as number)}
           </button>
         ))}
       </div>
