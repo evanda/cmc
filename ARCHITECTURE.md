@@ -5,7 +5,8 @@ church campus. **Single-tenant per deployment**: each church gets its own
 Supabase project + Vercel deployment; nothing church-specific is hardcoded
 (plan §7.6). This document orients a new contributor. The full product spec is
 [`facility-maintenance-app-plan.md`](./facility-maintenance-app-plan.md); the
-build order is plan §11.
+build order is plan §11. To put an instance online, see
+[`docs/DEPLOY.md`](./docs/DEPLOY.md).
 
 ## Monorepo layout (pnpm + Turborepo)
 
