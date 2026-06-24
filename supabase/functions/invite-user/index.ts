@@ -46,8 +46,14 @@ Deno.serve(async (req) => {
     const { email, role } = await req.json();
     if (!email || typeof email !== 'string') return json({ error: 'email is required' }, 400);
 
+    // SITE_URL is set as a function secret in production (supabase secrets set SITE_URL=…).
+    // Falls back to local dev default so invite links work without extra config.
+    const siteUrl = (Deno.env.get('SITE_URL') ?? 'http://127.0.0.1:5173').replace(/\/$/, '');
+
     const { data: invited, error: inviteErr } =
-      await supabaseAdmin.auth.admin.inviteUserByEmail(email);
+      await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
+        redirectTo: `${siteUrl}/accept-invite`,
+      });
     if (inviteErr) return json({ error: inviteErr.message }, 400);
 
     // The on_auth_user_created trigger created the public.users row with role 'requester'.
