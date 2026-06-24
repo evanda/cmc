@@ -17,6 +17,16 @@ import { execSync } from 'node:child_process';
 import { createCmcClient } from '@cmc/shared';
 import { fixtures, fixtureNames } from '../supabase/seed/fixtures/index.js';
 
+// supabase-js builds a Realtime client whose constructor needs a global
+// WebSocket. Node < 22 ships none (Node 20 only behind --experimental-websocket),
+// so polyfill from the `ws` package when it's absent. Seeding never opens a
+// realtime channel — this just satisfies the constructor. Synchronous require:
+// these scripts transpile to CommonJS, where top-level await isn't allowed.
+if (typeof (globalThis as { WebSocket?: unknown }).WebSocket === 'undefined') {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  (globalThis as { WebSocket?: unknown }).WebSocket = require('ws').WebSocket;
+}
+
 function fail(msg: string): never {
   console.error(`\n✖ ${msg}\n`);
   process.exit(1);
