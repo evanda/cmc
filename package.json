@@ -22,6 +22,7 @@
     "db:diff": "supabase db diff --linked",
     "db:seed": "tsx scripts/reset-seed.ts",
     "map:place": "node map-data/place-server.mjs",
+    "map:areas": "node map-data/place-server.mjs",
     "facility:export": "node scripts/facility-export.mjs",
     "facility:import": "node scripts/facility-import.mjs",
     "screenshots": "node scripts/screenshot.mjs"
