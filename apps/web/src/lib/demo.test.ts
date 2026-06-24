@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { demoDataSource as ds } from './demo';
-import { buildLevels, levelLabel, poiLevelFilter } from './map-utils';
+import { buildLevels, countOpenWosByBuilding, levelLabel, poiLevelFilter } from './map-utils';
 
 // The in-memory demo DataSource backs offline mode + screenshots. These guard
 // the seed shape and the core write flows the UI relies on.
@@ -219,5 +219,42 @@ describe('map-utils — buildLevels', () => {
     // Matches the floors.json for midwaypca (Basement, Main, Upper across buildings)
     const floorLevels = [-1, 1, -1, 1, 1, 2, 1];
     expect(buildLevels([], floorLevels)).toEqual([-1, 1, 2]);
+  });
+});
+
+describe('map-utils — countOpenWosByBuilding', () => {
+  const locations = [
+    { id: 'loc-1', building_id: 'bldg-A' },
+    { id: 'loc-2', building_id: 'bldg-A' },
+    { id: 'loc-3', building_id: 'bldg-B' },
+  ];
+
+  it('counts active WOs per building via location join', () => {
+    const wos = [
+      { status: 'open' as const, location_id: 'loc-1' },
+      { status: 'in_progress' as const, location_id: 'loc-2' },
+      { status: 'open' as const, location_id: 'loc-3' },
+    ];
+    expect(countOpenWosByBuilding(wos, locations)).toEqual({ 'bldg-A': 2, 'bldg-B': 1 });
+  });
+
+  it('excludes completed and cancelled WOs', () => {
+    const wos = [
+      { status: 'completed' as const, location_id: 'loc-1' },
+      { status: 'cancelled' as const, location_id: 'loc-1' },
+      { status: 'open' as const, location_id: 'loc-3' },
+    ];
+    const result = countOpenWosByBuilding(wos, locations);
+    expect(result['bldg-A']).toBeUndefined();
+    expect(result['bldg-B']).toBe(1);
+  });
+
+  it('ignores WOs with no location_id', () => {
+    const wos = [{ status: 'open' as const, location_id: null }];
+    expect(countOpenWosByBuilding(wos, locations)).toEqual({});
+  });
+
+  it('returns empty object when there are no active WOs', () => {
+    expect(countOpenWosByBuilding([], locations)).toEqual({});
   });
 });

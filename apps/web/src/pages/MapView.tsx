@@ -15,6 +15,7 @@ interface SelectedPoi {
   notes: string | null;
 }
 
+
 interface FloorData {
   building_code: string;
   building: string;
@@ -40,15 +41,23 @@ const POI_COLORS: Record<string, string> = {
 export function MapView({
   facility = 'midwaypca',
   assets = [],
+  buildings = [],
+  openWoCountByBuilding = {},
 }: {
   facility?: string;
   assets?: { id: string; name: string }[];
+  buildings?: { id: string; name: string }[];
+  openWoCountByBuilding?: Record<string, number>;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MlMap | null>(null);
   const [level, setLevel] = useState<Level>('site');
   const [levels, setLevels] = useState<number[]>([]);
   const [selected, setSelected] = useState<SelectedPoi | null>(null);
+  // Store just the GeoJSON feature name; derive id/count from current props on render
+  // so the map-load closure never sees stale buildings/openWoCountByBuilding values.
+  const [selectedBuildingName, setSelectedBuildingName] = useState<string | null>(null);
+  const buildingIdByName = new Map(buildings.map((b) => [b.name, b.id]));
   // Tracks floor image overlay layer IDs + their level for visibility toggling.
   const floorImageLayersRef = useRef<{ layerId: string; level: number }[]>([]);
   const base = `${import.meta.env.BASE_URL}facilities/${facility}`;
@@ -242,6 +251,7 @@ export function MapView({
       map.on('click', 'poi', (e) => {
         const p = e.features?.[0]?.properties;
         if (!p) return;
+        setSelectedBuildingName(null);
         setSelected({
           label: p.label ?? p.poi_type,
           poi_type: p.poi_type,
@@ -252,6 +262,21 @@ export function MapView({
       });
       map.on('mouseenter', 'poi', () => (map.getCanvas().style.cursor = 'pointer'));
       map.on('mouseleave', 'poi', () => (map.getCanvas().style.cursor = ''));
+
+      // Building click → summary card (plan §4.6: click a building → open WOs + assets).
+      // Skip if a POI was also at the clicked point (POI handler takes precedence).
+      // Only store the name in state; id + WO count derived from current props on render
+      // to avoid stale closure over buildings / openWoCountByBuilding.
+      map.on('click', 'building-fill', (e) => {
+        const pois = map.queryRenderedFeatures(e.point, { layers: ['poi'] });
+        if (pois.length > 0) return;
+        const p = e.features?.[0]?.properties;
+        if (!p) return;
+        setSelected(null);
+        setSelectedBuildingName(p.name as string);
+      });
+      map.on('mouseenter', 'building-fill', () => (map.getCanvas().style.cursor = 'pointer'));
+      map.on('mouseleave', 'building-fill', () => (map.getCanvas().style.cursor = ''));
 
       // Fit to the campus.
       const b = new maplibregl.LngLatBounds();
@@ -380,6 +405,49 @@ export function MapView({
           )}
         </div>
       )}
+
+      {/* Selected building card (plan §4.6 — click a building → open WOs + assets).
+          Derive id + WO count from current props so we never read stale closure state. */}
+      {selectedBuildingName && (() => {
+        const bid = buildingIdByName.get(selectedBuildingName);
+        const openWoCount = bid ? (openWoCountByBuilding[bid] ?? 0) : 0;
+        return (
+          <div className="absolute right-3 top-3 z-10 w-64 rounded-lg border border-slate-300 bg-white p-3 shadow-lg">
+            <div className="flex items-start justify-between">
+              <div className="font-semibold text-slate-800">{selectedBuildingName}</div>
+              <button
+                className="text-slate-400 hover:text-slate-700"
+                onClick={() => setSelectedBuildingName(null)}
+              >
+                ✕
+              </button>
+            </div>
+            <div className="mt-1 text-sm text-slate-600">
+              {openWoCount > 0 ? (
+                <span className="font-medium text-amber-700">
+                  {openWoCount} open work order{openWoCount !== 1 ? 's' : ''}
+                </span>
+              ) : (
+                <span className="text-slate-400">No open work orders</span>
+              )}
+            </div>
+            <div className="mt-3 flex flex-col gap-1.5">
+              <Link
+                to="/work-orders"
+                className="rounded bg-slate-800 px-3 py-1.5 text-center text-xs font-medium text-white hover:bg-slate-700"
+              >
+                Work orders →
+              </Link>
+              <Link
+                to="/assets"
+                className="rounded border border-slate-300 px-3 py-1.5 text-center text-xs font-medium text-slate-700 hover:bg-slate-50"
+              >
+                Assets →
+              </Link>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
