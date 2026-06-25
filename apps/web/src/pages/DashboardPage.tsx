@@ -83,7 +83,7 @@ export function DashboardPage() {
       </p>
       <div className="mb-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
         <StatCard label="Active work orders" value={activeWorkOrders ?? '—'} to="/work-orders" />
-        <StatCard label="PMs due soon" value={pmsDueSoon ?? '—'} to="/pm" />
+        <StatCard label="Maintenance due soon" value={pmsDueSoon ?? '—'} to="/assets" />
         <StatCard label="Assets" value={assets.data?.length ?? '—'} to="/assets" />
       </div>
       <div className="mb-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
@@ -92,7 +92,7 @@ export function DashboardPage() {
         <StatCard label="Locations" value={locations.data?.length ?? '—'} to="/campus" />
       </div>
       <Link
-        to="/reports"
+        to="/reports?tab=Expiry"
         className="block rounded-lg border border-slate-200 bg-white px-5 py-4 text-sm transition hover:border-slate-400"
       >
         <span className="font-medium text-slate-700">Contracts & warranties: </span>

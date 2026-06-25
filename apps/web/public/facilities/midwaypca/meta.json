@@ -1,0 +1,9 @@
+{
+  "id": "midwaypca",
+  "name": "Midway PCA",
+  "description": "Midway Presbyterian Church campus — church, school, gym/middle school.",
+  "basemap_tiles": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+  "basemap_minzoom": 0,
+  "basemap_maxzoom": 19,
+  "basemap_attribution": "Imagery © Esri, Maxar, Earthstar Geographics"
+}

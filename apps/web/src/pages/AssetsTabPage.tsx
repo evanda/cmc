@@ -3,7 +3,7 @@ import { AssetsPage } from './AssetsPage';
 import { PmSchedulesPage } from './PmSchedulesPage';
 import { FleetPage } from './FleetPage';
 
-const TABS = ['Assets', 'PM Schedules', 'Fleet'] as const;
+const TABS = ['Assets', 'Maintenance Schedules', 'Fleet'] as const;
 type Tab = (typeof TABS)[number];
 
 export function AssetsTabPage() {
@@ -27,7 +27,7 @@ export function AssetsTabPage() {
         ))}
       </div>
       {tab === 'Assets' && <AssetsPage />}
-      {tab === 'PM Schedules' && <PmSchedulesPage />}
+      {tab === 'Maintenance Schedules' && <PmSchedulesPage />}
       {tab === 'Fleet' && <FleetPage />}
     </div>
   );

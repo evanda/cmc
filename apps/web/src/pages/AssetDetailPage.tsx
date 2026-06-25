@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   WORK_ORDER_TYPES,
   workLogFormSchema,
@@ -47,8 +47,10 @@ function woTotal(wo: WorkOrder): number | null {
 
 export function AssetDetailPage() {
   const { id = '' } = useParams();
+  const navigate = useNavigate();
   const { role } = useAuth();
   const canEdit = role === 'admin' || role === 'technician';
+  const canFileWo = role === 'admin' || role === 'technician' || role === 'requester';
   const { data: org } = useOrgSettings();
   const currency = org?.currency ?? 'USD';
 
@@ -224,7 +226,14 @@ export function AssetDetailPage() {
       <section>
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-slate-800">Work history</h2>
-          {canEdit && <Button onClick={() => setShowLog(true)}>+ Log work</Button>}
+          <div className="flex gap-2">
+            {canFileWo && (
+              <Button variant="ghost" onClick={() => navigate(`/work-orders?asset=${id}`)}>
+                + New work order
+              </Button>
+            )}
+            {canEdit && <Button onClick={() => setShowLog(true)}>+ Log work</Button>}
+          </div>
         </div>
         {workOrders.data && workOrders.data.length > 0 ? (
           <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">

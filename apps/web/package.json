@@ -4,10 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "sync-map-data": "node ../../scripts/sync-map-data.mjs",
-    "dev": "pnpm sync-map-data && vite",
-    "build": "pnpm sync-map-data && tsc --noEmit && vite build",
-    "preview": "pnpm sync-map-data && vite preview",
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --passWithNoTests"

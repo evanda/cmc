@@ -10,7 +10,9 @@ import {
 } from '@cmc/shared';
 import {
   useAddWorkOrderPhoto,
+  useAssets,
   useDeleteWorkOrderPhoto,
+  useLocations,
   useUpdateWorkOrder,
   useVendors,
   useWorkOrderPhotos,
@@ -40,16 +42,30 @@ export function WorkOrderModal({
   const deletePhoto = useDeleteWorkOrderPhoto(wo.id);
   const updateWo = useUpdateWorkOrder();
   const vendors = useVendors();
+  const locations = useLocations();
+  const assets = useAssets();
   const vendorName =
     (wo.vendor_id ? vendors.data?.find((v) => v.id === wo.vendor_id)?.name : null) ?? wo.vendor_name;
+  const locationName = wo.location_id
+    ? (locations.data?.find((l) => l.id === wo.location_id)?.name ?? null)
+    : null;
+  const assetName = wo.linked_asset_id
+    ? (assets.data?.find((a) => a.id === wo.linked_asset_id)?.name ?? null)
+    : null;
 
   const [status, setStatus] = useState<WorkOrderStatus>(wo.status);
   const [priority, setPriority] = useState<WorkOrderPriority>(wo.priority);
   const [assignee, setAssignee] = useState(wo.assignee_user_id ?? '');
+  const [locationId, setLocationId] = useState(wo.location_id ?? '');
+  const [vendorId, setVendorId] = useState(wo.vendor_id ?? '');
+  const [linkedAssetId, setLinkedAssetId] = useState(wo.linked_asset_id ?? '');
   const dirty =
     status !== wo.status ||
     priority !== wo.priority ||
-    (assignee || null) !== wo.assignee_user_id;
+    (assignee || null) !== wo.assignee_user_id ||
+    (locationId || null) !== wo.location_id ||
+    (vendorId || null) !== wo.vendor_id ||
+    (linkedAssetId || null) !== wo.linked_asset_id;
 
   const userName = (uid: string | null) =>
     uid ? (users.find((u) => u.id === uid)?.name ?? '—') : null;
@@ -106,13 +122,64 @@ export function WorkOrderModal({
                 </select>
               </Field>
             </div>
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              <Field label="Asset">
+                <select
+                  className={inputClass}
+                  value={linkedAssetId}
+                  onChange={(e) => setLinkedAssetId(e.target.value)}
+                >
+                  <option value="">—</option>
+                  {assets.data?.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.name}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Location">
+                <select
+                  className={inputClass}
+                  value={locationId}
+                  onChange={(e) => setLocationId(e.target.value)}
+                >
+                  <option value="">—</option>
+                  {locations.data?.map((l) => (
+                    <option key={l.id} value={l.id}>
+                      {l.name}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Vendor">
+                <select
+                  className={inputClass}
+                  value={vendorId}
+                  onChange={(e) => setVendorId(e.target.value)}
+                >
+                  <option value="">—</option>
+                  {vendors.data?.map((v) => (
+                    <option key={v.id} value={v.id}>
+                      {v.name}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            </div>
             <div className="mt-2 flex justify-end">
               <Button
                 disabled={!dirty || updateWo.isPending}
                 onClick={() =>
                   updateWo.mutate({
                     id: wo.id,
-                    patch: { status, priority, assignee_user_id: assignee || null },
+                    patch: {
+                      status,
+                      priority,
+                      assignee_user_id: assignee || null,
+                      location_id: locationId || null,
+                      vendor_id: vendorId || null,
+                      linked_asset_id: linkedAssetId || null,
+                    },
                   })
                 }
               >
@@ -135,6 +202,8 @@ export function WorkOrderModal({
         {wo.completion_notes && <p className="text-slate-600">{wo.completion_notes}</p>}
 
         <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+          <Detail label="Asset" value={assetName} />
+          <Detail label="Location" value={locationName} />
           <Detail label="Vendor" value={vendorName} />
           <Detail label="Performed by" value={userName(wo.assignee_user_id)} />
           <Detail label="Coordinated by" value={userName(wo.coordinated_by_user_id)} />

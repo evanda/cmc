@@ -314,6 +314,21 @@ export function useDeleteWorkOrderPhoto(workOrderId: string) {
   });
 }
 
+// Upload one or more photos to a WO by ID — used by the create form after the
+// WO row exists. Treats all queued files as 'before' (issue documentation).
+export function useAddPhotosToWorkOrder() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ workOrderId, files }: { workOrderId: string; files: File[] }) => {
+      for (const file of files) {
+        await ds.addWorkOrderPhoto(workOrderId, file, 'before');
+      }
+    },
+    onSuccess: (_, { workOrderId }) =>
+      qc.invalidateQueries({ queryKey: ['work_order_photos', workOrderId] }),
+  });
+}
+
 // ── work orders board (all WOs across assets) ────────────────────────────────
 export function useAllWorkOrders() {
   return useQuery({ queryKey: ['all_work_orders'], queryFn: () => ds.listAllWorkOrders() });
