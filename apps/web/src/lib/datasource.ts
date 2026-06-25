@@ -18,6 +18,7 @@ import type {
   LocationForm,
   OrgSettings,
   OrgSettingsForm,
+  Poi,
   PmSchedule,
   PmScheduleForm,
   ServiceContract,
@@ -106,6 +107,8 @@ export interface DataSource {
   listPmSchedules(): Promise<PmSchedule[]>;
   createPmSchedule(input: PmScheduleForm): Promise<PmSchedule>;
   deletePmSchedule(id: string): Promise<void>;
+  // Spatial POIs — map markers linked to assets (plan §5.4).
+  listPois(): Promise<Poi[]>;
 }
 
 function pmSchedulePatch(input: PmScheduleForm) {
@@ -708,6 +711,11 @@ const supabaseDataSource: DataSource = {
         .single(),
     );
   },
+
+  listPois: async () =>
+    unwrap<Poi[]>(
+      await supabase.from('pois').select('*').is('deleted_at', null).order('label'),
+    ),
 };
 
 export const ds: DataSource = isDemo ? demoDataSource : supabaseDataSource;

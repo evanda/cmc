@@ -116,6 +116,68 @@ async function seed() {
   }
 
   console.log(`✓ assets seeded for "${facility}": ${inserted} inserted, ${updated} updated.`);
+
+  // ── Phase 2: seed the `pois` table, linking each row to its seeded asset ──
+  console.log(`→ seeding pois table from ${facility}/pois.geojson…`);
+
+  const { data: seededAssets, error: asErr } = await db
+    .from('assets')
+    .select('id, name')
+    .is('deleted_at', null);
+  if (asErr) fail(`assets read failed: ${asErr.message}`);
+  const assetIdByName = new Map((seededAssets ?? []).map((a) => [a.name, a.id]));
+
+  // Best-effort: match buildings by exact name so building_id FK resolves when
+  // buildings were seeded with names matching the GeoJSON `building` property.
+  const { data: seededBuildings, error: bldErr } = await db
+    .from('buildings')
+    .select('id, name')
+    .is('deleted_at', null);
+  if (bldErr) fail(`buildings read failed: ${bldErr.message}`);
+  const buildingIdByName = new Map((seededBuildings ?? []).map((b) => [b.name, b.id]));
+
+  let poisInserted = 0;
+  let poisUpdated = 0;
+  for (const f of pois.features) {
+    const label = (f.properties.label as string) ?? null;
+    if (!label) continue;
+
+    const poiType = (f.properties.poi_type as string) ?? 'hvac';
+    const buildingName = (f.properties.building as string) ?? null;
+    const level = typeof f.properties.level === 'number' ? f.properties.level : null;
+
+    const row = {
+      geometry_geojson: { type: 'Point', coordinates: f.geometry.coordinates },
+      poi_type: poiType,
+      label,
+      icon: (f.properties.icon as string) ?? null,
+      notes: (f.properties.notes as string) ?? null,
+      level,
+      building_id: buildingName ? (buildingIdByName.get(buildingName) ?? null) : null,
+      floor_id: null as string | null,
+      linked_asset_id: assetIdByName.get(label) ?? null,
+    };
+
+    const { data: existing, error: exErr } = await db
+      .from('pois')
+      .select('id')
+      .eq('label', label)
+      .is('deleted_at', null)
+      .maybeSingle();
+    if (exErr) fail(`pois lookup "${label}" failed: ${exErr.message}`);
+
+    if (existing) {
+      const { error } = await db.from('pois').update(row).eq('id', existing.id);
+      if (error) fail(`pois update "${label}" failed: ${error.message}`);
+      poisUpdated++;
+    } else {
+      const { error } = await db.from('pois').insert(row);
+      if (error) fail(`pois insert "${label}" failed: ${error.message}`);
+      poisInserted++;
+    }
+  }
+
+  console.log(`✓ pois seeded for "${facility}": ${poisInserted} inserted, ${poisUpdated} updated.`);
 }
 
 seed().catch((e) => fail(String(e)));

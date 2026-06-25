@@ -45,6 +45,7 @@ export function MapView({
   buildings = [],
   openWoCountByBuilding = {},
   onCreateWorkOrder,
+  poisGeoJSON,
 }: {
   facility?: string;
   assets?: { id: string; name: string }[];
@@ -52,6 +53,12 @@ export function MapView({
   openWoCountByBuilding?: Record<string, number>;
   /** Open a new work order pre-linked to this asset (plan §5.4, #37). */
   onCreateWorkOrder?: (assetId: string) => void;
+  /**
+   * DB-backed POIs as a GeoJSON FeatureCollection (plan §5.4, #5).
+   * When provided, the map uses this instead of fetching the bundled pois.geojson.
+   * Undefined/empty → fall back to the bundled static file (demo mode or unseeded DB).
+   */
+  poisGeoJSON?: GeoJSON.FeatureCollection;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MlMap | null>(null);
@@ -67,6 +74,10 @@ export function MapView({
   const base = `${import.meta.env.BASE_URL}facilities/${facility}`;
   // POIs are named after their asset (e.g. "AC16A"); link by label.
   const assetIdByName = new Map(assets.map((a) => [a.name, a.id]));
+  // Ref so the map.on('load') closure always reads the latest poisGeoJSON without
+  // triggering a map recreation (the effect deps only include `base`).
+  const poisGeoJSONRef = useRef(poisGeoJSON);
+  poisGeoJSONRef.current = poisGeoJSON;
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -88,10 +99,9 @@ export function MapView({
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
 
     map.on('load', async () => {
-      const [buildings, areas, pois, meta, floorsData] = await Promise.all([
+      const [buildings, areas, meta, floorsData] = await Promise.all([
         fetch(`${base}/buildings.geojson`).then((r) => r.json()),
         fetch(`${base}/areas.geojson`).then((r) => r.json()),
-        fetch(`${base}/pois.geojson`).then((r) => r.json()),
         fetch(`${base}/meta.json`)
           .then((r) => r.json())
           .catch(() => ({})),
@@ -99,6 +109,10 @@ export function MapView({
           .then((r) => r.json())
           .catch(() => []),
       ]);
+      // Use DB-sourced pois if available (seeded via `pnpm assets:seed`), otherwise
+      // fall back to the bundled static file (demo mode or unseeded instance).
+      const pois: GeoJSON.FeatureCollection =
+        poisGeoJSONRef.current ?? (await fetch(`${base}/pois.geojson`).then((r) => r.json()));
 
       // Optional subtle satellite basemap — grayscale + faded so it reads as
       // ground context behind the vectors, not a competing layer. Church-specific
@@ -321,6 +335,17 @@ export function MapView({
       maplibregl.removeProtocol('pmtiles');
     };
   }, [base]);
+
+  // When DB pois arrive after the map has already loaded (common timing), update
+  // the 'pois' GeoJSON source in place so the map reflects the DB-linked data.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !poisGeoJSON) return;
+    const src = map.getSource('pois');
+    if (src && 'setData' in src) {
+      (src as { setData(d: GeoJSON.FeatureCollection): void }).setData(poisGeoJSON);
+    }
+  }, [poisGeoJSON]);
 
   // Apply the level filter to POIs, floor outlines, and image overlays.
   useEffect(() => {

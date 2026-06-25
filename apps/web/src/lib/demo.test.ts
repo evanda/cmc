@@ -19,6 +19,12 @@ describe('demo data source — seed', () => {
     expect((await ds.listAssetCategories()).length).toBe(18);
   });
 
+  it('listPois returns empty array (map reads from bundled GeoJSON in demo mode)', async () => {
+    const pois = await ds.listPois();
+    expect(Array.isArray(pois)).toBe(true);
+    expect(pois).toHaveLength(0);
+  });
+
   it('exposes the org identity', async () => {
     const org = await ds.getOrgSettings();
     expect(org?.facility_name).toBeTruthy();

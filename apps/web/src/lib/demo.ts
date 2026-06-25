@@ -597,5 +597,9 @@ export const demoDataSource: DataSource = {
     const s = pmSchedules.find((x) => x.id === sid);
     if (s) s.deleted_at = now;
   },
+
+  // Demo mode: map reads POIs from bundled GeoJSON via the existing fetch path
+  // in MapView. Returning an empty array signals MapView to use the fallback.
+  listPois: async () => [],
 };
 
