@@ -1,10 +1,11 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Building, Floor, Poi } from '@cmc/shared';
+import { WO_FILING_ROLES } from '@cmc/shared';
 import { MapView } from './MapView';
+import { useAuth } from '../auth/AuthProvider';
 import { useAssets, useAllWorkOrders, useBuildings, useFloors, useLocations, useOrgSettings, usePois } from '../lib/queries';
 import { countOpenWosByBuilding } from '../lib/map-utils';
-import { useAuth } from '../auth/AuthProvider';
 
 function levelName(level: number): string {
   if (level === -1) return 'Basement';
@@ -73,6 +74,7 @@ function poisToGeoJSON(
 export function MapPage() {
   const navigate = useNavigate();
   const { role } = useAuth();
+  const canFileWorkOrder = role != null && (WO_FILING_ROLES as readonly string[]).includes(role);
   const { data: org } = useOrgSettings();
   const { data: assets } = useAssets();
   const { data: buildings } = useBuildings();
@@ -120,10 +122,7 @@ export function MapPage() {
         assets={(assets ?? []).map((a) => ({ id: a.id, name: a.name }))}
         buildings={(buildings ?? []).map((b) => ({ id: b.id, name: b.name }))}
         openWoCountByBuilding={openWoCountByBuilding}
-        onCreateWorkOrder={
-          // Trustees are read-only; all other authenticated roles can file WOs (plan §7.5, #49).
-          role !== 'trustee' ? (assetId) => navigate(`/work-orders?asset=${assetId}`) : undefined
-        }
+        onCreateWorkOrder={canFileWorkOrder ? (assetId) => navigate(`/work-orders?asset=${assetId}`) : undefined}
         poisGeoJSON={poisGeoJSON}
         buildingsGeoJSON={buildingsGeoJSON}
         floorsGeoJSON={floorsGeoJSON}

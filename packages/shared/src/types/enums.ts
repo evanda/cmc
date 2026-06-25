@@ -16,6 +16,9 @@ export type AssetStatus = (typeof ASSET_STATUSES)[number];
 /** Roles that may see cost/financial data (plan §7.5). */
 export const COST_VISIBLE_ROLES: readonly UserRole[] = ['admin', 'technician', 'trustee'];
 
+/** Roles that may file work orders (plan §7.5 — Trustee is financial/oversight only). */
+export const WO_FILING_ROLES: readonly UserRole[] = ['admin', 'technician', 'requester'];
+
 /** Work-order type / priority / status (plan §4.2). */
 export const WORK_ORDER_TYPES = ['reactive', 'preventive', 'inspection'] as const;
 export type WorkOrderType = (typeof WORK_ORDER_TYPES)[number];
