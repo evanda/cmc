@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { Poi } from '@cmc/shared';
+import type { Building, Poi } from '@cmc/shared';
 import { MapView } from './MapView';
 import { useAssets, useAllWorkOrders, useBuildings, useLocations, useOrgSettings, usePois } from '../lib/queries';
 import { countOpenWosByBuilding } from '../lib/map-utils';
@@ -11,6 +11,21 @@ function levelName(level: number): string {
   if (level === 1) return 'Main';
   if (level === 2) return 'Upper';
   return `Level ${level}`;
+}
+
+function buildingsToGeoJSON(
+  buildings: Building[],
+): GeoJSON.FeatureCollection | undefined {
+  const withFootprint = buildings.filter((b) => b.footprint_geojson);
+  if (withFootprint.length === 0) return undefined;
+  return {
+    type: 'FeatureCollection',
+    features: withFootprint.map((b) => ({
+      type: 'Feature' as const,
+      properties: { name: b.name, db_id: b.id },
+      geometry: b.footprint_geojson as GeoJSON.Polygon,
+    })),
+  };
 }
 
 function poisToGeoJSON(
@@ -62,6 +77,11 @@ export function MapPage() {
     [pois, buildingNameById],
   );
 
+  const buildingsGeoJSON = useMemo(
+    () => buildingsToGeoJSON(buildings ?? []),
+    [buildings],
+  );
+
   return (
     <div>
       <div className="mb-3">
@@ -78,6 +98,7 @@ export function MapPage() {
         openWoCountByBuilding={openWoCountByBuilding}
         onCreateWorkOrder={(assetId) => navigate(`/work-orders?asset=${assetId}`)}
         poisGeoJSON={poisGeoJSON}
+        buildingsGeoJSON={buildingsGeoJSON}
       />
     </div>
   );

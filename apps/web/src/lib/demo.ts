@@ -5,7 +5,9 @@
 
 import type {
   AssetForm,
+  Building,
   BuildingForm,
+  Floor,
   ContactForm,
   FloorForm,
   LocationForm,
@@ -144,7 +146,7 @@ export const demoDataSource: DataSource = {
       name: input.name,
       description: input.description ?? null,
       address: input.address ?? null,
-      footprint_geojson: null,
+      footprint_geojson: (input.footprint_geojson as Building['footprint_geojson']) ?? null,
     } as (typeof buildings)[0];
     buildings.push(b);
     return b;
@@ -155,6 +157,7 @@ export const demoDataSource: DataSource = {
       name: input.name,
       description: input.description ?? null,
       address: input.address ?? null,
+      footprint_geojson: (input.footprint_geojson as Building['footprint_geojson']) ?? null,
     });
     return b;
   },
@@ -174,8 +177,8 @@ export const demoDataSource: DataSource = {
       building_id: input.building_id,
       name: input.name,
       level: input.level,
-      floorplan_image_url: null,
-      geo_corners_geojson: null,
+      floorplan_image_url: input.floorplan_image_url ?? null,
+      geo_corners_geojson: (input.geo_corners_geojson as Floor['geo_corners_geojson']) ?? null,
       rotation_deg: null,
     } as (typeof floors)[0];
     floors.push(f);
@@ -183,7 +186,13 @@ export const demoDataSource: DataSource = {
   },
   updateFloor: async (fid, input: FloorForm) => {
     const f = floors.find((x) => x.id === fid)!;
-    Object.assign(f, { building_id: input.building_id, name: input.name, level: input.level });
+    Object.assign(f, {
+      building_id: input.building_id,
+      name: input.name,
+      level: input.level,
+      floorplan_image_url: input.floorplan_image_url ?? null,
+      geo_corners_geojson: (input.geo_corners_geojson as Floor['geo_corners_geojson']) ?? null,
+    });
     return f;
   },
   deleteFloor: async (fid) => {

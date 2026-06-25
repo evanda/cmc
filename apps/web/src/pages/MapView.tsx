@@ -48,6 +48,7 @@ export function MapView({
   openWoCountByBuilding = {},
   onCreateWorkOrder,
   poisGeoJSON,
+  buildingsGeoJSON,
 }: {
   facility?: string;
   assets?: { id: string; name: string }[];
@@ -61,6 +62,11 @@ export function MapView({
    * Undefined/empty → fall back to the bundled static file (demo mode or unseeded DB).
    */
   poisGeoJSON?: GeoJSON.FeatureCollection;
+  /**
+   * DB-backed building footprints as a GeoJSON FeatureCollection.
+   * When provided, merged with (or replaces) the bundled buildings.geojson.
+   */
+  buildingsGeoJSON?: GeoJSON.FeatureCollection;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MlMap | null>(null);
@@ -80,6 +86,8 @@ export function MapView({
   // triggering a map recreation (the effect deps only include `base`).
   const poisGeoJSONRef = useRef(poisGeoJSON);
   poisGeoJSONRef.current = poisGeoJSON;
+  const buildingsGeoJSONRef = useRef(buildingsGeoJSON);
+  buildingsGeoJSONRef.current = buildingsGeoJSON;
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -101,8 +109,8 @@ export function MapView({
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
 
     map.on('load', async () => {
-      const [buildings, areas, meta, floorsData] = await Promise.all([
-        fetch(`${base}/buildings.geojson`).then((r) => r.json()),
+      const [staticBuildings, areas, meta, floorsData] = await Promise.all([
+        fetch(`${base}/buildings.geojson`).then((r) => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })),
         fetch(`${base}/areas.geojson`).then((r) => r.json()),
         fetch(`${base}/meta.json`)
           .then((r) => r.json())
@@ -115,6 +123,25 @@ export function MapView({
       // fall back to the bundled static file (demo mode or unseeded instance).
       const pois: GeoJSON.FeatureCollection =
         poisGeoJSONRef.current ?? (await fetch(`${base}/pois.geojson`).then((r) => r.json()));
+
+      // Merge DB building footprints with the bundled static file. DB features
+      // (identified by a 'db_id' property) override any static feature with the
+      // same name so hand-drawn footprints win over the seeded GeoJSON.
+      const dbBuildings = buildingsGeoJSONRef.current;
+      const buildings: GeoJSON.FeatureCollection = dbBuildings
+        ? {
+            type: 'FeatureCollection',
+            features: [
+              ...staticBuildings.features.filter(
+                (sf: GeoJSON.Feature) =>
+                  !dbBuildings.features.some(
+                    (df) => df.properties?.name === sf.properties?.name,
+                  ),
+              ),
+              ...dbBuildings.features,
+            ],
+          }
+        : staticBuildings;
 
       // Optional subtle satellite basemap — grayscale + faded so it reads as
       // ground context behind the vectors, not a competing layer. Church-specific
@@ -275,7 +302,7 @@ export function MapView({
         const el = document.createElement('div');
         el.className =
           'rounded bg-white/85 px-1.5 py-0.5 text-[11px] font-semibold text-slate-700 shadow-sm';
-        el.textContent = f.properties.name;
+        el.textContent = f.properties?.name ?? '';
         new maplibregl.Marker({ element: el }).setLngLat(ll).addTo(map);
       }
 
@@ -313,8 +340,11 @@ export function MapView({
 
       // Fit to the campus.
       const b = new maplibregl.LngLatBounds();
-      for (const f of buildings.features)
-        for (const ring of f.geometry.coordinates) for (const c of ring) b.extend(c);
+      for (const f of buildings.features) {
+        const geom = f.geometry as GeoJSON.Polygon | null;
+        if (geom?.coordinates)
+          for (const ring of geom.coordinates) for (const c of ring) b.extend(c as [number, number]);
+      }
       map.fitBounds(b, { padding: 60, duration: 0 });
 
       // Discover levels: union of POI levels + floor levels (plan §5.2).
@@ -349,6 +379,16 @@ export function MapView({
       (src as { setData(d: GeoJSON.FeatureCollection): void }).setData(poisGeoJSON);
     }
   }, [poisGeoJSON]);
+
+  // When DB building footprints arrive after load, update the buildings source.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !buildingsGeoJSON) return;
+    const src = map.getSource('buildings');
+    if (src && 'setData' in src) {
+      (src as { setData(d: GeoJSON.FeatureCollection): void }).setData(buildingsGeoJSON);
+    }
+  }, [buildingsGeoJSON]);
 
   // Apply the level filter to POIs, floor outlines, and image overlays.
   useEffect(() => {
