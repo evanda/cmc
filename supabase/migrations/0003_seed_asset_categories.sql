@@ -25,7 +25,9 @@ from (
     ('Vehicles/Fleet'),
     ('Tools/Equipment'),
     ('Utility/Infrastructure'),
-    ('Cemetery')
+    ('Cemetery'),
+    ('Safety/Life Safety'),
+    ('Security/Alarm')
 ) as v (name)
 where not exists (
   select 1 from public.asset_categories ac where ac.name = v.name

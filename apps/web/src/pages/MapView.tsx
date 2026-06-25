@@ -40,7 +40,30 @@ const POI_COLORS: Record<string, string> = {
   sound_system: '#7c3aed',
   fountain: '#0891b2',
   fire_extinguisher: '#ea580c',
+  safety: '#f59e0b',
+  security: '#6366f1',
+  door_controller: '#8b5cf6',
+  thermostat: '#10b981',
 };
+
+const POI_LABELS: Record<string, string> = {
+  hvac: 'HVAC',
+  shutoff: 'Shutoff',
+  network_hardware: 'Network',
+  sound_system: 'Sound/AV',
+  fountain: 'Fountain',
+  fire_extinguisher: 'Fire Extinguisher',
+  safety: 'Safety/AED',
+  security: 'Security/Alarm',
+  door_controller: 'Door Controller',
+  thermostat: 'Thermostat',
+};
+
+function buildPoiFilter(level: Level, hiddenTypes: Set<string>) {
+  const lf = poiLevelFilter(level) as unknown[];
+  if (hiddenTypes.size === 0) return lf;
+  return ['all', lf, ['!', ['in', ['get', 'poi_type'], ['literal', [...hiddenTypes]]]]];
+}
 
 export function MapView({
   facility = 'midwaypca',
@@ -69,6 +92,11 @@ export function MapView({
   const [level, setLevel] = useState<Level>('site');
   const [levels, setLevels] = useState<number[]>([]);
   const [selected, setSelected] = useState<SelectedPoi | null>(null);
+  const [hiddenTypes, setHiddenTypes] = useState<Set<string>>(new Set());
+  const levelRef = useRef<Level>('site');
+  levelRef.current = level;
+  const hiddenTypesRef = useRef<Set<string>>(new Set());
+  hiddenTypesRef.current = hiddenTypes;
   // Store just the GeoJSON feature name; derive id/count from current props on render
   // so the map-load closure never sees stale buildings/openWoCountByBuilding values.
   const [selectedBuildingName, setSelectedBuildingName] = useState<string | null>(null);
@@ -425,7 +453,7 @@ export function MapView({
     const map = mapRef.current;
     if (!map || !map.getLayer('poi')) return;
 
-    map.setFilter('poi', poiLevelFilter(level) as Parameters<typeof map.setFilter>[1]);
+    map.setFilter('poi', buildPoiFilter(level, hiddenTypesRef.current) as Parameters<typeof map.setFilter>[1]);
 
     // Areas only visible at site level (exterior features).
     const areaVis = level === 'site' ? 'visible' : 'none';
@@ -460,6 +488,13 @@ export function MapView({
     }
   }, [level]);
 
+  // Re-apply the POI filter when hidden types change (level read from ref to avoid re-running floor logic).
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !map.getLayer('poi')) return;
+    map.setFilter('poi', buildPoiFilter(levelRef.current, hiddenTypes) as Parameters<typeof map.setFilter>[1]);
+  }, [hiddenTypes]);
+
   return (
     <div className="relative h-[calc(100vh-9rem)] overflow-hidden rounded-lg border border-slate-200">
       <div ref={containerRef} className="absolute inset-0" />
@@ -479,17 +514,36 @@ export function MapView({
         ))}
       </div>
 
-      {/* Legend */}
-      <div className="absolute bottom-3 left-3 z-10 rounded-lg border border-slate-300 bg-white/90 px-3 py-2 text-xs shadow">
-        <div className="mb-1 font-semibold text-slate-600">POIs</div>
-        {Object.entries(POI_COLORS)
-          .filter(([k]) => k === 'hvac' || k === 'shutoff')
-          .map(([k, c]) => (
-            <div key={k} className="flex items-center gap-1.5 text-slate-600">
-              <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: c }} />
-              {k}
-            </div>
-          ))}
+      {/* POI category filter panel */}
+      <div className="absolute bottom-3 right-3 z-10 rounded-lg border border-slate-300 bg-white/95 px-3 py-2 text-xs shadow">
+        <div className="mb-1.5 font-semibold text-slate-600">Show on map</div>
+        {Object.entries(POI_COLORS).map(([type, color]) => {
+          const hidden = hiddenTypes.has(type);
+          return (
+            <label key={type} className="flex cursor-pointer items-center gap-1.5 py-0.5 text-slate-600 hover:text-slate-900">
+              <span
+                className="inline-block h-2.5 w-2.5 shrink-0 rounded-full transition-opacity"
+                style={{ background: color, opacity: hidden ? 0.25 : 1 }}
+              />
+              <input
+                type="checkbox"
+                className="sr-only"
+                checked={!hidden}
+                onChange={() => {
+                  setHiddenTypes((prev) => {
+                    const next = new Set(prev);
+                    if (next.has(type)) next.delete(type);
+                    else next.add(type);
+                    return next;
+                  });
+                }}
+              />
+              <span className={hidden ? 'line-through opacity-40' : ''}>
+                {POI_LABELS[type] ?? type}
+              </span>
+            </label>
+          );
+        })}
       </div>
 
       {/* Selected POI card (plan §5.4 — click a POI → its asset record) */}
