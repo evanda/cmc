@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   WORK_ORDER_TYPES,
@@ -20,6 +20,7 @@ import {
   useDeleteAssetPhoto,
   useLocations,
   useOrgSettings,
+  usePois,
   useSetPrimaryPhoto,
   useUsers,
   useVendors,
@@ -57,6 +58,8 @@ export function AssetDetailPage() {
   const asset = useAsset(id);
   const categories = useAssetCategories();
   const locations = useLocations();
+  const { data: allPois } = usePois();
+  const linkedPoi = allPois?.find((p) => p.linked_asset_id === id);
   const users = useUsers();
   const photos = useAssetPhotos(id);
   const workOrders = useWorkOrders(id);
@@ -123,12 +126,20 @@ export function AssetDetailPage() {
               <Row label="Location" value={locName ?? 'Unplaced'} />
               <Row label="Make / Model" value={[a.make, a.model].filter(Boolean).join(' ') || '—'} />
               <Row label="Serial" value={a.serial ?? '—'} />
-              {a.geometry_geojson && (
+              {(linkedPoi || a.geometry_geojson) && (
                 <Row
                   label="Map location"
-                  value={`${a.geometry_geojson.coordinates[1].toFixed(5)}, ${a.geometry_geojson.coordinates[0].toFixed(5)}${
-                    a.level != null ? ` · level ${a.level}` : ''
-                  }`}
+                  value={
+                    <Link
+                      to={`/map?asset=${id}`}
+                      className="text-blue-600 hover:underline"
+                    >
+                      {linkedPoi
+                        ? `${linkedPoi.label}${linkedPoi.level != null ? ` · level ${linkedPoi.level}` : ''}`
+                        : `${a.geometry_geojson!.coordinates[1].toFixed(5)}, ${a.geometry_geojson!.coordinates[0].toFixed(5)}${a.level != null ? ` · level ${a.level}` : ''}`}
+                      {' — View on map →'}
+                    </Link>
+                  }
                 />
               )}
             </dl>
@@ -240,6 +251,7 @@ export function AssetDetailPage() {
             <table className="w-full text-sm">
               <thead className="border-b border-slate-200 bg-slate-50 text-left text-xs uppercase text-slate-500">
                 <tr>
+                  <th className="px-3 py-2 font-medium w-6"></th>
                   <th className="px-3 py-2 font-medium">Date</th>
                   <th className="px-3 py-2 font-medium">Work</th>
                   <th className="px-3 py-2 font-medium">By / coordinated / authorized</th>
@@ -249,13 +261,23 @@ export function AssetDetailPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {workOrders.data.map((w) => (
+                {/* Status icon + row shading — keep in sync with WorkOrderViews list table */}
+                {workOrders.data.map((w) => {
+                  const done = w.status === 'completed' || w.status === 'closed';
+                  return (
                   <tr
                     key={w.id}
-                    className="cursor-pointer align-top hover:bg-slate-50"
+                    className={`cursor-pointer align-top ${done ? 'bg-slate-50 hover:bg-slate-100' : 'hover:bg-slate-50'}`}
                     onClick={() => setViewWo(w)}
                     title="Open work order (before/after photos)"
                   >
+                    <td className="px-3 py-2.5">
+                      {done ? (
+                        <span title="Completed" className="flex h-5 w-5 items-center justify-center rounded-full bg-green-100 text-green-600 text-xs">✓</span>
+                      ) : (
+                        <span title={w.status} className="flex h-5 w-5 items-center justify-center rounded-full bg-red-100 text-red-500 text-xs">●</span>
+                      )}
+                    </td>
                     <td className="whitespace-nowrap px-3 py-2.5 text-slate-600">
                       {w.completed_date ?? '—'}
                     </td>
@@ -292,7 +314,8 @@ export function AssetDetailPage() {
                     </td>
                     <td className="px-3 py-2.5 text-blue-600">📷 view</td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -322,7 +345,7 @@ export function AssetDetailPage() {
   );
 }
 
-function Row({ label, value }: { label: string; value: string }) {
+function Row({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex justify-between gap-4">
       <dt className="text-slate-400">{label}</dt>

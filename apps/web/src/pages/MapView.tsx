@@ -65,6 +65,8 @@ export function MapView({
   buildings = [],
   openWoCountByBuilding = {},
   onCreateWorkOrder,
+  highlightAssetId,
+  highlightCoords,
   poisGeoJSON,
   buildingsGeoJSON,
   floorsGeoJSON,
@@ -75,6 +77,10 @@ export function MapView({
   openWoCountByBuilding?: Record<string, number>;
   /** Open a new work order pre-linked to this asset (plan §5.4, #37). */
   onCreateWorkOrder?: (assetId: string) => void;
+  /** If set, fly to the POI linked to this asset id and open its card. */
+  highlightAssetId?: string;
+  /** Fallback coordinates [lng, lat] when highlightAssetId has no linked POI. */
+  highlightCoords?: [number, number];
   poisGeoJSON?: GeoJSON.FeatureCollection;
   /** DB-backed building footprints — merged with the bundled buildings.geojson. */
   buildingsGeoJSON?: GeoJSON.FeatureCollection;
@@ -83,6 +89,8 @@ export function MapView({
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MlMap | null>(null);
+  const highlightMarkerRef = useRef<maplibregl.Marker | null>(null);
+  const [mapLoaded, setMapLoaded] = useState(false);
   const [level, setLevel] = useState<Level>('site');
   const [levels, setLevels] = useState<number[]>([]);
   const [selected, setSelected] = useState<SelectedPoi | null>(null);
@@ -287,6 +295,7 @@ export function MapView({
         .map((f: GeoJSON.Feature) => f.properties?.level)
         .filter((x): x is number => typeof x === 'number');
       setLevels(buildLevels(poiLevels, floorLevels));
+      setMapLoaded(true);
 
       // Expose for the screenshot harness (project a POI → pixel to click it).
       if (import.meta.env.VITE_DEMO) {
@@ -311,6 +320,65 @@ export function MapView({
       (src as { setData(d: GeoJSON.FeatureCollection): void }).setData(poisGeoJSON);
     }
   }, [poisGeoJSON]);
+
+  // When a highlight asset id is requested and POIs are loaded, fly to and select it.
+  // Falls back to name-match, then to highlightCoords if the asset has no linked POI.
+  useEffect(() => {
+    if (!highlightAssetId || !mapLoaded) return;
+    if (poisGeoJSON) {
+      const assetName = assets.find((a) => a.id === highlightAssetId)?.name;
+      const feature =
+        poisGeoJSON.features.find(
+          (f) => f.properties?.linked_asset_id === highlightAssetId,
+        ) ??
+        (assetName
+          ? poisGeoJSON.features.find(
+              (f) =>
+                f.properties?.label?.toLowerCase() === assetName.toLowerCase(),
+            )
+          : undefined);
+      if (feature && feature.geometry.type === 'Point') {
+        const [lng, lat] = feature.geometry.coordinates as [number, number];
+        const p = feature.properties!;
+        // Switch level so the POI marker is actually visible.
+        if (p.level != null && p.level !== levelRef.current) {
+          setLevel(p.level as Level);
+        }
+        setSelected({
+          label: p.label ?? p.poi_type,
+          poi_type: p.poi_type,
+          building: p.building ?? null,
+          level_name: p.level_name ?? null,
+          notes: p.notes ?? null,
+          linked_asset_id: p.linked_asset_id ?? highlightAssetId,
+        });
+        mapRef.current?.flyTo({ center: [lng, lat], zoom: 19, duration: 800 });
+        return;
+      }
+    }
+    // No linked POI — fly to the asset's own coordinates and drop a highlight marker.
+    if (highlightCoords && mapRef.current) {
+      highlightMarkerRef.current?.remove();
+      const el = document.createElement('div');
+      el.style.cssText = [
+        'width:20px', 'height:20px', 'border-radius:50%',
+        'background:#f59e0b', 'border:3px solid #fff',
+        'box-shadow:0 0 0 3px #f59e0b,0 2px 6px rgba(0,0,0,.4)',
+        'animation:cmc-pulse 1.5s ease-in-out infinite',
+      ].join(';');
+      if (!document.getElementById('cmc-pulse-style')) {
+        const style = document.createElement('style');
+        style.id = 'cmc-pulse-style';
+        style.textContent = '@keyframes cmc-pulse{0%,100%{box-shadow:0 0 0 3px #f59e0b,0 2px 6px rgba(0,0,0,.4)}50%{box-shadow:0 0 0 8px rgba(245,158,11,.2),0 2px 6px rgba(0,0,0,.4)}}';
+        document.head.appendChild(style);
+      }
+      highlightMarkerRef.current = new maplibregl.Marker({ element: el })
+        .setLngLat(highlightCoords)
+        .addTo(mapRef.current);
+      mapRef.current.flyTo({ center: highlightCoords, zoom: 19, duration: 800 });
+    }
+    return () => { highlightMarkerRef.current?.remove(); highlightMarkerRef.current = null; };
+  }, [highlightAssetId, poisGeoJSON, highlightCoords, mapLoaded, assets]);
 
   // When DB building footprints arrive, push them to the map source (if it exists yet).
   useEffect(() => {

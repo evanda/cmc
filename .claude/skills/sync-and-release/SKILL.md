@@ -12,6 +12,23 @@ migrations, and cut a release.
 
 ---
 
+## Standing Rules (apply to ALL development, not just syncme)
+
+1. **Open a PR immediately on the first push to any feature branch.** Don't wait
+   until a "batch" is done. The PR is what triggers Vercel to build a preview —
+   without it, there is no testable URL.
+
+2. **Always give the user the Vercel preview URL** after any push. Fetch it from
+   PR comments via `mcp__github__pull_request_read` (method `get_comments`) —
+   look for the Vercel bot comment containing the `*.vercel.app` URL. Retry after
+   ~30 s if the build hasn't finished. Never say "Vercel will pick it up" and
+   stop — either give the URL or give the PR link with an explicit ETA.
+
+3. **Never end a session without a working preview URL.** If the build is still
+   running, say so, give the PR link, and offer to wait.
+
+---
+
 ## Execution Guide for Agents
 
 **Trigger:** the user saying "syncme" (alone or with context like "syncme
@@ -171,7 +188,7 @@ destructive test before the user runs it.
 
 Format it like this so nothing is buried:
 
-> **Test here:** `<URL fetched from GitHub API above>` (Vercel preview — real prod build)
+> **Test here:** [Open preview](<URL fetched from GitHub API above>) (Vercel preview — real prod build)
 >
 > Here's what to check:
 > - [bullet]
@@ -198,6 +215,18 @@ Only proceed after the user explicitly approves ("looks good", "merge it", etc.)
 > **The merge is a USER-RUN step.** Merging a PR to `main` (and deleting the
 > branch) is a destructive default-branch action — present the commands for the
 > user to run, then continue once they confirm the merge landed.
+
+**Before presenting merge commands, YOU MUST verify all of the following — silently fix
+any issues before asking the user to do anything:**
+
+1. `pnpm -r typecheck` — must pass clean
+2. `pnpm -r test` — must pass clean
+3. `git rebase origin/main` — branch must be on top of main (no conflicts)
+4. `mcp__github__pull_request_read(get)` — `mergeable_state` must be `clean` (not `dirty`, `unstable`, or `draft`)
+5. Vercel build — fetch PR comments and confirm the build is `Ready`, not `Building`
+
+If any check fails, fix it, push, and re-verify before presenting the merge command.
+Never hand the user a merge command for a dirty, draft, or build-failing PR.
 
 **Before merging, push any commits made during testing:**
 

@@ -70,7 +70,7 @@ export type Floor = BaseRow & {
   level: number;
   floorplan_image_url: string | null;
   /** Complex polygon outline of the floor — any shape, used for map rendering. */
-  boundary_geojson: GeoJsonPolygon | null;
+  boundary_geojson: GeoJsonPolygonish | null;
   /** 4-corner quad for MapLibre image-source overlay — only needed with floorplan_image_url. */
   geo_corners_geojson: GeoJsonPolygon | null;
   rotation_deg: number | null;
@@ -285,6 +285,14 @@ export type GeoJsonPolygon = {
   type: 'Polygon';
   coordinates: number[][][];
 };
+
+export type GeoJsonMultiPolygon = {
+  type: 'MultiPolygon';
+  coordinates: number[][][][];
+};
+
+/** Either shape is valid for floor/building boundaries. */
+export type GeoJsonPolygonish = GeoJsonPolygon | GeoJsonMultiPolygon;
 
 export type GeoJsonPoint = {
   type: 'Point';

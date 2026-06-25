@@ -58,20 +58,29 @@ export function WorkOrderList({ workOrders, assetName, userName, onOpen }: ViewP
         <table className="w-full text-sm">
           <thead className="border-b border-slate-200 bg-slate-50 text-left text-xs uppercase text-slate-500">
             <tr>
+              <th className="px-4 py-2 font-medium w-8"></th>
               <th className="px-4 py-2 font-medium">Work order</th>
               <th className="px-4 py-2 font-medium">Asset</th>
-              <th className="px-4 py-2 font-medium">Status</th>
               <th className="px-4 py-2 font-medium">Priority</th>
               <th className="px-4 py-2 font-medium">Assignee</th>
               <th className="px-4 py-2 font-medium">Due / done</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {rows.map((w) => (
-              <tr key={w.id} className="cursor-pointer hover:bg-slate-50" onClick={() => onOpen(w)}>
+            {/* Status icon + row shading — keep in sync with AssetDetailPage work history table */}
+            {rows.map((w) => {
+              const done = w.status === 'completed' || w.status === 'closed';
+              return (
+              <tr key={w.id} className={`cursor-pointer ${done ? 'bg-slate-50 hover:bg-slate-100' : 'hover:bg-slate-50'}`} onClick={() => onOpen(w)}>
+                <td className="px-4 py-2.5">
+                  {done ? (
+                    <span title="Completed" className="flex h-5 w-5 items-center justify-center rounded-full bg-green-100 text-green-600 text-xs">✓</span>
+                  ) : (
+                    <span title={w.status} className="flex h-5 w-5 items-center justify-center rounded-full bg-red-100 text-red-500 text-xs">●</span>
+                  )}
+                </td>
                 <td className="px-4 py-2.5 font-medium text-slate-800">{w.title}</td>
                 <td className="px-4 py-2.5 text-slate-600">{assetName(w.linked_asset_id) ?? '—'}</td>
-                <td className="px-4 py-2.5 text-slate-600">{w.status}</td>
                 <td className="px-4 py-2.5">
                   <span className={`rounded px-1.5 py-0.5 text-xs ${priorityStyle[w.priority]}`}>
                     {w.priority}
@@ -82,7 +91,8 @@ export function WorkOrderList({ workOrders, assetName, userName, onOpen }: ViewP
                   {w.completed_date ?? w.due_date ?? '—'}
                 </td>
               </tr>
-            ))}
+              );
+            })}
             {rows.length === 0 && (
               <tr>
                 <td colSpan={6} className="px-4 py-8 text-center text-sm text-slate-400">
