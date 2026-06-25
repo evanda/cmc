@@ -10,15 +10,13 @@ import { AssetsPage } from './pages/AssetsPage';
 import { AssetDetailPage } from './pages/AssetDetailPage';
 import { AssetByTokenPage } from './pages/AssetByTokenPage';
 import { WorkOrdersPage } from './pages/WorkOrdersPage';
-import { WorkRequestsPage } from './pages/WorkRequestsPage';
+import { CampusPage } from './pages/CampusPage';
 import { VendorsPage } from './pages/VendorsPage';
 import { MapPage } from './pages/MapPage';
 import { UsersPage } from './pages/UsersPage';
 import { PmSchedulesPage } from './pages/PmSchedulesPage';
 import { ReportsPage } from './pages/ReportsPage';
-import { BuildingsPage } from './pages/BuildingsPage';
-import { FloorsPage } from './pages/FloorsPage';
-import { LocationsPage } from './pages/LocationsPage';
+
 import { SettingsPage } from './pages/SettingsPage';
 import { ExpiryBoardPage } from './pages/ExpiryBoardPage';
 
@@ -67,7 +65,7 @@ export function App() {
             <Route element={<Layout />}>
               <Route index element={<DashboardPage />} />
               <Route path="map" element={<MapPage />} />
-              <Route path="requests" element={<WorkRequestsPage />} />
+              <Route path="requests" element={<Navigate to="/work-orders" replace />} />
               <Route path="work-orders" element={<WorkOrdersPage />} />
               <Route path="pm" element={<PmSchedulesPage />} />
               <Route path="reports" element={<ReportsPage />} />
@@ -76,9 +74,10 @@ export function App() {
               <Route path="a/:token" element={<AssetByTokenPage />} />
               <Route path="vendors" element={<VendorsPage />} />
               <Route path="users" element={<UsersPage />} />
-              <Route path="buildings" element={<BuildingsPage />} />
-              <Route path="floors" element={<FloorsPage />} />
-              <Route path="locations" element={<LocationsPage />} />
+              <Route path="campus" element={<CampusPage />} />
+              <Route path="buildings" element={<Navigate to="/campus" replace />} />
+              <Route path="floors" element={<Navigate to="/campus" replace />} />
+              <Route path="locations" element={<Navigate to="/campus" replace />} />
               <Route path="expiry" element={<ExpiryBoardPage />} />
               <Route path="settings" element={<SettingsPage />} />
               <Route path="*" element={<Navigate to="/" replace />} />
