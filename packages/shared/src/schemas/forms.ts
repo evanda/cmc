@@ -59,6 +59,8 @@ export const locationFormSchema = z.object({
   floor_id: z.string().uuid().nullish(),
   name: z.string().trim().min(1, 'Name is required').max(200),
   type: optionalText,
+  geometry_geojson: optionalGeoJson,
+  map_level: z.coerce.number().int().min(-10).max(200).nullable().optional(),
 });
 export type LocationForm = z.infer<typeof locationFormSchema>;
 

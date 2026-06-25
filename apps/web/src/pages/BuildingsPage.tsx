@@ -81,6 +81,7 @@ export function BuildingsPage() {
       {showForm && (
         <BuildingForm
           initial={editing}
+          campusCenter={campusCenter(data ?? [])}
           onClose={() => setShowForm(false)}
           onSubmit={async (values) => {
             if (editing) await update.mutateAsync({ id: editing.id, ...values });
@@ -93,6 +94,25 @@ export function BuildingsPage() {
   );
 }
 
+const CAMPUS_DEFAULT: [number, number] = [-80.428, 36.09];
+
+function polygonCentroid(coords: number[][][]): [number, number] | null {
+  const ring = coords[0];
+  if (!ring?.length) return null;
+  const s = ring.reduce((a, p) => [a[0] + p[0], a[1] + p[1]], [0, 0]);
+  return [s[0] / ring.length, s[1] / ring.length];
+}
+
+function campusCenter(buildings: Building[]): [number, number] {
+  for (const b of buildings) {
+    if (b.footprint_geojson?.coordinates) {
+      const c = polygonCentroid(b.footprint_geojson.coordinates);
+      if (c) return c;
+    }
+  }
+  return CAMPUS_DEFAULT;
+}
+
 function validatePolygon(v: Record<string, unknown>): string | null {
   const type = v['type'] === 'Feature'
     ? (v['geometry'] as Record<string, unknown> | undefined)?.['type']
@@ -103,10 +123,12 @@ function validatePolygon(v: Record<string, unknown>): string | null {
 
 function BuildingForm({
   initial,
+  campusCenter: center,
   onClose,
   onSubmit,
 }: {
   initial: Building | null;
+  campusCenter: [number, number];
   onClose: () => void;
   onSubmit: (values: BuildingForm) => Promise<void>;
 }) {
@@ -163,6 +185,7 @@ function BuildingForm({
           value={footprint}
           onChange={setFootprint}
           validate={validatePolygon}
+          center={center}
         />
         <div className="flex justify-end gap-2">
           <Button type="button" variant="ghost" onClick={onClose}>

@@ -370,19 +370,19 @@ const supabaseDataSource: DataSource = {
     if (buildingId) q = q.eq('building_id', buildingId);
     return unwrap<Location[]>(await q.order('name'));
   },
-  createLocation: async (input) =>
+  createLocation: async ({ map_level, ...input }) =>
     unwrap<Location>(
       await supabase
         .from('locations')
-        .insert({ ...input, floor_id: input.floor_id ?? null })
+        .insert({ ...input, floor_id: input.floor_id ?? null, level: map_level ?? null })
         .select()
         .single(),
     ),
-  updateLocation: async (id, input) =>
+  updateLocation: async (id, { map_level, ...input }) =>
     unwrap<Location>(
       await supabase
         .from('locations')
-        .update({ ...input, floor_id: input.floor_id ?? null })
+        .update({ ...input, floor_id: input.floor_id ?? null, level: map_level ?? null })
         .eq('id', id)
         .select()
         .single(),

@@ -79,6 +79,8 @@ export type Location = BaseRow & {
   name: string;
   /** room | area | … (free text for v1, plan §6). */
   type: string | null;
+  geometry_geojson: GeoJsonPoint | null;
+  level: number | null;
 };
 
 export type AssetCategory = BaseRow & {

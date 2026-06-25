@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { floorFormSchema, type Floor, type FloorForm } from '@cmc/shared';
+import { floorFormSchema, type Building, type Floor, type FloorForm } from '@cmc/shared';
 import { useBuildings, useCreateFloor, useDeleteFloor, useFloors, useUpdateFloor } from '../lib/queries';
 import { useAuth } from '../auth/AuthProvider';
 import { Button, EmptyState, Field, Modal, inputClass } from '../components/ui';
@@ -95,7 +95,7 @@ export function FloorsPage() {
       {showForm && (
         <FloorForm
           initial={editing}
-          buildings={(buildings.data ?? []).map((b) => ({ id: b.id, name: b.name }))}
+          buildings={buildings.data ?? []}
           defaultBuildingId={buildingFilter}
           onClose={() => setShowForm(false)}
           onSubmit={async (values) => {
@@ -120,6 +120,16 @@ function validateCorners(v: Record<string, unknown>): string | null {
   return null;
 }
 
+const CAMPUS_DEFAULT: [number, number] = [-80.428, 36.09];
+
+function buildingCenter(b: Building | undefined): [number, number] {
+  const coords = b?.footprint_geojson?.coordinates;
+  if (!coords?.[0]?.length) return CAMPUS_DEFAULT;
+  const ring = coords[0];
+  const s = ring.reduce((a: number[], p) => [a[0] + p[0], a[1] + p[1]], [0, 0]);
+  return [s[0] / ring.length, s[1] / ring.length] as [number, number];
+}
+
 function FloorForm({
   initial,
   buildings,
@@ -128,7 +138,7 @@ function FloorForm({
   onSubmit,
 }: {
   initial: Floor | null;
-  buildings: { id: string; name: string }[];
+  buildings: Building[];
   defaultBuildingId: string;
   onClose: () => void;
   onSubmit: (values: FloorForm) => Promise<void>;
@@ -136,6 +146,7 @@ function FloorForm({
   const [buildingId, setBuildingId] = useState(
     initial?.building_id ?? defaultBuildingId ?? buildings[0]?.id ?? '',
   );
+  const selectedBuilding = buildings.find((b) => b.id === buildingId);
   const [name, setName] = useState(initial?.name ?? '');
   const [level, setLevel] = useState(String(initial?.level ?? 1));
   const [imageUrl, setImageUrl] = useState(initial?.floorplan_image_url ?? '');
@@ -208,6 +219,7 @@ function FloorForm({
           value={corners}
           onChange={setCorners}
           validate={validateCorners}
+          center={buildingCenter(selectedBuilding)}
         />
         <div className="flex justify-end gap-2">
           <Button type="button" variant="ghost" onClick={onClose}>

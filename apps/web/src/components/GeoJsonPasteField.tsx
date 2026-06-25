@@ -1,12 +1,19 @@
 import { useState } from 'react';
 import { Button, Field, inputClass } from './ui';
 
+/** Compute [lng, lat] centroid of a GeoJSON Polygon's outer ring. */
+function polygonCentroid(coords: number[][][]): [number, number] | null {
+  const ring = coords[0];
+  if (!ring?.length) return null;
+  const sum = ring.reduce((acc, p) => [acc[0] + p[0], acc[1] + p[1]], [0, 0]);
+  return [sum[0] / ring.length, sum[1] / ring.length];
+}
+
 /**
  * Two-step spatial field:
- * 1. A link opens geojson.io pre-seeded with existing geometry (if any).
+ * 1. A link opens geojson.io pre-seeded with existing geometry (if any),
+ *    centered on the campus (or the existing geometry's centroid).
  * 2. The user pastes the GeoJSON back; we validate and call onChange.
- *
- * Accepts any GeoJSON object but callers can enforce shape via `validate`.
  */
 export function GeoJsonPasteField({
   label,
@@ -14,6 +21,8 @@ export function GeoJsonPasteField({
   value,
   onChange,
   validate,
+  center = [-80.428, 36.09],
+  zoom = 17,
 }: {
   label: string;
   hint?: string;
@@ -21,13 +30,31 @@ export function GeoJsonPasteField({
   onChange: (v: Record<string, unknown> | null) => void;
   /** Return an error string if the parsed GeoJSON is wrong shape, or null if ok. */
   validate?: (v: Record<string, unknown>) => string | null;
+  /** [lng, lat] fallback map center when no geometry exists yet. */
+  center?: [number, number];
+  zoom?: number;
 }) {
   const [raw, setRaw] = useState(value ? JSON.stringify(value, null, 2) : '');
   const [error, setError] = useState<string | null>(null);
 
+  // Derive map center: use centroid of existing polygon, else the prop default.
+  const mapCenter: [number, number] = (() => {
+    if (value) {
+      const geom = value['type'] === 'Feature'
+        ? (value['geometry'] as Record<string, unknown> | undefined)
+        : value;
+      if (geom?.['type'] === 'Polygon') {
+        const c = polygonCentroid(geom['coordinates'] as number[][][]);
+        if (c) return c;
+      }
+    }
+    return center;
+  })();
+
+  const mapFragment = `#map=${zoom}/${mapCenter[1]}/${mapCenter[0]}`;
   const geojsonIoUrl = value
-    ? `https://geojson.io/#data=data:application/json,${encodeURIComponent(JSON.stringify(value))}`
-    : 'https://geojson.io/';
+    ? `https://geojson.io/${mapFragment}&data=data:application/json,${encodeURIComponent(JSON.stringify(value))}`
+    : `https://geojson.io/${mapFragment}`;
 
   function handleChange(text: string) {
     setRaw(text);

@@ -137,6 +137,8 @@ export function seedBuilding(
       floor_id: l.floor ? (floorByName.get(l.floor) ?? null) : null,
       name: l.name,
       type: l.type,
+      geometry_geojson: null,
+      level: null,
     });
   }
 }

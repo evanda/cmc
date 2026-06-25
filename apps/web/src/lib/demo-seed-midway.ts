@@ -70,6 +70,8 @@ export function applyMidwayReseed() {
       floor_id: null,
       name: l.name,
       type: 'area',
+      geometry_geojson: null,
+      level: null,
     };
     locations.push(row);
     locationIdByBuilding.set(l.building, row.id);
