@@ -109,21 +109,49 @@ export function FloorsPage() {
   );
 }
 
-function validatePolygon(v: Record<string, unknown>): string | null {
-  const geom = v['type'] === 'Feature'
-    ? (v['geometry'] as Record<string, unknown> | undefined)
-    : v;
-  if (geom?.['type'] !== 'Polygon') return 'Expected a Polygon';
+function unwrapGeom(v: Record<string, unknown>): Record<string, unknown> | undefined {
+  if (v['type'] === 'Feature') return v['geometry'] as Record<string, unknown> | undefined;
+  return v;
+}
+
+/** Accept Polygon, MultiPolygon, Feature<Polygon|MultiPolygon>, or FeatureCollection of polygons. */
+function validatePolygonish(v: Record<string, unknown>): string | null {
+  if (v['type'] === 'FeatureCollection') {
+    const feats = v['features'] as unknown[];
+    if (!Array.isArray(feats) || feats.length === 0) return 'FeatureCollection is empty';
+    for (const f of feats) {
+      const g = unwrapGeom(f as Record<string, unknown>);
+      if (g?.['type'] !== 'Polygon' && g?.['type'] !== 'MultiPolygon')
+        return 'All features must be Polygon or MultiPolygon';
+    }
+    return null;
+  }
+  const geom = unwrapGeom(v);
+  if (geom?.['type'] !== 'Polygon' && geom?.['type'] !== 'MultiPolygon')
+    return 'Expected Polygon, MultiPolygon, or FeatureCollection of polygons';
   return null;
 }
 
+/** Normalise to a plain geometry (unwrap Feature; merge FeatureCollection → MultiPolygon). */
+function normalisePolygonish(v: Record<string, unknown>): Record<string, unknown> {
+  if (v['type'] === 'FeatureCollection') {
+    const feats = v['features'] as Record<string, unknown>[];
+    const coords = feats.flatMap((f) => {
+      const g = unwrapGeom(f) as { type: string; coordinates: unknown[] } | undefined;
+      if (!g) return [];
+      if (g.type === 'MultiPolygon') return g.coordinates as unknown[];
+      return [g.coordinates]; // Polygon → one ring-set
+    });
+    return { type: 'MultiPolygon', coordinates: coords };
+  }
+  if (v['type'] === 'Feature') return unwrapGeom(v) as Record<string, unknown>;
+  return v;
+}
+
 function validateCorners(v: Record<string, unknown>): string | null {
-  const err = validatePolygon(v);
-  if (err) return err;
-  const geom = v['type'] === 'Feature'
-    ? (v['geometry'] as Record<string, unknown> | undefined)
-    : v;
-  const ring = (geom!['coordinates'] as unknown[][])?.[0];
+  const geom = unwrapGeom(v);
+  if (geom?.['type'] !== 'Polygon') return 'Image overlay corner must be a single Polygon';
+  const ring = (geom['coordinates'] as unknown[][])?.[0];
   if (!ring || (ring.length !== 4 && ring.length !== 5))
     return 'Image overlay needs exactly 4 corners (top-left → top-right → bottom-right → bottom-left)';
   return null;
@@ -178,7 +206,7 @@ function FloorForm({
             building_id: buildingId,
             name,
             level,
-            boundary_geojson: boundary,
+            boundary_geojson: boundary ? normalisePolygonish(boundary) : undefined,
             floorplan_image_url: imageUrl || undefined,
             geo_corners_geojson: corners,
           });
@@ -223,7 +251,7 @@ function FloorForm({
           hint="Draw the actual outline of this floor — any shape, as many points as you need. Used as the floor outline on the map when this level is active."
           value={boundary}
           onChange={setBoundary}
-          validate={validatePolygon}
+          validate={validatePolygonish}
           center={buildingCenter(selectedBuilding)}
         />
         <Field label="Floorplan image URL (optional)" error={errors.floorplan_image_url}>
