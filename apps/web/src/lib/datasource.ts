@@ -210,6 +210,7 @@ function workOrderUpdatePatch(patch: WorkOrderUpdate) {
     ...(patch.status === 'completed' ? { completed_date: new Date().toISOString().slice(0, 10) } : {}),
     ...(patch.location_id !== undefined ? { location_id: patch.location_id ?? null } : {}),
     ...(patch.vendor_id !== undefined ? { vendor_id: patch.vendor_id ?? null } : {}),
+    ...(patch.linked_asset_id !== undefined ? { linked_asset_id: patch.linked_asset_id ?? null } : {}),
   };
 }
 

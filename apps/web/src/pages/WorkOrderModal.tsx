@@ -10,6 +10,7 @@ import {
 } from '@cmc/shared';
 import {
   useAddWorkOrderPhoto,
+  useAssets,
   useDeleteWorkOrderPhoto,
   useLocations,
   useUpdateWorkOrder,
@@ -42,10 +43,14 @@ export function WorkOrderModal({
   const updateWo = useUpdateWorkOrder();
   const vendors = useVendors();
   const locations = useLocations();
+  const assets = useAssets();
   const vendorName =
     (wo.vendor_id ? vendors.data?.find((v) => v.id === wo.vendor_id)?.name : null) ?? wo.vendor_name;
   const locationName = wo.location_id
     ? (locations.data?.find((l) => l.id === wo.location_id)?.name ?? null)
+    : null;
+  const assetName = wo.linked_asset_id
+    ? (assets.data?.find((a) => a.id === wo.linked_asset_id)?.name ?? null)
     : null;
 
   const [status, setStatus] = useState<WorkOrderStatus>(wo.status);
@@ -53,12 +58,14 @@ export function WorkOrderModal({
   const [assignee, setAssignee] = useState(wo.assignee_user_id ?? '');
   const [locationId, setLocationId] = useState(wo.location_id ?? '');
   const [vendorId, setVendorId] = useState(wo.vendor_id ?? '');
+  const [linkedAssetId, setLinkedAssetId] = useState(wo.linked_asset_id ?? '');
   const dirty =
     status !== wo.status ||
     priority !== wo.priority ||
     (assignee || null) !== wo.assignee_user_id ||
     (locationId || null) !== wo.location_id ||
-    (vendorId || null) !== wo.vendor_id;
+    (vendorId || null) !== wo.vendor_id ||
+    (linkedAssetId || null) !== wo.linked_asset_id;
 
   const userName = (uid: string | null) =>
     uid ? (users.find((u) => u.id === uid)?.name ?? '—') : null;
@@ -116,6 +123,20 @@ export function WorkOrderModal({
               </Field>
             </div>
             <div className="mt-2 grid grid-cols-2 gap-2">
+              <Field label="Asset">
+                <select
+                  className={inputClass}
+                  value={linkedAssetId}
+                  onChange={(e) => setLinkedAssetId(e.target.value)}
+                >
+                  <option value="">—</option>
+                  {assets.data?.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.name}
+                    </option>
+                  ))}
+                </select>
+              </Field>
               <Field label="Location">
                 <select
                   className={inputClass}
@@ -157,6 +178,7 @@ export function WorkOrderModal({
                       assignee_user_id: assignee || null,
                       location_id: locationId || null,
                       vendor_id: vendorId || null,
+                      linked_asset_id: linkedAssetId || null,
                     },
                   })
                 }
@@ -180,6 +202,7 @@ export function WorkOrderModal({
         {wo.completion_notes && <p className="text-slate-600">{wo.completion_notes}</p>}
 
         <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+          <Detail label="Asset" value={assetName} />
           <Detail label="Location" value={locationName} />
           <Detail label="Vendor" value={vendorName} />
           <Detail label="Performed by" value={userName(wo.assignee_user_id)} />

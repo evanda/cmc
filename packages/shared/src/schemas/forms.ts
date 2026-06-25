@@ -143,6 +143,7 @@ export const workOrderUpdateSchema = z.object({
   // Optional — only sent when the user explicitly edits these fields.
   location_id: z.string().uuid().nullish(),
   vendor_id: z.string().uuid().nullish(),
+  linked_asset_id: z.string().uuid().nullish(),
 });
 export type WorkOrderUpdate = z.infer<typeof workOrderUpdateSchema>;
 
