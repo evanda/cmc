@@ -127,8 +127,16 @@ gh pr view <PR> --repo evanda/cmc --json comments \
   -q '.comments[].body' | grep -ioE 'https://[a-z0-9-]+\.vercel\.app' | tail -1
 ```
 
+**IMPORTANT — always surface the URL directly to the user.** Do not tell them
+to "check the PR" or "look it up". Extract the URL and print it in plain text
+so they can click it immediately. If the GitHub MCP is unavailable, derive the
+URL from the branch name: Vercel preview URLs follow the pattern
+`https://cmc-git-<branch-slug>-evanda.vercel.app` where `<branch-slug>` is the
+branch name with `/` → `-` and other non-alphanumeric chars → `-`. For
+`claude-async` that is `https://cmc-git-claude-async-evanda.vercel.app`.
+
 If the build isn't done, **tell the user to wait for the Vercel check to go
-green**, then re-fetch — don't silently fall back to localhost.
+green**, then give them the URL anyway (it won't serve until the build lands).
 
 **For local instead:**
 
@@ -152,14 +160,18 @@ destructive test before the user runs it.
 
 ## Phase 3 — User Testing Gate
 
-**Stop here.** Tell the user **the exact URL you chose in 2c and how to reach
-it** (e.g. "wait for the Vercel check on PR #N to go green, then open
-`https://…vercel.app`" — or "run `pnpm --filter web dev` and open
-http://localhost:5173"). Then:
+**Stop here.** Give the user:
+1. **The exact clickable URL** — no "see the PR", no "check Vercel". Print the full `https://` URL.
+2. **Why this target** (one line).
+3. **The test checklist** (repeat the "Surfaces to test manually" bullets from Phase 1).
 
-> Testing on **<the URL you chose>** (<one line: why this target + how you got there>).
+Format it like this so nothing is buried:
+
+> **Test here:** `https://cmc-git-claude-async-evanda.vercel.app` (Vercel preview — real prod build)
+>
 > Here's what to check:
-> [repeat the "Surfaces to test manually" bullets from Phase 1]
+> - [bullet]
+> - [bullet]
 >
 > Reply **"looks good"** (or describe any issues) when you're done.
 
