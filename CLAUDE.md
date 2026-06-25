@@ -31,11 +31,12 @@ mobile**, **single-tenant per deployment** (each church gets its own instance).
 - Prefer **complete, runnable** output over scaffolding stubs.
 - **Ask before** adding dependencies not named in the plan.
 - **Always open a PR when done with a batch of fixes** — use `mcp__github__create_pull_request`
-  targeting `main`. Close the session by posting both the GitHub PR URL and the Vercel preview
-  URL so the user has a live environment to test against before merging. Vercel preview URLs
-  follow the pattern `https://cmc-git-<branch-slug>-evanda.vercel.app` where `<branch-slug>`
-  is the branch name with `/` → `-` and other special chars stripped
-  (e.g. `claude/confident-ride-ol6ulb` → `cmc-git-claude-confident-ride-ol6ulb-evanda.vercel.app`).
+  targeting `main`. Then fetch the Vercel preview URL from the PR's status checks using
+  `mcp__github__pull_request_read` (method `get_checks` or `get`) — Vercel posts it as a
+  deployment status once the build completes. Include both the GitHub PR URL and the Vercel
+  preview URL in your closing message. Do **not** guess or construct the preview URL from the
+  branch name — Vercel uses an opaque hash (e.g. `https://cmc-8ybzivewy-church-maintenance-coordinator.vercel.app`)
+  that must be read from the PR.
 
 ## Workflow
 
