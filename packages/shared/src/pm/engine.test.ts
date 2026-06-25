@@ -188,4 +188,26 @@ describe('advanceAnchor', () => {
     const next = advanceAnchor(meter, prev, { advanceFrom: 'completion', completedDate: completed });
     expect(next.toISOString()).toBe(completed.toISOString());
   });
+
+  it('advance_from completion when done early: anchor moves forward but less than one full interval', () => {
+    // WO completed 5 days BEFORE the due date (2026-03-27 < 2026-04-01).
+    // With advance_from = completion the anchor is the early date, so the
+    // next cycle starts from there — the interval effectively shrinks by 5 days.
+    const early = new Date('2026-03-27T00:00:00Z');
+    const next = advanceAnchor(calendar, prev, { advanceFrom: 'completion', completedDate: early });
+    expect(next.toISOString()).toBe('2026-03-27T00:00:00.000Z');
+    expect(nextDueDate(calendar, next)?.toISOString()).toBe('2026-06-27T00:00:00.000Z');
+  });
+
+  it('advance_from scheduled when done early: anchor stays at the due date, not the early completion', () => {
+    // Same early completion but advance_from = scheduled: the due date is
+    // anchor + interval = 2026-04-01.  The schedule keeps its rhythm.
+    const next = advanceAnchor(calendar, prev, {
+      advanceFrom: 'scheduled',
+      completedDate: new Date('2026-03-27T00:00:00Z'),
+      scheduledDate: new Date('2026-04-01T00:00:00Z'),
+    });
+    expect(next.toISOString()).toBe('2026-04-01T00:00:00.000Z');
+    expect(nextDueDate(calendar, next)?.toISOString()).toBe('2026-07-01T00:00:00.000Z');
+  });
 });
