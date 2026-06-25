@@ -425,12 +425,16 @@ const supabaseDataSource: DataSource = {
     }
   },
   deactivateUser: async (userId) => {
-    unwrap(
-      await supabase
-        .from('users')
-        .update({ deleted_at: new Date().toISOString() })
-        .eq('id', userId),
-    );
+    const { error } = await supabase.functions.invoke('delete-user', { body: { userId } });
+    if (error) {
+      try {
+        const body = await (error as { context?: Response }).context?.json?.();
+        if (body?.error) throw new Error(body.error);
+      } catch (inner) {
+        if (inner instanceof Error && inner.message !== error.message) throw inner;
+      }
+      throw new Error(error.message);
+    }
   },
 
   listAssetCategories: async () =>
