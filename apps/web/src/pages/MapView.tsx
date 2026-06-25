@@ -112,7 +112,7 @@ export function MapView({
     map.on('load', async () => {
       const [staticBuildings, areas, meta, floorsData] = await Promise.all([
         fetch(`${base}/buildings.geojson`).then((r) => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })),
-        fetch(`${base}/areas.geojson`).then((r) => r.json()),
+        fetch(`${base}/areas.geojson`).then((r) => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })),
         fetch(`${base}/meta.json`)
           .then((r) => r.json())
           .catch(() => ({})),
@@ -128,23 +128,12 @@ export function MapView({
       // Cache the static file so the live-update effect can re-merge later.
       staticBuildingsRef.current = staticBuildings;
 
-      // Merge DB building footprints with the bundled static file. DB features
-      // (identified by a 'db_id' property) override any static feature with the
-      // same name so hand-drawn footprints win over the seeded GeoJSON.
+      // Merge DB building footprints with the bundled static file additively.
+      // DB features render on top of static ones; static outlines are always kept
+      // so seed-file geometry is never silently dropped.
       const dbBuildings = buildingsGeoJSONRef.current;
       const buildings: GeoJSON.FeatureCollection = dbBuildings
-        ? {
-            type: 'FeatureCollection',
-            features: [
-              ...staticBuildings.features.filter(
-                (sf: GeoJSON.Feature) =>
-                  !dbBuildings.features.some(
-                    (df) => df.properties?.name === sf.properties?.name,
-                  ),
-              ),
-              ...dbBuildings.features,
-            ],
-          }
+        ? { type: 'FeatureCollection', features: [...staticBuildings.features, ...dbBuildings.features] }
         : staticBuildings;
 
       // Optional subtle satellite basemap — grayscale + faded so it reads as
@@ -401,15 +390,7 @@ export function MapView({
     const staticBuildings = staticBuildingsRef.current;
     if (!staticBuildings) return; // map hasn't finished loading yet; the on('load') handler will use the ref
     const merged: GeoJSON.FeatureCollection = buildingsGeoJSON
-      ? {
-          type: 'FeatureCollection',
-          features: [
-            ...staticBuildings.features.filter(
-              (sf) => !buildingsGeoJSON.features.some((df) => df.properties?.name === sf.properties?.name),
-            ),
-            ...buildingsGeoJSON.features,
-          ],
-        }
+      ? { type: 'FeatureCollection', features: [...staticBuildings.features, ...buildingsGeoJSON.features] }
       : staticBuildings;
     (src as { setData(d: GeoJSON.FeatureCollection): void }).setData(merged);
   }, [buildingsGeoJSON]);

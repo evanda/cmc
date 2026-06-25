@@ -51,10 +51,10 @@ export function GeoJsonPasteField({
     return center;
   })();
 
-  const mapFragment = `#map=${zoom}/${mapCenter[1]}/${mapCenter[0]}`;
+  const mapQuery = `?map=${zoom}/${mapCenter[1]}/${mapCenter[0]}`;
   const geojsonIoUrl = value
-    ? `https://geojson.io/${mapFragment}&data=data:application/json,${encodeURIComponent(JSON.stringify(value))}`
-    : `https://geojson.io/${mapFragment}`;
+    ? `https://geojson.io/${mapQuery}#data=data:application/json,${encodeURIComponent(JSON.stringify(value))}`
+    : `https://geojson.io/${mapQuery}`;
 
   function handleChange(text: string) {
     setRaw(text);
