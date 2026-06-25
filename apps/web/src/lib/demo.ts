@@ -178,6 +178,7 @@ export const demoDataSource: DataSource = {
       name: input.name,
       level: input.level,
       floorplan_image_url: input.floorplan_image_url ?? null,
+      boundary_geojson: (input.boundary_geojson as Floor['boundary_geojson']) ?? null,
       geo_corners_geojson: (input.geo_corners_geojson as Floor['geo_corners_geojson']) ?? null,
       rotation_deg: null,
     } as (typeof floors)[0];
@@ -191,6 +192,7 @@ export const demoDataSource: DataSource = {
       name: input.name,
       level: input.level,
       floorplan_image_url: input.floorplan_image_url ?? null,
+      boundary_geojson: (input.boundary_geojson as Floor['boundary_geojson']) ?? null,
       geo_corners_geojson: (input.geo_corners_geojson as Floor['geo_corners_geojson']) ?? null,
     });
     return f;

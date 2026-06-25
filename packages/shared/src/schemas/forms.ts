@@ -50,6 +50,7 @@ export const floorFormSchema = z.object({
   // Integer level: -1 = B1, 0/1 = ground, 2… (plan §5.2).
   level: z.coerce.number().int('Level must be a whole number').min(-10).max(200),
   floorplan_image_url: optionalText,
+  boundary_geojson: optionalGeoJson,
   geo_corners_geojson: optionalGeoJson,
 });
 export type FloorForm = z.infer<typeof floorFormSchema>;

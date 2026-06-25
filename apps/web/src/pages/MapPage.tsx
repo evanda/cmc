@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { Building, Poi } from '@cmc/shared';
+import type { Building, Floor, Poi } from '@cmc/shared';
 import { MapView } from './MapView';
-import { useAssets, useAllWorkOrders, useBuildings, useLocations, useOrgSettings, usePois } from '../lib/queries';
+import { useAssets, useAllWorkOrders, useBuildings, useFloors, useLocations, useOrgSettings, usePois } from '../lib/queries';
 import { countOpenWosByBuilding } from '../lib/map-utils';
 
 function levelName(level: number): string {
@@ -11,6 +11,19 @@ function levelName(level: number): string {
   if (level === 1) return 'Main';
   if (level === 2) return 'Upper';
   return `Level ${level}`;
+}
+
+function floorsToGeoJSON(floors: Floor[]): GeoJSON.FeatureCollection | undefined {
+  const withGeom = floors.filter((f) => f.boundary_geojson ?? f.geo_corners_geojson);
+  if (withGeom.length === 0) return undefined;
+  return {
+    type: 'FeatureCollection',
+    features: withGeom.map((f) => ({
+      type: 'Feature' as const,
+      properties: { level: f.level, name: f.name, db_id: f.id },
+      geometry: (f.boundary_geojson ?? f.geo_corners_geojson) as GeoJSON.Polygon,
+    })),
+  };
 }
 
 function buildingsToGeoJSON(
@@ -58,6 +71,7 @@ export function MapPage() {
   const { data: org } = useOrgSettings();
   const { data: assets } = useAssets();
   const { data: buildings } = useBuildings();
+  const { data: floors } = useFloors();
   const { data: locations } = useLocations();
   const { data: allWorkOrders } = useAllWorkOrders();
   const { data: pois } = usePois();
@@ -82,6 +96,11 @@ export function MapPage() {
     [buildings],
   );
 
+  const floorsGeoJSON = useMemo(
+    () => floorsToGeoJSON(floors ?? []),
+    [floors],
+  );
+
   return (
     <div>
       <div className="mb-3">
@@ -99,6 +118,7 @@ export function MapPage() {
         onCreateWorkOrder={(assetId) => navigate(`/work-orders?asset=${assetId}`)}
         poisGeoJSON={poisGeoJSON}
         buildingsGeoJSON={buildingsGeoJSON}
+        floorsGeoJSON={floorsGeoJSON}
       />
     </div>
   );

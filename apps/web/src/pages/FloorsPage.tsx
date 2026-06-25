@@ -109,14 +109,23 @@ export function FloorsPage() {
   );
 }
 
-function validateCorners(v: Record<string, unknown>): string | null {
+function validatePolygon(v: Record<string, unknown>): string | null {
   const geom = v['type'] === 'Feature'
     ? (v['geometry'] as Record<string, unknown> | undefined)
     : v;
-  if (geom?.['type'] !== 'Polygon') return 'Expected a Polygon with exactly 4 corners';
-  const ring = (geom['coordinates'] as unknown[][])?.[0];
+  if (geom?.['type'] !== 'Polygon') return 'Expected a Polygon';
+  return null;
+}
+
+function validateCorners(v: Record<string, unknown>): string | null {
+  const err = validatePolygon(v);
+  if (err) return err;
+  const geom = v['type'] === 'Feature'
+    ? (v['geometry'] as Record<string, unknown> | undefined)
+    : v;
+  const ring = (geom!['coordinates'] as unknown[][])?.[0];
   if (!ring || (ring.length !== 4 && ring.length !== 5))
-    return 'Draw exactly 4 corners (the building footprint quad)';
+    return 'Image overlay needs exactly 4 corners (top-left → top-right → bottom-right → bottom-left)';
   return null;
 }
 
@@ -149,6 +158,9 @@ function FloorForm({
   const selectedBuilding = buildings.find((b) => b.id === buildingId);
   const [name, setName] = useState(initial?.name ?? '');
   const [level, setLevel] = useState(String(initial?.level ?? 1));
+  const [boundary, setBoundary] = useState<Record<string, unknown> | null>(
+    (initial?.boundary_geojson as Record<string, unknown> | null) ?? null,
+  );
   const [imageUrl, setImageUrl] = useState(initial?.floorplan_image_url ?? '');
   const [corners, setCorners] = useState<Record<string, unknown> | null>(
     (initial?.geo_corners_geojson as Record<string, unknown> | null) ?? null,
@@ -166,6 +178,7 @@ function FloorForm({
             building_id: buildingId,
             name,
             level,
+            boundary_geojson: boundary,
             floorplan_image_url: imageUrl || undefined,
             geo_corners_geojson: corners,
           });
@@ -205,6 +218,14 @@ function FloorForm({
             onChange={(e) => setLevel(e.target.value)}
           />
         </Field>
+        <GeoJsonPasteField
+          label="Floor boundary (optional)"
+          hint="Draw the actual outline of this floor — any shape, as many points as you need. Used as the floor outline on the map when this level is active."
+          value={boundary}
+          onChange={setBoundary}
+          validate={validatePolygon}
+          center={buildingCenter(selectedBuilding)}
+        />
         <Field label="Floorplan image URL (optional)" error={errors.floorplan_image_url}>
           <input
             className={inputClass}
@@ -213,14 +234,16 @@ function FloorForm({
             onChange={(e) => setImageUrl(e.target.value)}
           />
         </Field>
-        <GeoJsonPasteField
-          label="Floor image corners (optional)"
-          hint="MapLibre image overlays require exactly 4 corners — draw a 4-point polygon on geojson.io tracing the image's top-left → top-right → bottom-right → bottom-left corners over the building footprint. More complex shapes are not supported here."
-          value={corners}
-          onChange={setCorners}
-          validate={validateCorners}
-          center={buildingCenter(selectedBuilding)}
-        />
+        {imageUrl && (
+          <GeoJsonPasteField
+            label="Image overlay corners (required for image overlay)"
+            hint="MapLibre needs exactly 4 corners to stretch the image onto the map — draw a 4-point polygon on geojson.io tracing top-left → top-right → bottom-right → bottom-left of where the image should sit."
+            value={corners}
+            onChange={setCorners}
+            validate={validateCorners}
+            center={buildingCenter(selectedBuilding)}
+          />
+        )}
         <div className="flex justify-end gap-2">
           <Button type="button" variant="ghost" onClick={onClose}>
             Cancel

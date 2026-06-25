@@ -54,6 +54,7 @@ export function applyMidwayReseed() {
       name: fl.name,
       level: fl.level,
       floorplan_image_url: null,
+      boundary_geojson: null,
       geo_corners_geojson: fl.geo_corners as Floor['geo_corners_geojson'],
       rotation_deg: null,
     });

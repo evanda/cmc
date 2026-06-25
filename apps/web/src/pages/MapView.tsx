@@ -25,6 +25,7 @@ interface FloorData {
   name: string;
   level: number;
   floorplan_image_url: string | null;
+  boundary_geojson: GeoJSON.Polygon | null;
   geo_corners_geojson: GeoJSON.Polygon | null;
   rotation_deg: number;
 }
@@ -49,6 +50,7 @@ export function MapView({
   onCreateWorkOrder,
   poisGeoJSON,
   buildingsGeoJSON,
+  floorsGeoJSON,
 }: {
   facility?: string;
   assets?: { id: string; name: string }[];
@@ -56,17 +58,11 @@ export function MapView({
   openWoCountByBuilding?: Record<string, number>;
   /** Open a new work order pre-linked to this asset (plan §5.4, #37). */
   onCreateWorkOrder?: (assetId: string) => void;
-  /**
-   * DB-backed POIs as a GeoJSON FeatureCollection (plan §5.4, #5).
-   * When provided, the map uses this instead of fetching the bundled pois.geojson.
-   * Undefined/empty → fall back to the bundled static file (demo mode or unseeded DB).
-   */
   poisGeoJSON?: GeoJSON.FeatureCollection;
-  /**
-   * DB-backed building footprints as a GeoJSON FeatureCollection.
-   * When provided, merged with (or replaces) the bundled buildings.geojson.
-   */
+  /** DB-backed building footprints — merged with the bundled buildings.geojson. */
   buildingsGeoJSON?: GeoJSON.FeatureCollection;
+  /** DB-backed floor outlines — merged with the bundled floors.json. */
+  floorsGeoJSON?: GeoJSON.FeatureCollection;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MlMap | null>(null);
@@ -88,6 +84,11 @@ export function MapView({
   poisGeoJSONRef.current = poisGeoJSON;
   const buildingsGeoJSONRef = useRef(buildingsGeoJSON);
   buildingsGeoJSONRef.current = buildingsGeoJSON;
+  const floorsGeoJSONRef = useRef(floorsGeoJSON);
+  floorsGeoJSONRef.current = floorsGeoJSON;
+  // Cache static files once fetched so live-update effects can re-merge without re-fetching.
+  const staticBuildingsRef = useRef<GeoJSON.FeatureCollection | null>(null);
+  const staticFloorsRef = useRef<GeoJSON.FeatureCollection | null>(null);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -123,6 +124,9 @@ export function MapView({
       // fall back to the bundled static file (demo mode or unseeded instance).
       const pois: GeoJSON.FeatureCollection =
         poisGeoJSONRef.current ?? (await fetch(`${base}/pois.geojson`).then((r) => r.json()));
+
+      // Cache the static file so the live-update effect can re-merge later.
+      staticBuildingsRef.current = staticBuildings;
 
       // Merge DB building footprints with the bundled static file. DB features
       // (identified by a 'db_id' property) override any static feature with the
@@ -209,15 +213,16 @@ export function MapView({
         paint: { 'line-color': '#475569', 'line-width': 2 },
       });
 
-      // Per-level floor outlines from floors.json geo_corners_geojson (plan §5.2).
-      // At site level: hidden (building footprints are shown instead).
-      // At a numbered level: only the floors matching that level appear.
-      const validFloors = (floorsData as FloorData[]).filter((f) => f.geo_corners_geojson);
-      const floorsGeoJSON: GeoJSON.FeatureCollection = {
+      // Per-level floor outlines. Prefers boundary_geojson (any complex polygon) over
+      // geo_corners_geojson (the 4-corner image-overlay quad) — at site level: hidden.
+      const validFloors = (floorsData as FloorData[]).filter(
+        (f) => f.boundary_geojson ?? f.geo_corners_geojson,
+      );
+      const staticFloorsGeoJSON: GeoJSON.FeatureCollection = {
         type: 'FeatureCollection',
         features: validFloors.map((f) => ({
           type: 'Feature' as const,
-          geometry: f.geo_corners_geojson as GeoJSON.Polygon,
+          geometry: (f.boundary_geojson ?? f.geo_corners_geojson) as GeoJSON.Polygon,
           properties: {
             level: f.level,
             building: f.building,
@@ -226,7 +231,13 @@ export function MapView({
           },
         })),
       };
-      map.addSource('floors', { type: 'geojson', data: floorsGeoJSON });
+      staticFloorsRef.current = staticFloorsGeoJSON;
+      // Merge with DB floors if available.
+      const dbFloors = floorsGeoJSONRef.current;
+      const mergedFloors: GeoJSON.FeatureCollection = dbFloors
+        ? { type: 'FeatureCollection', features: [...staticFloorsGeoJSON.features, ...dbFloors.features] }
+        : staticFloorsGeoJSON;
+      map.addSource('floors', { type: 'geojson', data: mergedFloors });
       map.addLayer({
         id: 'floor-fill',
         type: 'fill',
@@ -380,15 +391,42 @@ export function MapView({
     }
   }, [poisGeoJSON]);
 
-  // When DB building footprints arrive after load, update the buildings source.
+  // When DB building footprints arrive after load, re-merge with the static file
+  // and push the combined result to the map source.
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !buildingsGeoJSON) return;
+    if (!map) return;
     const src = map.getSource('buildings');
-    if (src && 'setData' in src) {
-      (src as { setData(d: GeoJSON.FeatureCollection): void }).setData(buildingsGeoJSON);
-    }
+    if (!src || !('setData' in src)) return;
+    const staticBuildings = staticBuildingsRef.current;
+    if (!staticBuildings) return; // map hasn't finished loading yet; the on('load') handler will use the ref
+    const merged: GeoJSON.FeatureCollection = buildingsGeoJSON
+      ? {
+          type: 'FeatureCollection',
+          features: [
+            ...staticBuildings.features.filter(
+              (sf) => !buildingsGeoJSON.features.some((df) => df.properties?.name === sf.properties?.name),
+            ),
+            ...buildingsGeoJSON.features,
+          ],
+        }
+      : staticBuildings;
+    (src as { setData(d: GeoJSON.FeatureCollection): void }).setData(merged);
   }, [buildingsGeoJSON]);
+
+  // When DB floor outlines arrive after load, merge with static and update the source.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    const src = map.getSource('floors');
+    if (!src || !('setData' in src)) return;
+    const staticFloors = staticFloorsRef.current;
+    if (!staticFloors) return;
+    const merged: GeoJSON.FeatureCollection = floorsGeoJSON
+      ? { type: 'FeatureCollection', features: [...staticFloors.features, ...floorsGeoJSON.features] }
+      : staticFloors;
+    (src as { setData(d: GeoJSON.FeatureCollection): void }).setData(merged);
+  }, [floorsGeoJSON]);
 
   // Apply the level filter to POIs, floor outlines, and image overlays.
   useEffect(() => {

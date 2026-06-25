@@ -123,6 +123,7 @@ export function seedBuilding(
       name: f.name,
       level: f.level,
       floorplan_image_url: null,
+      boundary_geojson: null,
       geo_corners_geojson: null,
       rotation_deg: null,
     };

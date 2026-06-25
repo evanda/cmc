@@ -69,6 +69,9 @@ export type Floor = BaseRow & {
   /** Integer level: -1 = B1, 0/1 = ground, 2… (plan §5.2). */
   level: number;
   floorplan_image_url: string | null;
+  /** Complex polygon outline of the floor — any shape, used for map rendering. */
+  boundary_geojson: GeoJsonPolygon | null;
+  /** 4-corner quad for MapLibre image-source overlay — only needed with floorplan_image_url. */
   geo_corners_geojson: GeoJsonPolygon | null;
   rotation_deg: number | null;
 };
