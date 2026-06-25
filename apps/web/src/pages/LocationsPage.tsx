@@ -14,12 +14,15 @@ import { LocationPicker, type PlacedPoint } from '../components/LocationPicker';
 
 const CAMPUS_DEFAULT: [number, number] = [-80.428, 36.09];
 
-function buildingCenter(b: Building | undefined): [number, number] {
-  const coords = b?.footprint_geojson?.coordinates;
-  if (!coords?.[0]?.length) return CAMPUS_DEFAULT;
-  const ring = coords[0];
-  const s = ring.reduce((a: number[], p) => [a[0] + p[0], a[1] + p[1]], [0, 0]);
-  return [s[0] / ring.length, s[1] / ring.length] as [number, number];
+function campusCenter(buildings: Building[]): [number, number] {
+  for (const b of buildings) {
+    const ring = b.footprint_geojson?.coordinates?.[0];
+    if (ring?.length) {
+      const s = ring.reduce((a: number[], p) => [a[0] + p[0], a[1] + p[1]], [0, 0]);
+      return [s[0] / ring.length, s[1] / ring.length] as [number, number];
+    }
+  }
+  return CAMPUS_DEFAULT;
 }
 
 export function LocationsPage() {
@@ -153,7 +156,6 @@ function LocationForm({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const floors = useFloors(buildingId || undefined);
-  const selectedBuilding = buildings.find((b) => b.id === buildingId);
 
   return (
     <Modal title={initial ? 'Edit location' : 'New location'} onClose={onClose}>
@@ -224,7 +226,7 @@ function LocationForm({
           <LocationPicker
             value={mapPin}
             onChange={setMapPin}
-            center={buildingCenter(selectedBuilding)}
+            center={campusCenter(buildings)}
           />
         </Field>
         <div className="flex justify-end gap-2">
