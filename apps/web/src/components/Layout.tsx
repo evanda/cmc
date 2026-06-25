@@ -12,6 +12,7 @@ const navItems = [
   { to: '/reports', label: 'Reports' },
   { to: '/assets', label: 'Assets' },
   { to: '/vendors', label: 'Vendors' },
+  { to: '/expiry', label: 'Expiry' },
   { to: '/buildings', label: 'Buildings' },
   { to: '/floors', label: 'Floors' },
   { to: '/locations', label: 'Locations' },

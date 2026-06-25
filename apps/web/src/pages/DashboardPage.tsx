@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ACTIVE_WORK_ORDER_STATUSES, upcomingDueDate } from '@cmc/shared';
+import { ACTIVE_WORK_ORDER_STATUSES, checkExpiries, upcomingDueDate } from '@cmc/shared';
 import {
   useAllWorkOrders,
   useAssets,
@@ -59,11 +59,12 @@ export function DashboardPage() {
   const activeWorkOrders = workOrders.data?.filter((w) =>
     ACTIVE_WORK_ORDER_STATUSES.includes(w.status),
   ).length;
-  const within30 = (d: string | null) =>
-    d != null && Math.ceil((new Date(d).getTime() - Date.now()) / 86_400_000) <= 30;
-  const expiringSoon =
-    (vendors.data?.filter((v) => within30(v.coi_expiry) || within30(v.contract_expiry)).length ?? 0) +
-    (contracts.data?.filter((c) => within30(c.end_date)).length ?? 0);
+  const expiryReport = checkExpiries({
+    assets: assets.data ?? [],
+    vendors: vendors.data ?? [],
+    serviceContracts: contracts.data ?? [],
+  });
+  const expiringSoon = expiryReport.all.length;
 
   return (
     <div>
@@ -78,7 +79,7 @@ export function DashboardPage() {
         <StatCard label="Open requests" value={openRequests ?? '—'} to="/requests" />
         <StatCard label="Active work orders" value={activeWorkOrders ?? '—'} to="/work-orders" />
         <StatCard label="PMs due soon" value={pmsDueSoon ?? '—'} to="/pm" />
-        <StatCard label="Expiring soon (COI/contract)" value={expiringSoon} to="/vendors" />
+        <StatCard label="Expiring soon" value={expiringSoon} to="/expiry" />
       </div>
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <StatCard label="Assets" value={assets.data?.length ?? '—'} to="/assets" />

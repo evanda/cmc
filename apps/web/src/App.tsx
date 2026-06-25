@@ -20,6 +20,7 @@ import { BuildingsPage } from './pages/BuildingsPage';
 import { FloorsPage } from './pages/FloorsPage';
 import { LocationsPage } from './pages/LocationsPage';
 import { SettingsPage } from './pages/SettingsPage';
+import { ExpiryBoardPage } from './pages/ExpiryBoardPage';
 
 // Ensures org_settings exists before rendering the main app layout.
 // If the DB row is missing (fresh deployment), redirects to /setup.
@@ -78,6 +79,7 @@ export function App() {
               <Route path="buildings" element={<BuildingsPage />} />
               <Route path="floors" element={<FloorsPage />} />
               <Route path="locations" element={<LocationsPage />} />
+              <Route path="expiry" element={<ExpiryBoardPage />} />
               <Route path="settings" element={<SettingsPage />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
