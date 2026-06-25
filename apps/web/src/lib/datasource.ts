@@ -39,6 +39,8 @@ import { demoDataSource } from './demo';
 
 export interface DataSource {
   getOrgSettings(): Promise<OrgSettings | null>;
+  /** First-run: upserts the single org_settings row (no row required to exist). */
+  setupOrgSettings(input: OrgSettingsForm): Promise<OrgSettings>;
   updateOrgSettings(input: OrgSettingsForm): Promise<OrgSettings>;
   listBuildings(): Promise<Building[]>;
   createBuilding(input: BuildingForm): Promise<Building>;
@@ -245,6 +247,30 @@ function unwrap<T>(res: { data: T | null; error: { message: string } | null }): 
 const supabaseDataSource: DataSource = {
   getOrgSettings: async () =>
     unwrap<OrgSettings | null>(await supabase.from('org_settings').select('*').maybeSingle()),
+  setupOrgSettings: async (input) => {
+    // Upsert on the singleton constraint so calling this a second time
+    // (e.g. re-running the wizard) just updates rather than errors.
+    return unwrap<OrgSettings>(
+      await supabase
+        .from('org_settings')
+        .upsert(
+          {
+            facility_name: input.facility_name,
+            logo_url: input.logo_url ?? null,
+            address: input.address ?? null,
+            maintenance_contact_email: input.maintenance_contact_email ?? null,
+            locale: input.locale,
+            distance_unit: input.distance_unit,
+            currency: input.currency,
+            timezone: input.timezone,
+            theme: input.theme ?? null,
+          },
+          { onConflict: 'singleton' },
+        )
+        .select()
+        .single(),
+    );
+  },
   updateOrgSettings: async (input) => {
     // Singleton table — fetch the row id first, then update by id.
     const current = unwrap<{ id: string } | null>(

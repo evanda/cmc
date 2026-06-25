@@ -104,6 +104,20 @@ seedPm({
 
 export const demoDataSource: DataSource = {
   getOrgSettings: async () => org,
+  setupOrgSettings: async (input) => {
+    Object.assign(org, {
+      facility_name: input.facility_name,
+      logo_url: input.logo_url ?? null,
+      address: input.address ?? null,
+      maintenance_contact_email: input.maintenance_contact_email ?? null,
+      locale: input.locale,
+      distance_unit: input.distance_unit,
+      currency: input.currency,
+      timezone: input.timezone,
+      theme: input.theme ?? null,
+    });
+    return org;
+  },
   updateOrgSettings: async (input) => {
     Object.assign(org, {
       facility_name: input.facility_name,

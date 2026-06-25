@@ -1,7 +1,9 @@
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import { useAuth } from './auth/AuthProvider';
+import { useOrgSettings } from './lib/queries';
 import { Layout } from './components/Layout';
 import { LoginPage } from './pages/LoginPage';
+import { SetupWizardPage } from './pages/SetupWizardPage';
 import { AcceptInvitePage } from './pages/AcceptInvitePage';
 import { DashboardPage } from './pages/DashboardPage';
 import { AssetsPage } from './pages/AssetsPage';
@@ -18,6 +20,23 @@ import { BuildingsPage } from './pages/BuildingsPage';
 import { FloorsPage } from './pages/FloorsPage';
 import { LocationsPage } from './pages/LocationsPage';
 import { SettingsPage } from './pages/SettingsPage';
+
+// Ensures org_settings exists before rendering the main app layout.
+// If the DB row is missing (fresh deployment), redirects to /setup.
+function OrgGuard() {
+  const { data: org, isLoading } = useOrgSettings();
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center text-sm text-slate-500">
+        Loading…
+      </div>
+    );
+  }
+  if (!org) {
+    return <Navigate to="/setup" replace />;
+  }
+  return <Outlet />;
+}
 
 export function App() {
   const { session, loading } = useAuth();
@@ -38,24 +57,32 @@ export function App() {
       {!session ? (
         <Route path="*" element={<LoginPage />} />
       ) : (
-        <Route element={<Layout />}>
-          <Route index element={<DashboardPage />} />
-          <Route path="map" element={<MapPage />} />
-          <Route path="requests" element={<WorkRequestsPage />} />
-          <Route path="work-orders" element={<WorkOrdersPage />} />
-          <Route path="pm" element={<PmSchedulesPage />} />
-          <Route path="reports" element={<ReportsPage />} />
-          <Route path="assets" element={<AssetsPage />} />
-          <Route path="assets/:id" element={<AssetDetailPage />} />
-          <Route path="a/:token" element={<AssetByTokenPage />} />
-          <Route path="vendors" element={<VendorsPage />} />
-          <Route path="users" element={<UsersPage />} />
-          <Route path="buildings" element={<BuildingsPage />} />
-          <Route path="floors" element={<FloorsPage />} />
-          <Route path="locations" element={<LocationsPage />} />
-          <Route path="settings" element={<SettingsPage />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Route>
+        <>
+          {/* /setup is reachable before org_settings exists */}
+          <Route path="setup" element={<SetupWizardPage />} />
+
+          {/* OrgGuard redirects to /setup if org_settings is null (fresh instance) */}
+          <Route element={<OrgGuard />}>
+            <Route element={<Layout />}>
+              <Route index element={<DashboardPage />} />
+              <Route path="map" element={<MapPage />} />
+              <Route path="requests" element={<WorkRequestsPage />} />
+              <Route path="work-orders" element={<WorkOrdersPage />} />
+              <Route path="pm" element={<PmSchedulesPage />} />
+              <Route path="reports" element={<ReportsPage />} />
+              <Route path="assets" element={<AssetsPage />} />
+              <Route path="assets/:id" element={<AssetDetailPage />} />
+              <Route path="a/:token" element={<AssetByTokenPage />} />
+              <Route path="vendors" element={<VendorsPage />} />
+              <Route path="users" element={<UsersPage />} />
+              <Route path="buildings" element={<BuildingsPage />} />
+              <Route path="floors" element={<FloorsPage />} />
+              <Route path="locations" element={<LocationsPage />} />
+              <Route path="settings" element={<SettingsPage />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Route>
+          </Route>
+        </>
       )}
     </Routes>
   );

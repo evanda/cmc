@@ -56,6 +56,13 @@ function crudHooks<TRow, TForm>(
 export function useOrgSettings() {
   return useQuery({ queryKey: ['org_settings'], queryFn: () => ds.getOrgSettings() });
 }
+export function useSetupOrgSettings() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: OrgSettingsForm) => ds.setupOrgSettings(input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['org_settings'] }),
+  });
+}
 export function useUpdateOrgSettings() {
   const qc = useQueryClient();
   return useMutation({
