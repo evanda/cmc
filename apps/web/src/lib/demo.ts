@@ -434,6 +434,11 @@ export const demoDataSource: DataSource = {
     w.assignee_user_id = patch.assignee_user_id ?? null;
     if (patch.location_id !== undefined) w.location_id = patch.location_id ?? null;
     if (patch.vendor_id !== undefined) w.vendor_id = patch.vendor_id ?? null;
+    if (patch.completion_notes !== undefined) w.completion_notes = patch.completion_notes ?? null;
+    if (patch.labor_hours !== undefined) w.labor_hours = patch.labor_hours ?? null;
+    if (patch.actual_parts_cost !== undefined) w.actual_parts_cost = patch.actual_parts_cost ?? null;
+    if (patch.actual_labor_cost !== undefined) w.actual_labor_cost = patch.actual_labor_cost ?? null;
+    if (patch.actual_vendor_cost !== undefined) w.actual_vendor_cost = patch.actual_vendor_cost ?? null;
     if (patch.status === 'completed' && !w.completed_date) w.completed_date = '2026-06-23';
     return w;
   },

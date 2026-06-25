@@ -140,6 +140,8 @@ export const workOrderUpdateSchema = z.object({
   status: z.enum(WORK_ORDER_STATUSES),
   priority: z.enum(WORK_ORDER_PRIORITIES),
   assignee_user_id: z.string().uuid().nullish(),
+  location_id: z.string().uuid().nullish(),
+  vendor_id: z.string().uuid().nullish(),
   completion_notes: optionalText,
   labor_hours: optionalNumber,
   actual_parts_cost: optionalNumber,
