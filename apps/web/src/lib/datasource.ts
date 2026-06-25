@@ -263,6 +263,8 @@ function assetPatch(input: AssetForm) {
     notes: input.notes ?? null,
     contact_name: input.contact_name ?? null,
     contact_email: input.contact_email ?? null,
+    geometry_geojson: input.geometry_geojson ?? null,
+    level: input.map_level ?? null,
   };
 }
 

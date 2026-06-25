@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { buildingFormSchema, type Building } from '@cmc/shared';
+import { buildingFormSchema, type Building, type BuildingForm } from '@cmc/shared';
 import {
   useBuildings,
   useCreateBuilding,
@@ -8,6 +8,7 @@ import {
 } from '../lib/queries';
 import { useAuth } from '../auth/AuthProvider';
 import { Button, EmptyState, Field, Modal, inputClass } from '../components/ui';
+import { GeoJsonPasteField } from '../components/GeoJsonPasteField';
 
 export function BuildingsPage() {
   const { role } = useAuth();
@@ -92,6 +93,14 @@ export function BuildingsPage() {
   );
 }
 
+function validatePolygon(v: Record<string, unknown>): string | null {
+  const type = v['type'] === 'Feature'
+    ? (v['geometry'] as Record<string, unknown> | undefined)?.['type']
+    : v['type'];
+  if (type !== 'Polygon') return 'Expected a Polygon (draw one shape on geojson.io)';
+  return null;
+}
+
 function BuildingForm({
   initial,
   onClose,
@@ -99,11 +108,14 @@ function BuildingForm({
 }: {
   initial: Building | null;
   onClose: () => void;
-  onSubmit: (values: { name: string; description?: string; address?: string }) => Promise<void>;
+  onSubmit: (values: BuildingForm) => Promise<void>;
 }) {
   const [name, setName] = useState(initial?.name ?? '');
   const [description, setDescription] = useState(initial?.description ?? '');
   const [address, setAddress] = useState(initial?.address ?? '');
+  const [footprint, setFootprint] = useState<Record<string, unknown> | null>(
+    (initial?.footprint_geojson as Record<string, unknown> | null) ?? null,
+  );
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
 
@@ -113,7 +125,7 @@ function BuildingForm({
         className="space-y-4"
         onSubmit={async (e) => {
           e.preventDefault();
-          const parsed = buildingFormSchema.safeParse({ name, description, address });
+          const parsed = buildingFormSchema.safeParse({ name, description, address, footprint_geojson: footprint });
           if (!parsed.success) {
             setErrors(
               Object.fromEntries(
@@ -145,6 +157,13 @@ function BuildingForm({
             onChange={(e) => setDescription(e.target.value)}
           />
         </Field>
+        <GeoJsonPasteField
+          label="Building footprint (optional)"
+          hint="Draw the building outline on geojson.io, then paste the GeoJSON back."
+          value={footprint}
+          onChange={setFootprint}
+          validate={validatePolygon}
+        />
         <div className="flex justify-end gap-2">
           <Button type="button" variant="ghost" onClick={onClose}>
             Cancel

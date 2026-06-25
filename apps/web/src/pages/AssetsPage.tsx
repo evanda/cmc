@@ -17,6 +17,7 @@ import {
 } from '../lib/queries';
 import { useAuth } from '../auth/AuthProvider';
 import { Button, EmptyState, Field, Modal, inputClass } from '../components/ui';
+import { LocationPicker, type PlacedPoint } from '../components/LocationPicker';
 
 const critStyle: Record<Criticality, string> = {
   low: 'bg-slate-100 text-slate-600',
@@ -244,6 +245,11 @@ function AssetForm({
   const [notes, setNotes] = useState(initial?.notes ?? '');
   const [contactName, setContactName] = useState(initial?.contact_name ?? '');
   const [contactEmail, setContactEmail] = useState(initial?.contact_email ?? '');
+  const [mapPin, setMapPin] = useState<PlacedPoint | null>(() => {
+    const g = initial?.geometry_geojson as unknown as { coordinates?: [number, number] } | null;
+    if (!g?.coordinates) return null;
+    return { lng: g.coordinates[0], lat: g.coordinates[1], level: initial?.level ?? 1 };
+  });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
 
@@ -265,6 +271,10 @@ function AssetForm({
             notes,
             contact_name: contactName,
             contact_email: contactEmail,
+            geometry_geojson: mapPin
+              ? { type: 'Point', coordinates: [mapPin.lng, mapPin.lat] }
+              : null,
+            map_level: mapPin?.level ?? null,
           });
           if (!parsed.success) {
             setErrors(
@@ -369,6 +379,9 @@ function AssetForm({
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
           />
+        </Field>
+        <Field label="Map location (optional)">
+          <LocationPicker value={mapPin} onChange={setMapPin} />
         </Field>
         <div className="flex justify-end gap-2 pt-1">
           <Button type="button" variant="ghost" onClick={onClose}>

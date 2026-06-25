@@ -33,10 +33,14 @@ const optionalNumber = z.preprocess(
   z.coerce.number().nonnegative('Must be ≥ 0').optional(),
 );
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const optionalGeoJson = z.any().nullable().optional();
+
 export const buildingFormSchema = z.object({
   name: z.string().trim().min(1, 'Name is required').max(200),
   description: optionalText,
   address: optionalText,
+  footprint_geojson: optionalGeoJson,
 });
 export type BuildingForm = z.infer<typeof buildingFormSchema>;
 
@@ -45,6 +49,8 @@ export const floorFormSchema = z.object({
   name: z.string().trim().min(1, 'Name is required').max(200),
   // Integer level: -1 = B1, 0/1 = ground, 2… (plan §5.2).
   level: z.coerce.number().int('Level must be a whole number').min(-10).max(200),
+  floorplan_image_url: optionalText,
+  geo_corners_geojson: optionalGeoJson,
 });
 export type FloorForm = z.infer<typeof floorFormSchema>;
 
@@ -69,6 +75,8 @@ export const assetFormSchema = z.object({
   notes: optionalText,
   contact_name: optionalText,
   contact_email: optionalEmail,
+  geometry_geojson: optionalGeoJson,
+  map_level: z.coerce.number().int().min(-10).max(200).nullable().optional(),
 });
 export type AssetForm = z.infer<typeof assetFormSchema>;
 

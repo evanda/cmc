@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { floorFormSchema, type Floor } from '@cmc/shared';
+import { floorFormSchema, type Floor, type FloorForm } from '@cmc/shared';
 import { useBuildings, useCreateFloor, useDeleteFloor, useFloors, useUpdateFloor } from '../lib/queries';
 import { useAuth } from '../auth/AuthProvider';
 import { Button, EmptyState, Field, Modal, inputClass } from '../components/ui';
+import { GeoJsonPasteField } from '../components/GeoJsonPasteField';
 
 export function FloorsPage() {
   const { role } = useAuth();
@@ -108,6 +109,17 @@ export function FloorsPage() {
   );
 }
 
+function validateCorners(v: Record<string, unknown>): string | null {
+  const geom = v['type'] === 'Feature'
+    ? (v['geometry'] as Record<string, unknown> | undefined)
+    : v;
+  if (geom?.['type'] !== 'Polygon') return 'Expected a Polygon with exactly 4 corners';
+  const ring = (geom['coordinates'] as unknown[][])?.[0];
+  if (!ring || (ring.length !== 4 && ring.length !== 5))
+    return 'Draw exactly 4 corners (the building footprint quad)';
+  return null;
+}
+
 function FloorForm({
   initial,
   buildings,
@@ -119,13 +131,17 @@ function FloorForm({
   buildings: { id: string; name: string }[];
   defaultBuildingId: string;
   onClose: () => void;
-  onSubmit: (values: { building_id: string; name: string; level: number }) => Promise<void>;
+  onSubmit: (values: FloorForm) => Promise<void>;
 }) {
   const [buildingId, setBuildingId] = useState(
     initial?.building_id ?? defaultBuildingId ?? buildings[0]?.id ?? '',
   );
   const [name, setName] = useState(initial?.name ?? '');
   const [level, setLevel] = useState(String(initial?.level ?? 1));
+  const [imageUrl, setImageUrl] = useState(initial?.floorplan_image_url ?? '');
+  const [corners, setCorners] = useState<Record<string, unknown> | null>(
+    (initial?.geo_corners_geojson as Record<string, unknown> | null) ?? null,
+  );
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
 
@@ -135,7 +151,13 @@ function FloorForm({
         className="space-y-4"
         onSubmit={async (e) => {
           e.preventDefault();
-          const parsed = floorFormSchema.safeParse({ building_id: buildingId, name, level });
+          const parsed = floorFormSchema.safeParse({
+            building_id: buildingId,
+            name,
+            level,
+            floorplan_image_url: imageUrl || undefined,
+            geo_corners_geojson: corners,
+          });
           if (!parsed.success) {
             setErrors(
               Object.fromEntries(parsed.error.issues.map((i) => [i.path[0] as string, i.message])),
@@ -172,6 +194,21 @@ function FloorForm({
             onChange={(e) => setLevel(e.target.value)}
           />
         </Field>
+        <Field label="Floorplan image URL (optional)" error={errors.floorplan_image_url}>
+          <input
+            className={inputClass}
+            placeholder="https://…/floorplan.png"
+            value={imageUrl}
+            onChange={(e) => setImageUrl(e.target.value)}
+          />
+        </Field>
+        <GeoJsonPasteField
+          label="Floor corners (optional)"
+          hint="Draw a 4-corner polygon on geojson.io that matches this floor's footprint. Used to overlay the floorplan image on the map."
+          value={corners}
+          onChange={setCorners}
+          validate={validateCorners}
+        />
         <div className="flex justify-end gap-2">
           <Button type="button" variant="ghost" onClick={onClose}>
             Cancel
