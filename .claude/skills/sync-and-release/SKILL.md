@@ -318,18 +318,32 @@ in each internal issue that was just merged.
 
 ### 6d. Commit and tag
 
-```bash
-git add package.json
-git commit -m "$(cat <<'EOF'
-chore: release vX.Y.Z
+**The tag must point to a commit already on GitHub.** The user pushes `main` from
+their own machine after the merge; if Claude creates a local-only commit and tags it,
+the SHA doesn't exist on the remote and `git push origin release/vX.Y.Z` fails with
+"src refspec does not match any."
 
-Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
-EOF
-)"
+Correct sequence:
+
+1. `git fetch origin main && git reset --hard origin/main` — ensure local HEAD = remote HEAD.
+2. Set author: `git config user.email noreply@anthropic.com && git config user.name Claude`
+3. Tag HEAD directly (the squash-merge commit GitHub already has). Skip the version-bump
+   commit — bump `package.json` in the next PR instead, or omit the bump entirely.
+4. Tell the user to push **only the tag** — `main` is already up to date from the merge.
+
+```bash
+git fetch origin main && git reset --hard origin/main
+git config user.email noreply@anthropic.com && git config user.name Claude
 git tag release/vX.Y.Z
 ```
 
-Do **not** push — the user pushes manually.
+Then tell the user to run:
+
+```bash
+git push origin release/vX.Y.Z
+```
+
+Do **not** ask them to push `main` — it is already on GitHub from the merge step.
 
 ### 6e. Web release (Vercel)
 
