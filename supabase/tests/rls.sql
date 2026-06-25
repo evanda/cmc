@@ -25,16 +25,13 @@ grant authenticated to current_user;
 -- by the platform. In plain-Postgres CI they don't exist, so we add them here
 -- to match the real environment.
 grant select, insert, update, delete
-  on public.users, public.assets, public.work_orders, public.org_settings,
-     public.buildings, public.floors, public.locations, public.vendors,
-     public.contacts, public.pois, public.pm_schedules, public.task_templates,
-     public.meters, public.meter_readings, public.vehicles,
-     public.work_order_comments, public.work_order_attachments,
-     public.asset_documents, public.asset_photos,
-     public.checklist_templates, public.checklist_items,
-     public.inspection_runs, public.inspection_results,
-     public.vendor_documents, public.service_contracts,
-     public.audit_log
+  on public.users, public.assets, public.asset_categories, public.asset_photos,
+     public.work_orders, public.work_order_attachments,
+     public.org_settings, public.buildings, public.floors, public.locations,
+     public.vendors, public.vendor_documents, public.contacts,
+     public.service_contracts, public.pois,
+     public.pm_schedules, public.task_templates,
+     public.meters, public.meter_readings
   to authenticated;
 
 -- Shorthand: set the JWT sub claim so auth.uid() returns this value.
