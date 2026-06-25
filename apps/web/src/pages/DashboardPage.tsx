@@ -83,7 +83,7 @@ export function DashboardPage() {
       </p>
       <div className="mb-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
         <StatCard label="Active work orders" value={activeWorkOrders ?? '—'} to="/work-orders" />
-        <StatCard label="PMs due soon" value={pmsDueSoon ?? '—'} to="/pm" />
+        <StatCard label="Maintenance due soon" value={pmsDueSoon ?? '—'} to="/assets" />
         <StatCard label="Assets" value={assets.data?.length ?? '—'} to="/assets" />
       </div>
       <div className="mb-4 grid grid-cols-2 gap-4 sm:grid-cols-3">

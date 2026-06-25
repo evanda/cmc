@@ -53,8 +53,8 @@ export function PmSchedulesPage() {
   return (
     <div>
       <div className="mb-1 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-slate-800">Preventive Maintenance</h1>
-        {canEdit && <Button onClick={() => setShowForm(true)}>+ New PM schedule</Button>}
+        <h1 className="text-2xl font-semibold text-slate-800">Maintenance Schedules</h1>
+        {canEdit && <Button onClick={() => setShowForm(true)}>+ New maintenance schedule</Button>}
       </div>
       <p className="mb-4 text-sm text-slate-500">
         Recurring scheduled work. The engine computes each schedule&apos;s next-due date and (once
@@ -128,7 +128,7 @@ export function PmSchedulesPage() {
           </table>
         </div>
       ) : (
-        <EmptyState>No PM schedules yet.</EmptyState>
+        <EmptyState>No maintenance schedules yet.</EmptyState>
       )}
 
       {showForm && (
@@ -171,7 +171,7 @@ function PmForm({
     setF((p) => ({ ...p, [k]: e.target.value }));
 
   return (
-    <Modal title="New PM schedule" onClose={onClose}>
+    <Modal title="New maintenance schedule" onClose={onClose}>
       <form
         className="space-y-3"
         onSubmit={async (e) => {

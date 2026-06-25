@@ -322,7 +322,7 @@ export function SetupWizardPage() {
                   <li>Add buildings and floors (Buildings → Floors)</li>
                   <li>Import or create assets (Assets)</li>
                   <li>Invite technicians and staff (Users)</li>
-                  <li>Set up PM schedules (PM)</li>
+                  <li>Set up maintenance schedules (Assets → Maintenance Schedules)</li>
                 </ul>
               </div>
               <Button className="w-full" onClick={() => navigate('/')}>
