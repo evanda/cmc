@@ -117,23 +117,27 @@ functions) is identical — the choice is about the *frontend build + environmen
 | **Local dev** | `http://localhost:5173` (`pnpm --filter web dev`) | Pure UI / map / client-logic changes with no prod-only behaviour; fast iteration; or when no preview is available. |
 | **Vercel prod** | the production domain (`main`) | AFTER merge only — verify what actually shipped. |
 
-**Get the preview URL** (Vercel posts it as a PR comment / commit status once the
-branch build finishes):
+**Get the preview URL** — Vercel posts the `*.vercel.app` URL as a comment on
+the PR once the build finishes. Fetch the latest PR comments from the GitHub API
+and grep for the preview link:
 
 ```bash
-# Wait for the Vercel check, then grab the preview URL:
-gh pr checks <PR> --repo evanda/cmc            # is the Vercel build green yet?
-gh pr view <PR> --repo evanda/cmc --json comments \
-  -q '.comments[].body' | grep -ioE 'https://[a-z0-9-]+\.vercel\.app' | tail -1
+PR=<number>
+curl -s -H "Authorization: token $GITHUB_TOKEN" \
+  "https://api.github.com/repos/evanda/cmc/issues/${PR}/comments" \
+  | jq -r '.[].body' \
+  | grep -oE 'https://cmc-[a-z0-9]+-[a-z0-9-]+\.vercel\.app' \
+  | tail -1
 ```
 
+The preview URL contains a short hash and is NOT derivable from the branch name
+(e.g. `https://cmc-kfnzwt4ax-church-maintenance-coordinator.vercel.app`).
+Do NOT guess or construct a URL — always fetch it.
+
 **IMPORTANT — always surface the URL directly to the user.** Do not tell them
-to "check the PR" or "look it up". Extract the URL and print it in plain text
-so they can click it immediately. If the GitHub MCP is unavailable, derive the
-URL from the branch name: Vercel preview URLs follow the pattern
-`https://cmc-git-<branch-slug>-evanda.vercel.app` where `<branch-slug>` is the
-branch name with `/` → `-` and other non-alphanumeric chars → `-`. For
-`claude-async` that is `https://cmc-git-claude-async-evanda.vercel.app`.
+to "check the PR". Print the full `https://` URL so they can click immediately.
+If no comment has appeared yet, tell the user to wait for the Vercel build and
+provide the URL once it appears.
 
 If the build isn't done, **tell the user to wait for the Vercel check to go
 green**, then give them the URL anyway (it won't serve until the build lands).
@@ -167,7 +171,7 @@ destructive test before the user runs it.
 
 Format it like this so nothing is buried:
 
-> **Test here:** `https://cmc-git-claude-async-evanda.vercel.app` (Vercel preview — real prod build)
+> **Test here:** `<URL fetched from GitHub API above>` (Vercel preview — real prod build)
 >
 > Here's what to check:
 > - [bullet]
