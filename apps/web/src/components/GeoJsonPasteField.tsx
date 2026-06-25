@@ -65,8 +65,12 @@ export function GeoJsonPasteField({
     }
     try {
       let parsed = JSON.parse(text) as Record<string, unknown>;
-      // Auto-unwrap FeatureCollection → first Feature (what geojson.io copies)
-      if (parsed['type'] === 'FeatureCollection') {
+      // If the caller's validate accepts FeatureCollections, pass it through as-is.
+      // Otherwise auto-unwrap to the first feature's geometry (legacy behaviour for
+      // single-polygon fields like image overlay corners).
+      const validationError = validate ? validate(parsed) : null;
+      if (validationError && parsed['type'] === 'FeatureCollection') {
+        // Caller rejected the collection — fall back to unwrapping the first feature.
         const features = parsed['features'] as Record<string, unknown>[] | undefined;
         if (!features?.length) { setError('FeatureCollection is empty'); return; }
         parsed = features[0];
@@ -77,9 +81,9 @@ export function GeoJsonPasteField({
         if (!geom) { setError('Feature has no geometry'); return; }
         parsed = geom;
       }
-      const validationError = validate ? validate(parsed) : null;
-      if (validationError) {
-        setError(validationError);
+      const finalError = validate ? validate(parsed) : null;
+      if (finalError) {
+        setError(finalError);
       } else {
         setError(null);
         onChange(parsed);
@@ -119,7 +123,7 @@ export function GeoJsonPasteField({
         <textarea
           className={inputClass + ' font-mono text-xs'}
           rows={4}
-          placeholder='Paste anything from geojson.io — FeatureCollection, Feature, or plain geometry. FeatureCollections are unwrapped to the first feature automatically.'
+          placeholder='Paste GeoJSON from geojson.io — FeatureCollection, Feature, or plain geometry.'
           value={raw}
           onChange={(e) => handleChange(e.target.value)}
         />
