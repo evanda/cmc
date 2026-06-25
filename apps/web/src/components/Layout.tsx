@@ -5,16 +5,11 @@ import { Button } from './ui';
 
 const navItems = [
   { to: '/', label: 'Dashboard', end: true },
-  { to: '/map', label: 'Map' },
-  { to: '/requests', label: 'Requests' },
+  { to: '/campus', label: 'Campus' },
   { to: '/work-orders', label: 'Work Orders' },
-  { to: '/pm', label: 'PM' },
-  { to: '/reports', label: 'Reports' },
   { to: '/assets', label: 'Assets' },
   { to: '/vendors', label: 'Vendors' },
-  { to: '/buildings', label: 'Buildings' },
-  { to: '/floors', label: 'Floors' },
-  { to: '/locations', label: 'Locations' },
+  { to: '/reports', label: 'Reports' },
 ];
 
 export function Layout() {
@@ -22,15 +17,34 @@ export function Layout() {
   const { data: org } = useOrgSettings();
   const items =
     role === 'admin'
-      ? [...navItems, { to: '/users', label: 'Users' }, { to: '/settings', label: 'Settings' }]
+      ? [...navItems, { to: '/settings', label: 'Settings' }]
       : navItems;
 
+  const theme = org?.theme;
+  const themeVars = {
+    '--color-primary': theme?.primaryColor ?? '#1e293b',
+    '--color-primary-fg': '#ffffff',
+    '--color-accent': theme?.accentColor ?? '#0ea5e9',
+  } as React.CSSProperties;
+
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
+    <div className="min-h-screen bg-slate-50 text-slate-900" style={themeVars}>
+      {/* Thin brand-colour strip at the very top */}
+      <div className="h-1 bg-[var(--color-primary)]" />
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
           <div className="flex items-center gap-6">
-            <span className="font-semibold">{org?.facility_name ?? 'CMC'}</span>
+            {/* Logo + facility name (logo_url set via Settings page) */}
+            <div className="flex items-center gap-2">
+              {org?.logo_url && (
+                <img
+                  src={org.logo_url}
+                  alt={org.facility_name}
+                  className="h-7 w-7 rounded object-contain"
+                />
+              )}
+              <span className="font-semibold text-slate-800">{org?.facility_name ?? 'CMC'}</span>
+            </div>
             <nav className="flex gap-1">
               {items.map((item) => (
                 <NavLink
@@ -39,7 +53,9 @@ export function Layout() {
                   end={item.end}
                   className={({ isActive }) =>
                     `rounded px-3 py-1.5 text-sm ${
-                      isActive ? 'bg-slate-800 text-white' : 'text-slate-600 hover:bg-slate-100'
+                      isActive
+                        ? 'bg-[var(--color-primary)] text-[var(--color-primary-fg)]'
+                        : 'text-slate-600 hover:bg-slate-100'
                     }`
                   }
                 >

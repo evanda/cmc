@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { locationFormSchema, type Location } from '@cmc/shared';
+import { locationFormSchema, type Building, type Location } from '@cmc/shared';
 import {
   useBuildings,
   useCreateLocation,
@@ -10,6 +10,20 @@ import {
 } from '../lib/queries';
 import { useAuth } from '../auth/AuthProvider';
 import { Button, EmptyState, Field, Modal, inputClass } from '../components/ui';
+import { LocationPicker, type PlacedPoint } from '../components/LocationPicker';
+
+const CAMPUS_DEFAULT: [number, number] = [-80.428, 36.09];
+
+function campusCenter(buildings: Building[]): [number, number] {
+  for (const b of buildings) {
+    const ring = b.footprint_geojson?.coordinates?.[0];
+    if (ring?.length) {
+      const s = ring.reduce((a: number[], p) => [a[0] + p[0], a[1] + p[1]], [0, 0]);
+      return [s[0] / ring.length, s[1] / ring.length] as [number, number];
+    }
+  }
+  return CAMPUS_DEFAULT;
+}
 
 export function LocationsPage() {
   const { role } = useAuth();
@@ -101,7 +115,7 @@ export function LocationsPage() {
       {showForm && (
         <LocationForm
           initial={editing}
-          buildings={(buildings.data ?? []).map((b) => ({ id: b.id, name: b.name }))}
+          buildings={buildings.data ?? []}
           defaultBuildingId={buildingFilter}
           onClose={() => setShowForm(false)}
           onSubmit={async (values) => {
@@ -123,15 +137,10 @@ function LocationForm({
   onSubmit,
 }: {
   initial: Location | null;
-  buildings: { id: string; name: string }[];
+  buildings: Building[];
   defaultBuildingId: string;
   onClose: () => void;
-  onSubmit: (values: {
-    building_id: string;
-    floor_id?: string | null;
-    name: string;
-    type?: string;
-  }) => Promise<void>;
+  onSubmit: (values: import('@cmc/shared').LocationForm) => Promise<void>;
 }) {
   const [buildingId, setBuildingId] = useState(
     initial?.building_id ?? defaultBuildingId ?? buildings[0]?.id ?? '',
@@ -139,6 +148,11 @@ function LocationForm({
   const [floorId, setFloorId] = useState(initial?.floor_id ?? '');
   const [name, setName] = useState(initial?.name ?? '');
   const [type, setType] = useState(initial?.type ?? '');
+  const [mapPin, setMapPin] = useState<PlacedPoint | null>(() => {
+    const g = initial?.geometry_geojson as unknown as { coordinates?: [number, number] } | null;
+    if (!g?.coordinates) return null;
+    return { lng: g.coordinates[0], lat: g.coordinates[1], level: initial?.level ?? 1 };
+  });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const floors = useFloors(buildingId || undefined);
@@ -154,6 +168,10 @@ function LocationForm({
             floor_id: floorId || null,
             name,
             type,
+            geometry_geojson: mapPin
+              ? { type: 'Point', coordinates: [mapPin.lng, mapPin.lat] }
+              : null,
+            map_level: mapPin?.level ?? null,
           });
           if (!parsed.success) {
             setErrors(
@@ -203,6 +221,13 @@ function LocationForm({
         </Field>
         <Field label="Type (room, area, …)" error={errors.type}>
           <input className={inputClass} value={type} onChange={(e) => setType(e.target.value)} />
+        </Field>
+        <Field label="Map location (optional)">
+          <LocationPicker
+            value={mapPin}
+            onChange={setMapPin}
+            center={campusCenter(buildings)}
+          />
         </Field>
         <div className="flex justify-end gap-2">
           <Button type="button" variant="ghost" onClick={onClose}>

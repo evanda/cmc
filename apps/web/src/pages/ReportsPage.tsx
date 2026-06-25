@@ -1,4 +1,5 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import { ExpiryBoardPage } from './ExpiryBoardPage';
 import {
   capitalForecast,
   capitalForecastTotal,
@@ -35,7 +36,31 @@ function Bar({ value, max, label, amount }: { value: number; max: number; label:
   );
 }
 
+const TABS = ['Spend & Forecast', 'PM Status', 'Expiry'] as const;
+type Tab = (typeof TABS)[number];
+
+function TabBar({ tab, setTab }: { tab: Tab; setTab: (t: Tab) => void }) {
+  return (
+    <div className="mb-6 flex gap-1 border-b border-slate-200">
+      {TABS.map((t) => (
+        <button
+          key={t}
+          onClick={() => setTab(t)}
+          className={`px-4 py-2 text-sm font-medium ${
+            tab === t
+              ? 'border-b-2 border-[var(--color-primary)] text-[var(--color-primary)]'
+              : 'text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          {t}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function ReportsPage() {
+  const [tab, setTab] = useState<Tab>('Spend & Forecast');
   const { data: org } = useOrgSettings();
   const currency = org?.currency ?? 'USD';
   const money = (n: number) =>
@@ -121,97 +146,103 @@ export function ReportsPage() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-2xl font-semibold text-slate-800">Reports</h1>
+      <TabBar tab={tab} setTab={setTab} />
 
-      {/* Capital forecast */}
-      <section className="rounded-lg border border-slate-200 bg-white p-5">
-        <div className="mb-1 flex items-baseline justify-between">
-          <h2 className="text-lg font-semibold text-slate-800">Capital-replacement forecast</h2>
-          <span className="text-sm text-slate-500">
-            {YEAR}–{YEAR + 14} · projected {money(forecastTotal)}
-          </span>
-        </div>
-        <p className="mb-4 text-sm text-slate-500">
-          Major assets by projected replacement year (install date + expected life). Overdue items
-          fold into {YEAR}.
-        </p>
-        {forecastTotal > 0 ? (
-          <div className="space-y-1.5">
-            {forecast
-              .filter((r) => r.total > 0)
-              .map((r) => (
-                <Bar
-                  key={r.year}
-                  label={`${r.year} · ${r.count} asset${r.count === 1 ? '' : 's'}`}
-                  value={r.total}
-                  max={forecastMax}
-                  amount={money(r.total)}
-                />
-              ))}
-          </div>
-        ) : (
-          <p className="text-sm text-slate-400">
-            No assets have install date + expected life + replacement cost yet.
-          </p>
-        )}
-      </section>
+      {tab === 'Expiry' && <ExpiryBoardPage />}
 
-      {/* Spend */}
-      <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <div className="rounded-lg border border-slate-200 bg-white p-5">
-          <h2 className="mb-1 text-lg font-semibold text-slate-800">Spend by category</h2>
-          <p className="mb-4 text-sm text-slate-500">
-            Completed work-order cost · total {money(totalSpend)}
-          </p>
-          {byCategory.length > 0 ? (
-            <div className="space-y-1.5">
-              {byCategory.map(([name, amt]) => (
-                <Bar key={name} label={name} value={amt} max={spendMax} amount={money(amt)} />
-              ))}
+      {tab === 'Spend & Forecast' && (
+        <>
+          <section className="rounded-lg border border-slate-200 bg-white p-5">
+            <div className="mb-1 flex items-baseline justify-between">
+              <h2 className="text-lg font-semibold text-slate-800">Capital-replacement forecast</h2>
+              <span className="text-sm text-slate-500">
+                {YEAR}–{YEAR + 14} · projected {money(forecastTotal)}
+              </span>
             </div>
-          ) : (
-            <p className="text-sm text-slate-400">No completed work-order costs yet.</p>
-          )}
-        </div>
-        <div className="rounded-lg border border-slate-200 bg-white p-5">
-          <h2 className="mb-1 text-lg font-semibold text-slate-800">Spend by building</h2>
-          <p className="mb-4 text-sm text-slate-500">
-            Estimate {money(estimateVsActual.estimate)} → actual {money(estimateVsActual.actual)}
-          </p>
-          {byBuilding.length > 0 ? (
-            <div className="space-y-1.5">
-              {byBuilding.map(([name, amt]) => (
-                <Bar key={name} label={name} value={amt} max={spendMax} amount={money(amt)} />
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-slate-400">No completed work-order costs yet.</p>
-          )}
-        </div>
-      </section>
+            <p className="mb-4 text-sm text-slate-500">
+              Major assets by projected replacement year (install date + expected life). Overdue
+              items fold into {YEAR}.
+            </p>
+            {forecastTotal > 0 ? (
+              <div className="space-y-1.5">
+                {forecast
+                  .filter((r) => r.total > 0)
+                  .map((r) => (
+                    <Bar
+                      key={r.year}
+                      label={`${r.year} · ${r.count} asset${r.count === 1 ? '' : 's'}`}
+                      value={r.total}
+                      max={forecastMax}
+                      amount={money(r.total)}
+                    />
+                  ))}
+              </div>
+            ) : (
+              <p className="text-sm text-slate-400">
+                No assets have install date + expected life + replacement cost yet.
+              </p>
+            )}
+          </section>
 
-      {/* PM status */}
-      <section className="rounded-lg border border-slate-200 bg-white p-5">
-        <h2 className="mb-1 text-lg font-semibold text-slate-800">PM status</h2>
-        <p className="mb-4 text-sm text-slate-500">
-          Schedule health from the engine. (True on-time compliance % needs the daily job&apos;s
-          completion history — issue #18.)
-        </p>
-        <div className="grid grid-cols-3 gap-4">
-          <div className="rounded border border-red-200 bg-red-50 p-4 text-center">
-            <div className="text-2xl font-semibold text-red-700">{pmStatus.overdue}</div>
-            <div className="text-xs text-red-600">Overdue</div>
+          <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <div className="rounded-lg border border-slate-200 bg-white p-5">
+              <h2 className="mb-1 text-lg font-semibold text-slate-800">Spend by category</h2>
+              <p className="mb-4 text-sm text-slate-500">
+                Completed work-order cost · total {money(totalSpend)}
+              </p>
+              {byCategory.length > 0 ? (
+                <div className="space-y-1.5">
+                  {byCategory.map(([name, amt]) => (
+                    <Bar key={name} label={name} value={amt} max={spendMax} amount={money(amt)} />
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-slate-400">No completed work-order costs yet.</p>
+              )}
+            </div>
+            <div className="rounded-lg border border-slate-200 bg-white p-5">
+              <h2 className="mb-1 text-lg font-semibold text-slate-800">Spend by building</h2>
+              <p className="mb-4 text-sm text-slate-500">
+                Estimate {money(estimateVsActual.estimate)} → actual{' '}
+                {money(estimateVsActual.actual)}
+              </p>
+              {byBuilding.length > 0 ? (
+                <div className="space-y-1.5">
+                  {byBuilding.map(([name, amt]) => (
+                    <Bar key={name} label={name} value={amt} max={spendMax} amount={money(amt)} />
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-slate-400">No completed work-order costs yet.</p>
+              )}
+            </div>
+          </section>
+        </>
+      )}
+
+      {tab === 'PM Status' && (
+        <section className="rounded-lg border border-slate-200 bg-white p-5">
+          <h2 className="mb-1 text-lg font-semibold text-slate-800">PM status</h2>
+          <p className="mb-4 text-sm text-slate-500">
+            Schedule health from the engine. (True on-time compliance % needs the daily job&apos;s
+            completion history — issue #18.)
+          </p>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="rounded border border-red-200 bg-red-50 p-4 text-center">
+              <div className="text-2xl font-semibold text-red-700">{pmStatus.overdue}</div>
+              <div className="text-xs text-red-600">Overdue</div>
+            </div>
+            <div className="rounded border border-amber-200 bg-amber-50 p-4 text-center">
+              <div className="text-2xl font-semibold text-amber-700">{pmStatus.soon}</div>
+              <div className="text-xs text-amber-600">Due soon</div>
+            </div>
+            <div className="rounded border border-green-200 bg-green-50 p-4 text-center">
+              <div className="text-2xl font-semibold text-green-700">{pmStatus.ok}</div>
+              <div className="text-xs text-green-600">On track</div>
+            </div>
           </div>
-          <div className="rounded border border-amber-200 bg-amber-50 p-4 text-center">
-            <div className="text-2xl font-semibold text-amber-700">{pmStatus.soon}</div>
-            <div className="text-xs text-amber-600">Due soon</div>
-          </div>
-          <div className="rounded border border-green-200 bg-green-50 p-4 text-center">
-            <div className="text-2xl font-semibold text-green-700">{pmStatus.ok}</div>
-            <div className="text-xs text-green-600">On track</div>
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
     </div>
   );
 }

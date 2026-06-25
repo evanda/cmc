@@ -20,9 +20,33 @@ describe('addInterval', () => {
     );
   });
 
+  it('month: clamps to last day when the target month is shorter (Jan 31 + 3 mo = Apr 30)', () => {
+    expect(addInterval(new Date('2026-01-31T00:00:00Z'), 3, 'month').toISOString()).toBe(
+      '2026-04-30T00:00:00.000Z',
+    );
+  });
+
+  it('month: clamps Jan 31 to Feb 28 in a non-leap year', () => {
+    expect(addInterval(new Date('2026-01-31T00:00:00Z'), 1, 'month').toISOString()).toBe(
+      '2026-02-28T00:00:00.000Z',
+    );
+  });
+
+  it('month: does not clamp when the target month is long enough (Mar 31 + 3 mo = Jun 30)', () => {
+    expect(addInterval(new Date('2026-03-31T00:00:00Z'), 3, 'month').toISOString()).toBe(
+      '2026-06-30T00:00:00.000Z',
+    );
+  });
+
   it('adds years', () => {
     expect(addInterval(new Date('2026-06-23T00:00:00Z'), 1, 'year').toISOString()).toBe(
       '2027-06-23T00:00:00.000Z',
+    );
+  });
+
+  it('year: clamps Feb 29 to Feb 28 when advancing from a leap year to a non-leap year', () => {
+    expect(addInterval(new Date('2024-02-29T00:00:00Z'), 1, 'year').toISOString()).toBe(
+      '2025-02-28T00:00:00.000Z',
     );
   });
 

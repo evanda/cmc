@@ -33,10 +33,14 @@ const optionalNumber = z.preprocess(
   z.coerce.number().nonnegative('Must be ≥ 0').optional(),
 );
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const optionalGeoJson = z.any().nullable().optional();
+
 export const buildingFormSchema = z.object({
   name: z.string().trim().min(1, 'Name is required').max(200),
   description: optionalText,
   address: optionalText,
+  footprint_geojson: optionalGeoJson,
 });
 export type BuildingForm = z.infer<typeof buildingFormSchema>;
 
@@ -45,6 +49,9 @@ export const floorFormSchema = z.object({
   name: z.string().trim().min(1, 'Name is required').max(200),
   // Integer level: -1 = B1, 0/1 = ground, 2… (plan §5.2).
   level: z.coerce.number().int('Level must be a whole number').min(-10).max(200),
+  floorplan_image_url: optionalText,
+  boundary_geojson: optionalGeoJson,
+  geo_corners_geojson: optionalGeoJson,
 });
 export type FloorForm = z.infer<typeof floorFormSchema>;
 
@@ -53,6 +60,8 @@ export const locationFormSchema = z.object({
   floor_id: z.string().uuid().nullish(),
   name: z.string().trim().min(1, 'Name is required').max(200),
   type: optionalText,
+  geometry_geojson: optionalGeoJson,
+  map_level: z.coerce.number().int().min(-10).max(200).nullable().optional(),
 });
 export type LocationForm = z.infer<typeof locationFormSchema>;
 
@@ -69,6 +78,8 @@ export const assetFormSchema = z.object({
   notes: optionalText,
   contact_name: optionalText,
   contact_email: optionalEmail,
+  geometry_geojson: optionalGeoJson,
+  map_level: z.coerce.number().int().min(-10).max(200).nullable().optional(),
 });
 export type AssetForm = z.infer<typeof assetFormSchema>;
 
@@ -193,13 +204,43 @@ export const pmScheduleFormSchema = z.object({
 });
 export type PmScheduleForm = z.infer<typeof pmScheduleFormSchema>;
 
+// ── Fleet / Vehicles (plan §4.4, Phase 3) ────────────────────────────────────
+export const vehicleFormSchema = z.object({
+  asset_id: z.string().uuid('Pick an asset'),
+  vin: optionalText,
+  plate: optionalText,
+  year: z.coerce.number().int().min(1900).max(2200).optional().nullable(),
+  make: optionalText,
+  model: optionalText,
+  fuel_type: optionalText,
+  capacity: z.coerce.number().int().min(1).max(999).optional().nullable(),
+  registration_expiry: optionalText,
+  insurance_expiry: optionalText,
+  inspection_expiry: optionalText,
+  driver_contact_id: z.string().uuid().optional().nullable(),
+});
+export type VehicleForm = z.infer<typeof vehicleFormSchema>;
+
+const hexColor = z
+  .string()
+  .trim()
+  .regex(/^#[0-9a-fA-F]{6}$/, 'Must be a 6-digit hex colour, e.g. #1e3a5f')
+  .optional();
+
 export const orgSettingsFormSchema = z.object({
   facility_name: z.string().trim().min(1, 'Facility name is required').max(200),
+  logo_url: z.string().trim().url('Must be a valid URL').nullish(),
   address: optionalText,
   maintenance_contact_email: optionalEmail,
   locale: z.string().trim().min(2).max(10).default('en-US'),
   distance_unit: z.enum(['mi', 'km']).default('mi'),
   currency: z.string().trim().length(3).default('USD'),
   timezone: z.string().trim().min(1).default('America/New_York'),
+  theme: z
+    .object({
+      primaryColor: hexColor,
+      accentColor: hexColor,
+    })
+    .nullish(),
 });
 export type OrgSettingsForm = z.infer<typeof orgSettingsFormSchema>;

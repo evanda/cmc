@@ -1,20 +1,104 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import type { Building, Floor, Poi } from '@cmc/shared';
 import { MapView } from './MapView';
-import { useAssets, useAllWorkOrders, useBuildings, useLocations, useOrgSettings } from '../lib/queries';
+import { useAssets, useAllWorkOrders, useBuildings, useFloors, useLocations, useOrgSettings, usePois } from '../lib/queries';
 import { countOpenWosByBuilding } from '../lib/map-utils';
+
+function levelName(level: number): string {
+  if (level === -1) return 'Basement';
+  if (level === 0) return 'Ground';
+  if (level === 1) return 'Main';
+  if (level === 2) return 'Upper';
+  return `Level ${level}`;
+}
+
+function floorsToGeoJSON(floors: Floor[]): GeoJSON.FeatureCollection | undefined {
+  const withGeom = floors.filter((f) => f.boundary_geojson ?? f.geo_corners_geojson);
+  if (withGeom.length === 0) return undefined;
+  return {
+    type: 'FeatureCollection',
+    features: withGeom.map((f) => ({
+      type: 'Feature' as const,
+      properties: { level: f.level, name: f.name, db_id: f.id },
+      geometry: (f.boundary_geojson ?? f.geo_corners_geojson) as GeoJSON.Polygon,
+    })),
+  };
+}
+
+function buildingsToGeoJSON(
+  buildings: Building[],
+): GeoJSON.FeatureCollection | undefined {
+  const withFootprint = buildings.filter((b) => b.footprint_geojson);
+  if (withFootprint.length === 0) return undefined;
+  return {
+    type: 'FeatureCollection',
+    features: withFootprint.map((b) => ({
+      type: 'Feature' as const,
+      properties: { name: b.name, db_id: b.id },
+      geometry: b.footprint_geojson as GeoJSON.Polygon,
+    })),
+  };
+}
+
+function poisToGeoJSON(
+  pois: Poi[],
+  buildingNameById: Map<string, string>,
+): GeoJSON.FeatureCollection | undefined {
+  if (pois.length === 0) return undefined;
+  return {
+    type: 'FeatureCollection',
+    features: pois.map((p) => ({
+      type: 'Feature',
+      properties: {
+        id: p.id,
+        label: p.label,
+        poi_type: p.poi_type,
+        icon: p.icon,
+        level: p.level,
+        level_name: p.level != null ? levelName(p.level) : null,
+        building: p.building_id ? (buildingNameById.get(p.building_id) ?? null) : null,
+        notes: p.notes,
+        linked_asset_id: p.linked_asset_id,
+      },
+      geometry: p.geometry_geojson,
+    })),
+  };
+}
 
 export function MapPage() {
   const navigate = useNavigate();
   const { data: org } = useOrgSettings();
   const { data: assets } = useAssets();
   const { data: buildings } = useBuildings();
+  const { data: floors } = useFloors();
   const { data: locations } = useLocations();
   const { data: allWorkOrders } = useAllWorkOrders();
+  const { data: pois } = usePois();
 
   const openWoCountByBuilding = useMemo(
     () => countOpenWosByBuilding(allWorkOrders ?? [], locations ?? []),
     [allWorkOrders, locations],
+  );
+
+  const buildingNameById = useMemo(
+    () => new Map((buildings ?? []).map((b) => [b.id, b.name])),
+    [buildings],
+  );
+
+  const poisGeoJSON = useMemo(
+    () => poisToGeoJSON(pois ?? [], buildingNameById),
+    [pois, buildingNameById],
+  );
+
+  const buildingsGeoJSON = useMemo(
+    () => buildingsToGeoJSON(buildings ?? []),
+    [buildings],
+  );
+
+  const floorsGeoJSON = useMemo(
+    () => floorsToGeoJSON(floors ?? []),
+    [floors],
   );
 
   return (
@@ -32,6 +116,9 @@ export function MapPage() {
         buildings={(buildings ?? []).map((b) => ({ id: b.id, name: b.name }))}
         openWoCountByBuilding={openWoCountByBuilding}
         onCreateWorkOrder={(assetId) => navigate(`/work-orders?asset=${assetId}`)}
+        poisGeoJSON={poisGeoJSON}
+        buildingsGeoJSON={buildingsGeoJSON}
+        floorsGeoJSON={floorsGeoJSON}
       />
     </div>
   );

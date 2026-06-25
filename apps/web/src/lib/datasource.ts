@@ -18,12 +18,15 @@ import type {
   LocationForm,
   OrgSettings,
   OrgSettingsForm,
+  Poi,
   PmSchedule,
   PmScheduleForm,
   ServiceContract,
   ServiceContractForm,
   User,
   UserRole,
+  Vehicle,
+  VehicleForm,
   Vendor,
   VendorForm,
   WorkLogForm,
@@ -39,6 +42,8 @@ import { demoDataSource } from './demo';
 
 export interface DataSource {
   getOrgSettings(): Promise<OrgSettings | null>;
+  /** First-run: upserts the single org_settings row (no row required to exist). */
+  setupOrgSettings(input: OrgSettingsForm): Promise<OrgSettings>;
   updateOrgSettings(input: OrgSettingsForm): Promise<OrgSettings>;
   listBuildings(): Promise<Building[]>;
   createBuilding(input: BuildingForm): Promise<Building>;
@@ -104,6 +109,13 @@ export interface DataSource {
   listPmSchedules(): Promise<PmSchedule[]>;
   createPmSchedule(input: PmScheduleForm): Promise<PmSchedule>;
   deletePmSchedule(id: string): Promise<void>;
+  // Spatial POIs — map markers linked to assets (plan §5.4).
+  listPois(): Promise<Poi[]>;
+  // Fleet / vehicles (plan §4.4).
+  listVehicles(): Promise<Vehicle[]>;
+  createVehicle(input: VehicleForm): Promise<Vehicle>;
+  updateVehicle(id: string, input: VehicleForm): Promise<Vehicle>;
+  deleteVehicle(id: string): Promise<void>;
 }
 
 function pmSchedulePatch(input: PmScheduleForm) {
@@ -151,6 +163,23 @@ function serviceContractPatch(input: ServiceContractForm) {
     start_date: input.start_date ?? null,
     end_date: input.end_date ?? null,
     renewal_reminder_days: input.renewal_reminder_days ?? null,
+  };
+}
+
+function vehiclePatch(input: VehicleForm) {
+  return {
+    asset_id: input.asset_id,
+    vin: input.vin ?? null,
+    plate: input.plate ?? null,
+    year: input.year ?? null,
+    make: input.make ?? null,
+    model: input.model ?? null,
+    fuel_type: input.fuel_type ?? null,
+    capacity: input.capacity ?? null,
+    registration_expiry: input.registration_expiry ?? null,
+    insurance_expiry: input.insurance_expiry ?? null,
+    inspection_expiry: input.inspection_expiry ?? null,
+    driver_contact_id: input.driver_contact_id ?? null,
   };
 }
 
@@ -234,6 +263,8 @@ function assetPatch(input: AssetForm) {
     notes: input.notes ?? null,
     contact_name: input.contact_name ?? null,
     contact_email: input.contact_email ?? null,
+    geometry_geojson: input.geometry_geojson ?? null,
+    level: input.map_level ?? null,
   };
 }
 
@@ -245,6 +276,30 @@ function unwrap<T>(res: { data: T | null; error: { message: string } | null }): 
 const supabaseDataSource: DataSource = {
   getOrgSettings: async () =>
     unwrap<OrgSettings | null>(await supabase.from('org_settings').select('*').maybeSingle()),
+  setupOrgSettings: async (input) => {
+    // Upsert on the singleton constraint so calling this a second time
+    // (e.g. re-running the wizard) just updates rather than errors.
+    return unwrap<OrgSettings>(
+      await supabase
+        .from('org_settings')
+        .upsert(
+          {
+            facility_name: input.facility_name,
+            logo_url: input.logo_url ?? null,
+            address: input.address ?? null,
+            maintenance_contact_email: input.maintenance_contact_email ?? null,
+            locale: input.locale,
+            distance_unit: input.distance_unit,
+            currency: input.currency,
+            timezone: input.timezone,
+            theme: input.theme ?? null,
+          },
+          { onConflict: 'singleton' },
+        )
+        .select()
+        .single(),
+    );
+  },
   updateOrgSettings: async (input) => {
     // Singleton table — fetch the row id first, then update by id.
     const current = unwrap<{ id: string } | null>(
@@ -256,12 +311,14 @@ const supabaseDataSource: DataSource = {
         .from('org_settings')
         .update({
           facility_name: input.facility_name,
+          logo_url: input.logo_url ?? null,
           address: input.address ?? null,
           maintenance_contact_email: input.maintenance_contact_email ?? null,
           locale: input.locale,
           distance_unit: input.distance_unit,
           currency: input.currency,
           timezone: input.timezone,
+          theme: input.theme ?? null,
         })
         .eq('id', current.id)
         .select()
@@ -313,19 +370,19 @@ const supabaseDataSource: DataSource = {
     if (buildingId) q = q.eq('building_id', buildingId);
     return unwrap<Location[]>(await q.order('name'));
   },
-  createLocation: async (input) =>
+  createLocation: async ({ map_level, ...input }) =>
     unwrap<Location>(
       await supabase
         .from('locations')
-        .insert({ ...input, floor_id: input.floor_id ?? null })
+        .insert({ ...input, floor_id: input.floor_id ?? null, level: map_level ?? null })
         .select()
         .single(),
     ),
-  updateLocation: async (id, input) =>
+  updateLocation: async (id, { map_level, ...input }) =>
     unwrap<Location>(
       await supabase
         .from('locations')
-        .update({ ...input, floor_id: input.floor_id ?? null })
+        .update({ ...input, floor_id: input.floor_id ?? null, level: map_level ?? null })
         .eq('id', id)
         .select()
         .single(),
@@ -676,6 +733,39 @@ const supabaseDataSource: DataSource = {
         .from('pm_schedules')
         .update({ deleted_at: new Date().toISOString() })
         .eq('id', id)
+        .select()
+        .single(),
+    );
+  },
+
+  listPois: async () =>
+    unwrap<Poi[]>(
+      await supabase.from('pois').select('*').is('deleted_at', null).order('label'),
+    ),
+
+  listVehicles: async () =>
+    unwrap<Vehicle[]>(
+      await supabase.from('vehicles').select('*').is('deleted_at', null).order('created_at'),
+    ),
+  createVehicle: async (input) =>
+    unwrap<Vehicle>(
+      await supabase.from('vehicles').insert(vehiclePatch(input)).select().single(),
+    ),
+  updateVehicle: async (vid, input) =>
+    unwrap<Vehicle>(
+      await supabase
+        .from('vehicles')
+        .update(vehiclePatch(input))
+        .eq('id', vid)
+        .select()
+        .single(),
+    ),
+  deleteVehicle: async (vid) => {
+    unwrap(
+      await supabase
+        .from('vehicles')
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', vid)
         .select()
         .single(),
     );

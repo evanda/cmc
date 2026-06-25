@@ -28,6 +28,12 @@ export type BaseRow = {
   deleted_at: string | null;
 };
 
+/** Per-church brand colours stored in org_settings.theme (plan §7.6). */
+export type OrgTheme = {
+  primaryColor?: string;  // hex, e.g. "#1e3a5f"
+  accentColor?: string;   // hex, e.g. "#c8a84b"
+};
+
 /** Single-row church identity / branding (plan §7.6). NOT church-hardcoded. */
 export type OrgSettings = BaseRow & {
   facility_name: string;
@@ -38,7 +44,7 @@ export type OrgSettings = BaseRow & {
   distance_unit: string;
   currency: string;
   timezone: string;
-  theme: Record<string, unknown> | null;
+  theme: OrgTheme | null;
   /** Org-wide maintenance contact (a mail list); per-asset contact overrides it. */
   maintenance_contact_email: string | null;
 };
@@ -63,6 +69,9 @@ export type Floor = BaseRow & {
   /** Integer level: -1 = B1, 0/1 = ground, 2… (plan §5.2). */
   level: number;
   floorplan_image_url: string | null;
+  /** Complex polygon outline of the floor — any shape, used for map rendering. */
+  boundary_geojson: GeoJsonPolygon | null;
+  /** 4-corner quad for MapLibre image-source overlay — only needed with floorplan_image_url. */
   geo_corners_geojson: GeoJsonPolygon | null;
   rotation_deg: number | null;
 };
@@ -73,6 +82,8 @@ export type Location = BaseRow & {
   name: string;
   /** room | area | … (free text for v1, plan §6). */
   type: string | null;
+  geometry_geojson: GeoJsonPoint | null;
+  level: number | null;
 };
 
 export type AssetCategory = BaseRow & {
@@ -192,6 +203,22 @@ export type MeterReading = BaseRow & {
   value: number;
   reading_date: string;
   recorded_by: string | null;
+};
+
+/** Vehicle profile extending an asset with registration/fleet fields (plan §4.4). */
+export type Vehicle = BaseRow & {
+  asset_id: string;
+  vin: string | null;
+  plate: string | null;
+  year: number | null;
+  make: string | null;
+  model: string | null;
+  fuel_type: string | null;
+  capacity: number | null;
+  registration_expiry: string | null;   // YYYY-MM-DD
+  insurance_expiry: string | null;      // YYYY-MM-DD
+  inspection_expiry: string | null;     // YYYY-MM-DD
+  driver_contact_id: string | null;
 };
 
 /** External company that performs work (plan §4.5). */

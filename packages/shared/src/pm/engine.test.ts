@@ -51,6 +51,17 @@ describe('upcomingDueDate', () => {
       '2027-04-15T00:00:00.000Z',
     );
   });
+
+  it('meter triggers return null (no date-based due; use meterUnitsRemaining instead)', () => {
+    expect(upcomingDueDate(meter, new Date('2026-01-01T00:00:00Z'), today)).toBeNull();
+  });
+
+  it('calendar: anchor in the future returns anchor + interval (not yet stale)', () => {
+    // anchor 2026-08-01 is after today; next due = 2026-11-01
+    expect(
+      upcomingDueDate(calendar, new Date('2026-08-01T00:00:00Z'), today)?.toISOString(),
+    ).toBe('2026-11-01T00:00:00.000Z');
+  });
 });
 
 describe('meterUnitsRemaining', () => {
@@ -100,6 +111,45 @@ describe('shouldGenerateWorkOrder', () => {
       true,
     );
   });
+
+  it('meter: does not double-generate when an open WO already exists', () => {
+    const r = shouldGenerateWorkOrder(meter, today, {
+      today,
+      leadTimeDays: 0,
+      hasOpenWorkOrder: true,
+      meterSinceLastService: 9999,
+    });
+    expect(r).toBe(false);
+  });
+
+  it('fixed_date: generates when the next annual date is within lead window', () => {
+    // fixed April 15; today March 25 → 21 days out; lead 30 → should generate
+    const r = shouldGenerateWorkOrder(fixed, new Date('2025-04-15T00:00:00Z'), {
+      today,
+      leadTimeDays: 30,
+      hasOpenWorkOrder: false,
+    });
+    expect(r).toBe(true);
+  });
+
+  it('fixed_date: does not generate when beyond the lead window', () => {
+    // fixed April 15; today March 25 → 21 days out; lead 7 → skip
+    const r = shouldGenerateWorkOrder(fixed, new Date('2025-04-15T00:00:00Z'), {
+      today,
+      leadTimeDays: 7,
+      hasOpenWorkOrder: false,
+    });
+    expect(r).toBe(false);
+  });
+
+  it('fixed_date: does not double-generate when an open WO exists', () => {
+    const r = shouldGenerateWorkOrder(fixed, new Date('2025-04-15T00:00:00Z'), {
+      today,
+      leadTimeDays: 60,
+      hasOpenWorkOrder: true,
+    });
+    expect(r).toBe(false);
+  });
 });
 
 describe('advanceAnchor', () => {
@@ -122,5 +172,20 @@ describe('advanceAnchor', () => {
       scheduledDate: new Date('2026-04-01T00:00:00Z'),
     });
     expect(next.toISOString()).toBe('2026-04-01T00:00:00.000Z');
+  });
+
+  it('advance_from scheduled without a scheduledDate falls back to prevAnchor (meter trigger has no date)', () => {
+    // meter triggers have no nextDueDate; without scheduledDate, the anchor stays put
+    const next = advanceAnchor(meter, prev, {
+      advanceFrom: 'scheduled',
+      completedDate: new Date('2026-04-05T00:00:00Z'),
+    });
+    expect(next.toISOString()).toBe(prev.toISOString());
+  });
+
+  it('advance_from completion always uses the completed date, even for meter triggers', () => {
+    const completed = new Date('2026-04-05T00:00:00Z');
+    const next = advanceAnchor(meter, prev, { advanceFrom: 'completion', completedDate: completed });
+    expect(next.toISOString()).toBe(completed.toISOString());
   });
 });

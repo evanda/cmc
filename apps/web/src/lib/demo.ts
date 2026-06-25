@@ -5,12 +5,15 @@
 
 import type {
   AssetForm,
+  Building,
   BuildingForm,
+  Floor,
   ContactForm,
   FloorForm,
   LocationForm,
   PmScheduleForm,
   ServiceContractForm,
+  VehicleForm,
   VendorForm,
   WorkLogForm,
   WorkOrder,
@@ -38,6 +41,7 @@ import {
   serviceContracts,
   users,
   userId,
+  vehicles,
   vendors,
   woPhotos,
   workOrders,
@@ -104,15 +108,31 @@ seedPm({
 
 export const demoDataSource: DataSource = {
   getOrgSettings: async () => org,
-  updateOrgSettings: async (input) => {
+  setupOrgSettings: async (input) => {
     Object.assign(org, {
       facility_name: input.facility_name,
+      logo_url: input.logo_url ?? null,
       address: input.address ?? null,
       maintenance_contact_email: input.maintenance_contact_email ?? null,
       locale: input.locale,
       distance_unit: input.distance_unit,
       currency: input.currency,
       timezone: input.timezone,
+      theme: input.theme ?? null,
+    });
+    return org;
+  },
+  updateOrgSettings: async (input) => {
+    Object.assign(org, {
+      facility_name: input.facility_name,
+      logo_url: input.logo_url ?? null,
+      address: input.address ?? null,
+      maintenance_contact_email: input.maintenance_contact_email ?? null,
+      locale: input.locale,
+      distance_unit: input.distance_unit,
+      currency: input.currency,
+      timezone: input.timezone,
+      theme: input.theme ?? null,
     });
     return org;
   },
@@ -126,7 +146,7 @@ export const demoDataSource: DataSource = {
       name: input.name,
       description: input.description ?? null,
       address: input.address ?? null,
-      footprint_geojson: null,
+      footprint_geojson: (input.footprint_geojson as Building['footprint_geojson']) ?? null,
     } as (typeof buildings)[0];
     buildings.push(b);
     return b;
@@ -137,6 +157,7 @@ export const demoDataSource: DataSource = {
       name: input.name,
       description: input.description ?? null,
       address: input.address ?? null,
+      footprint_geojson: (input.footprint_geojson as Building['footprint_geojson']) ?? null,
     });
     return b;
   },
@@ -156,8 +177,9 @@ export const demoDataSource: DataSource = {
       building_id: input.building_id,
       name: input.name,
       level: input.level,
-      floorplan_image_url: null,
-      geo_corners_geojson: null,
+      floorplan_image_url: input.floorplan_image_url ?? null,
+      boundary_geojson: (input.boundary_geojson as Floor['boundary_geojson']) ?? null,
+      geo_corners_geojson: (input.geo_corners_geojson as Floor['geo_corners_geojson']) ?? null,
       rotation_deg: null,
     } as (typeof floors)[0];
     floors.push(f);
@@ -165,7 +187,14 @@ export const demoDataSource: DataSource = {
   },
   updateFloor: async (fid, input: FloorForm) => {
     const f = floors.find((x) => x.id === fid)!;
-    Object.assign(f, { building_id: input.building_id, name: input.name, level: input.level });
+    Object.assign(f, {
+      building_id: input.building_id,
+      name: input.name,
+      level: input.level,
+      floorplan_image_url: input.floorplan_image_url ?? null,
+      boundary_geojson: (input.boundary_geojson as Floor['boundary_geojson']) ?? null,
+      geo_corners_geojson: (input.geo_corners_geojson as Floor['geo_corners_geojson']) ?? null,
+    });
     return f;
   },
   deleteFloor: async (fid) => {
@@ -580,6 +609,58 @@ export const demoDataSource: DataSource = {
   deletePmSchedule: async (sid) => {
     const s = pmSchedules.find((x) => x.id === sid);
     if (s) s.deleted_at = now;
+  },
+
+  // Demo mode: map reads POIs from bundled GeoJSON via the existing fetch path
+  // in MapView. Returning an empty array signals MapView to use the fallback.
+  listPois: async () => [],
+
+  listVehicles: async () => (live(vehicles) as typeof vehicles).sort((a, b) => {
+    const nameA = a.make ?? '';
+    const nameB = b.make ?? '';
+    return nameA.localeCompare(nameB);
+  }),
+  createVehicle: async (input: VehicleForm) => {
+    const v = {
+      id: id(),
+      ...base(),
+      asset_id: input.asset_id,
+      vin: input.vin ?? null,
+      plate: input.plate ?? null,
+      year: input.year ?? null,
+      make: input.make ?? null,
+      model: input.model ?? null,
+      fuel_type: input.fuel_type ?? null,
+      capacity: input.capacity ?? null,
+      registration_expiry: input.registration_expiry ?? null,
+      insurance_expiry: input.insurance_expiry ?? null,
+      inspection_expiry: input.inspection_expiry ?? null,
+      driver_contact_id: input.driver_contact_id ?? null,
+    } as (typeof vehicles)[0];
+    vehicles.push(v);
+    return v;
+  },
+  updateVehicle: async (vid: string, input: VehicleForm) => {
+    const v = vehicles.find((x) => x.id === vid)!;
+    Object.assign(v, {
+      asset_id: input.asset_id,
+      vin: input.vin ?? null,
+      plate: input.plate ?? null,
+      year: input.year ?? null,
+      make: input.make ?? null,
+      model: input.model ?? null,
+      fuel_type: input.fuel_type ?? null,
+      capacity: input.capacity ?? null,
+      registration_expiry: input.registration_expiry ?? null,
+      insurance_expiry: input.insurance_expiry ?? null,
+      inspection_expiry: input.inspection_expiry ?? null,
+      driver_contact_id: input.driver_contact_id ?? null,
+    });
+    return v;
+  },
+  deleteVehicle: async (vid: string) => {
+    const v = vehicles.find((x) => x.id === vid);
+    if (v) v.deleted_at = now;
   },
 };
 

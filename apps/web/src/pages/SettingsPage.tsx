@@ -13,24 +13,30 @@ export function SettingsPage() {
   const canEdit = role === 'admin';
 
   const [facilityName, setFacilityName] = useState('');
+  const [logoUrl, setLogoUrl] = useState('');
   const [address, setAddress] = useState('');
   const [email, setEmail] = useState('');
   const [locale, setLocale] = useState('en-US');
   const [distanceUnit, setDistanceUnit] = useState<'mi' | 'km'>('mi');
   const [currency, setCurrency] = useState('USD');
   const [timezone, setTimezone] = useState('America/New_York');
+  const [primaryColor, setPrimaryColor] = useState('#1e293b');
+  const [accentColor, setAccentColor] = useState('#0ea5e9');
   const [saved, setSaved] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (org) {
       setFacilityName(org.facility_name);
+      setLogoUrl(org.logo_url ?? '');
       setAddress(org.address ?? '');
       setEmail(org.maintenance_contact_email ?? '');
       setLocale(org.locale);
       setDistanceUnit(org.distance_unit as 'mi' | 'km');
       setCurrency(org.currency);
       setTimezone(org.timezone);
+      setPrimaryColor(org.theme?.primaryColor ?? '#1e293b');
+      setAccentColor(org.theme?.accentColor ?? '#0ea5e9');
     }
   }, [org]);
 
@@ -38,17 +44,20 @@ export function SettingsPage() {
     e.preventDefault();
     const result = orgSettingsFormSchema.safeParse({
       facility_name: facilityName,
+      logo_url: logoUrl || undefined,
       address,
       maintenance_contact_email: email,
       locale,
       distance_unit: distanceUnit,
       currency,
       timezone,
+      theme: { primaryColor: primaryColor || undefined, accentColor: accentColor || undefined },
     });
     if (!result.success) {
       const errs: Record<string, string> = {};
       for (const issue of result.error.issues) {
-        errs[issue.path[0] as string] = issue.message;
+        const key = issue.path.join('.');
+        errs[key] = issue.message;
       }
       setErrors(errs);
       return;
@@ -88,6 +97,26 @@ export function SettingsPage() {
           />
         </Field>
 
+        <Field label="Logo URL" error={errors.logo_url}>
+          <div className="flex items-center gap-2">
+            <input
+              className={inputClass}
+              value={logoUrl}
+              onChange={(e) => setLogoUrl(e.target.value)}
+              disabled={!canEdit}
+              placeholder="https://example.org/logo.png"
+            />
+            {logoUrl && (
+              <img
+                src={logoUrl}
+                alt="logo preview"
+                className="h-8 w-8 flex-shrink-0 rounded object-contain"
+                onError={(e) => ((e.target as HTMLImageElement).style.display = 'none')}
+              />
+            )}
+          </div>
+        </Field>
+
         <Field label="Address" error={errors.address}>
           <textarea
             className={inputClass}
@@ -109,6 +138,58 @@ export function SettingsPage() {
             placeholder="maintenance@example.org"
           />
         </Field>
+
+        {/* Brand colours — applied immediately via CSS variables in Layout */}
+        <div className="rounded border border-slate-200 p-4">
+          <p className="mb-3 text-xs font-medium uppercase tracking-wide text-slate-500">
+            Brand colours
+          </p>
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Primary colour" error={errors['theme.primaryColor']}>
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  className="h-8 w-10 cursor-pointer rounded border border-slate-300 p-0.5"
+                  value={primaryColor}
+                  onChange={(e) => setPrimaryColor(e.target.value)}
+                  disabled={!canEdit}
+                />
+                <input
+                  className={inputClass}
+                  value={primaryColor}
+                  onChange={(e) => setPrimaryColor(e.target.value)}
+                  disabled={!canEdit}
+                  placeholder="#1e293b"
+                  maxLength={7}
+                />
+              </div>
+            </Field>
+            <Field label="Accent colour" error={errors['theme.accentColor']}>
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  className="h-8 w-10 cursor-pointer rounded border border-slate-300 p-0.5"
+                  value={accentColor}
+                  onChange={(e) => setAccentColor(e.target.value)}
+                  disabled={!canEdit}
+                />
+                <input
+                  className={inputClass}
+                  value={accentColor}
+                  onChange={(e) => setAccentColor(e.target.value)}
+                  disabled={!canEdit}
+                  placeholder="#0ea5e9"
+                  maxLength={7}
+                />
+              </div>
+            </Field>
+          </div>
+          {/* Live preview strip */}
+          <div className="mt-3 flex h-6 overflow-hidden rounded">
+            <div className="flex-1" style={{ backgroundColor: primaryColor }} />
+            <div className="flex-1" style={{ backgroundColor: accentColor }} />
+          </div>
+        </div>
 
         <div className="grid grid-cols-2 gap-4">
           <Field label="Distance unit" error={errors.distance_unit}>

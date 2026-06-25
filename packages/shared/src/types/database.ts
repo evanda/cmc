@@ -19,6 +19,7 @@ import type {
   ServiceContract,
   TaskTemplate,
   User,
+  Vehicle,
   Vendor,
   WorkOrder,
   WorkOrderAttachment,
@@ -60,6 +61,7 @@ export interface Database {
       task_templates: TableShape<TaskTemplate>;
       meters: TableShape<Meter>;
       meter_readings: TableShape<MeterReading>;
+      vehicles: TableShape<Vehicle>;
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

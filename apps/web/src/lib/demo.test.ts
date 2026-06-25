@@ -19,6 +19,12 @@ describe('demo data source — seed', () => {
     expect((await ds.listAssetCategories()).length).toBe(18);
   });
 
+  it('listPois returns empty array (map reads from bundled GeoJSON in demo mode)', async () => {
+    const pois = await ds.listPois();
+    expect(Array.isArray(pois)).toBe(true);
+    expect(pois).toHaveLength(0);
+  });
+
   it('exposes the org identity', async () => {
     const org = await ds.getOrgSettings();
     expect(org?.facility_name).toBeTruthy();
@@ -64,6 +70,56 @@ describe('demo data source — updateOrgSettings', () => {
       timezone: 'America/New_York',
     });
     expect(updated.maintenance_contact_email).toBeNull();
+  });
+
+  it('stores logo_url', async () => {
+    const updated = await ds.updateOrgSettings({
+      facility_name: 'Test Church',
+      logo_url: 'https://example.org/logo.png',
+      locale: 'en-US',
+      distance_unit: 'mi',
+      currency: 'USD',
+      timezone: 'America/New_York',
+    });
+    expect(updated.logo_url).toBe('https://example.org/logo.png');
+
+    const fetched = await ds.getOrgSettings();
+    expect(fetched?.logo_url).toBe('https://example.org/logo.png');
+  });
+
+  it('clears logo_url when omitted', async () => {
+    const updated = await ds.updateOrgSettings({
+      facility_name: 'Test Church',
+      locale: 'en-US',
+      distance_unit: 'mi',
+      currency: 'USD',
+      timezone: 'America/New_York',
+    });
+    expect(updated.logo_url).toBeNull();
+  });
+
+  it('stores theme brand colours', async () => {
+    const updated = await ds.updateOrgSettings({
+      facility_name: 'Test Church',
+      locale: 'en-US',
+      distance_unit: 'mi',
+      currency: 'USD',
+      timezone: 'America/New_York',
+      theme: { primaryColor: '#1e3a5f', accentColor: '#c8a84b' },
+    });
+    expect(updated.theme?.primaryColor).toBe('#1e3a5f');
+    expect(updated.theme?.accentColor).toBe('#c8a84b');
+  });
+
+  it('clears theme when omitted', async () => {
+    const updated = await ds.updateOrgSettings({
+      facility_name: 'Test Church',
+      locale: 'en-US',
+      distance_unit: 'mi',
+      currency: 'USD',
+      timezone: 'America/New_York',
+    });
+    expect(updated.theme).toBeNull();
   });
 });
 
@@ -325,5 +381,37 @@ describe('asset intrinsic map coordinates (#38)', () => {
     });
     expect(a.geometry_geojson).toBeNull();
     expect(a.level).toBeNull();
+  });
+});
+
+describe('demo data source — setupOrgSettings (#14)', () => {
+  it('upserts org settings and returns the updated row', async () => {
+    const result = await ds.setupOrgSettings({
+      facility_name: 'Grace Community Church',
+      address: '1 Grace Blvd, Nashville, TN',
+      maintenance_contact_email: 'facilities@grace.org',
+      locale: 'en-US',
+      distance_unit: 'mi',
+      currency: 'USD',
+      timezone: 'America/Chicago',
+      theme: { primaryColor: '#1a3a5c', accentColor: '#c8a84b' },
+    });
+    expect(result.facility_name).toBe('Grace Community Church');
+    expect(result.timezone).toBe('America/Chicago');
+    expect(result.theme?.primaryColor).toBe('#1a3a5c');
+  });
+
+  it('is reflected by getOrgSettings immediately', async () => {
+    await ds.setupOrgSettings({
+      facility_name: 'Setup Test Church',
+      locale: 'en-US',
+      distance_unit: 'km',
+      currency: 'GBP',
+      timezone: 'Europe/London',
+    });
+    const org = await ds.getOrgSettings();
+    expect(org?.facility_name).toBe('Setup Test Church');
+    expect(org?.currency).toBe('GBP');
+    expect(org?.distance_unit).toBe('km');
   });
 });

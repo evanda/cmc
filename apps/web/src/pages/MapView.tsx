@@ -14,6 +14,8 @@ interface SelectedPoi {
   building: string | null;
   level_name: string | null;
   notes: string | null;
+  /** DB-sourced asset id — preferred over name-matching for navigation. */
+  linked_asset_id: string | null;
 }
 
 
@@ -23,6 +25,7 @@ interface FloorData {
   name: string;
   level: number;
   floorplan_image_url: string | null;
+  boundary_geojson: GeoJSON.Polygon | null;
   geo_corners_geojson: GeoJSON.Polygon | null;
   rotation_deg: number;
 }
@@ -45,6 +48,9 @@ export function MapView({
   buildings = [],
   openWoCountByBuilding = {},
   onCreateWorkOrder,
+  poisGeoJSON,
+  buildingsGeoJSON,
+  floorsGeoJSON,
 }: {
   facility?: string;
   assets?: { id: string; name: string }[];
@@ -52,6 +58,11 @@ export function MapView({
   openWoCountByBuilding?: Record<string, number>;
   /** Open a new work order pre-linked to this asset (plan §5.4, #37). */
   onCreateWorkOrder?: (assetId: string) => void;
+  poisGeoJSON?: GeoJSON.FeatureCollection;
+  /** DB-backed building footprints — merged with the bundled buildings.geojson. */
+  buildingsGeoJSON?: GeoJSON.FeatureCollection;
+  /** DB-backed floor outlines — merged with the bundled floors.json. */
+  floorsGeoJSON?: GeoJSON.FeatureCollection;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MlMap | null>(null);
@@ -67,6 +78,17 @@ export function MapView({
   const base = `${import.meta.env.BASE_URL}facilities/${facility}`;
   // POIs are named after their asset (e.g. "AC16A"); link by label.
   const assetIdByName = new Map(assets.map((a) => [a.name, a.id]));
+  // Ref so the map.on('load') closure always reads the latest poisGeoJSON without
+  // triggering a map recreation (the effect deps only include `base`).
+  const poisGeoJSONRef = useRef(poisGeoJSON);
+  poisGeoJSONRef.current = poisGeoJSON;
+  const buildingsGeoJSONRef = useRef(buildingsGeoJSON);
+  buildingsGeoJSONRef.current = buildingsGeoJSON;
+  const floorsGeoJSONRef = useRef(floorsGeoJSON);
+  floorsGeoJSONRef.current = floorsGeoJSON;
+  // Cache static files once fetched so live-update effects can re-merge without re-fetching.
+  const staticBuildingsRef = useRef<GeoJSON.FeatureCollection | null>(null);
+  const staticFloorsRef = useRef<GeoJSON.FeatureCollection | null>(null);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -88,10 +110,9 @@ export function MapView({
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
 
     map.on('load', async () => {
-      const [buildings, areas, pois, meta, floorsData] = await Promise.all([
-        fetch(`${base}/buildings.geojson`).then((r) => r.json()),
-        fetch(`${base}/areas.geojson`).then((r) => r.json()),
-        fetch(`${base}/pois.geojson`).then((r) => r.json()),
+      const [staticBuildings, areas, meta, floorsData] = await Promise.all([
+        fetch(`${base}/buildings.geojson`).then((r) => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })),
+        fetch(`${base}/areas.geojson`).then((r) => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })),
         fetch(`${base}/meta.json`)
           .then((r) => r.json())
           .catch(() => ({})),
@@ -99,6 +120,21 @@ export function MapView({
           .then((r) => r.json())
           .catch(() => []),
       ]);
+      // Use DB-sourced pois if available (seeded via `pnpm assets:seed`), otherwise
+      // fall back to the bundled static file (demo mode or unseeded instance).
+      const pois: GeoJSON.FeatureCollection =
+        poisGeoJSONRef.current ?? (await fetch(`${base}/pois.geojson`).then((r) => r.json()));
+
+      // Cache the static file so the live-update effect can re-merge later.
+      staticBuildingsRef.current = staticBuildings;
+
+      // Merge DB building footprints with the bundled static file additively.
+      // DB features render on top of static ones; static outlines are always kept
+      // so seed-file geometry is never silently dropped.
+      const dbBuildings = buildingsGeoJSONRef.current;
+      const buildings: GeoJSON.FeatureCollection = dbBuildings
+        ? { type: 'FeatureCollection', features: [...staticBuildings.features, ...dbBuildings.features] }
+        : staticBuildings;
 
       // Optional subtle satellite basemap — grayscale + faded so it reads as
       // ground context behind the vectors, not a competing layer. Church-specific
@@ -166,15 +202,16 @@ export function MapView({
         paint: { 'line-color': '#475569', 'line-width': 2 },
       });
 
-      // Per-level floor outlines from floors.json geo_corners_geojson (plan §5.2).
-      // At site level: hidden (building footprints are shown instead).
-      // At a numbered level: only the floors matching that level appear.
-      const validFloors = (floorsData as FloorData[]).filter((f) => f.geo_corners_geojson);
-      const floorsGeoJSON: GeoJSON.FeatureCollection = {
+      // Per-level floor outlines. Prefers boundary_geojson (any complex polygon) over
+      // geo_corners_geojson (the 4-corner image-overlay quad) — at site level: hidden.
+      const validFloors = (floorsData as FloorData[]).filter(
+        (f) => f.boundary_geojson ?? f.geo_corners_geojson,
+      );
+      const staticFloorsGeoJSON: GeoJSON.FeatureCollection = {
         type: 'FeatureCollection',
         features: validFloors.map((f) => ({
           type: 'Feature' as const,
-          geometry: f.geo_corners_geojson as GeoJSON.Polygon,
+          geometry: (f.boundary_geojson ?? f.geo_corners_geojson) as GeoJSON.Polygon,
           properties: {
             level: f.level,
             building: f.building,
@@ -183,7 +220,13 @@ export function MapView({
           },
         })),
       };
-      map.addSource('floors', { type: 'geojson', data: floorsGeoJSON });
+      staticFloorsRef.current = staticFloorsGeoJSON;
+      // Merge with DB floors if available.
+      const dbFloors = floorsGeoJSONRef.current;
+      const mergedFloors: GeoJSON.FeatureCollection = dbFloors
+        ? { type: 'FeatureCollection', features: [...staticFloorsGeoJSON.features, ...dbFloors.features] }
+        : staticFloorsGeoJSON;
+      map.addSource('floors', { type: 'geojson', data: mergedFloors });
       map.addLayer({
         id: 'floor-fill',
         type: 'fill',
@@ -259,7 +302,7 @@ export function MapView({
         const el = document.createElement('div');
         el.className =
           'rounded bg-white/85 px-1.5 py-0.5 text-[11px] font-semibold text-slate-700 shadow-sm';
-        el.textContent = f.properties.name;
+        el.textContent = f.properties?.name ?? '';
         new maplibregl.Marker({ element: el }).setLngLat(ll).addTo(map);
       }
 
@@ -274,6 +317,7 @@ export function MapView({
           building: p.building ?? null,
           level_name: p.level_name ?? null,
           notes: p.notes ?? null,
+          linked_asset_id: p.linked_asset_id ?? null,
         });
       });
       map.on('mouseenter', 'poi', () => (map.getCanvas().style.cursor = 'pointer'));
@@ -296,8 +340,11 @@ export function MapView({
 
       // Fit to the campus.
       const b = new maplibregl.LngLatBounds();
-      for (const f of buildings.features)
-        for (const ring of f.geometry.coordinates) for (const c of ring) b.extend(c);
+      for (const f of buildings.features) {
+        const geom = f.geometry as GeoJSON.Polygon | null;
+        if (geom?.coordinates)
+          for (const ring of geom.coordinates) for (const c of ring) b.extend(c as [number, number]);
+      }
       map.fitBounds(b, { padding: 60, duration: 0 });
 
       // Discover levels: union of POI levels + floor levels (plan §5.2).
@@ -321,6 +368,46 @@ export function MapView({
       maplibregl.removeProtocol('pmtiles');
     };
   }, [base]);
+
+  // When DB pois arrive after the map has already loaded (common timing), update
+  // the 'pois' GeoJSON source in place so the map reflects the DB-linked data.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !poisGeoJSON) return;
+    const src = map.getSource('pois');
+    if (src && 'setData' in src) {
+      (src as { setData(d: GeoJSON.FeatureCollection): void }).setData(poisGeoJSON);
+    }
+  }, [poisGeoJSON]);
+
+  // When DB building footprints arrive after load, re-merge with the static file
+  // and push the combined result to the map source.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    const src = map.getSource('buildings');
+    if (!src || !('setData' in src)) return;
+    const staticBuildings = staticBuildingsRef.current;
+    if (!staticBuildings) return; // map hasn't finished loading yet; the on('load') handler will use the ref
+    const merged: GeoJSON.FeatureCollection = buildingsGeoJSON
+      ? { type: 'FeatureCollection', features: [...staticBuildings.features, ...buildingsGeoJSON.features] }
+      : staticBuildings;
+    (src as { setData(d: GeoJSON.FeatureCollection): void }).setData(merged);
+  }, [buildingsGeoJSON]);
+
+  // When DB floor outlines arrive after load, merge with static and update the source.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    const src = map.getSource('floors');
+    if (!src || !('setData' in src)) return;
+    const staticFloors = staticFloorsRef.current;
+    if (!staticFloors) return;
+    const merged: GeoJSON.FeatureCollection = floorsGeoJSON
+      ? { type: 'FeatureCollection', features: [...staticFloors.features, ...floorsGeoJSON.features] }
+      : staticFloors;
+    (src as { setData(d: GeoJSON.FeatureCollection): void }).setData(merged);
+  }, [floorsGeoJSON]);
 
   // Apply the level filter to POIs, floor outlines, and image overlays.
   useEffect(() => {
@@ -412,17 +499,23 @@ export function MapView({
             {selected.level_name ? ` · ${selected.level_name}` : ''}
           </div>
           {selected.notes && <p className="mt-2 text-xs text-slate-600">{selected.notes}</p>}
-          {assetIdByName.get(selected.label) ? (
+          {/* Use DB-sourced linked_asset_id when available; fall back to name
+              matching for the bundled static pois.geojson (demo / unseeded). */}
+          {(selected.linked_asset_id ?? assetIdByName.get(selected.label)) ? (
             <div className="mt-3 flex flex-col gap-1.5">
               <Link
-                to={`/assets/${assetIdByName.get(selected.label)}`}
+                to={`/assets/${selected.linked_asset_id ?? assetIdByName.get(selected.label)}`}
                 className="rounded bg-slate-800 px-3 py-1.5 text-center text-xs font-medium text-white hover:bg-slate-700"
               >
                 Open asset record →
               </Link>
               {onCreateWorkOrder && (
                 <button
-                  onClick={() => onCreateWorkOrder(assetIdByName.get(selected.label)!)}
+                  onClick={() =>
+                    onCreateWorkOrder(
+                      (selected.linked_asset_id ?? assetIdByName.get(selected.label))!,
+                    )
+                  }
                   className="rounded border border-slate-300 px-3 py-1.5 text-center text-xs font-medium text-slate-700 hover:bg-slate-50"
                 >
                   + Create work order
@@ -462,13 +555,21 @@ export function MapView({
             </div>
             <div className="mt-3 flex flex-col gap-1.5">
               <Link
-                to="/work-orders"
+                to={
+                  bid
+                    ? `/work-orders?building=${bid}&buildingName=${encodeURIComponent(selectedBuildingName)}`
+                    : '/work-orders'
+                }
                 className="rounded bg-slate-800 px-3 py-1.5 text-center text-xs font-medium text-white hover:bg-slate-700"
               >
                 Work orders →
               </Link>
               <Link
-                to="/assets"
+                to={
+                  bid
+                    ? `/assets?building=${bid}&buildingName=${encodeURIComponent(selectedBuildingName)}`
+                    : '/assets'
+                }
                 className="rounded border border-slate-300 px-3 py-1.5 text-center text-xs font-medium text-slate-700 hover:bg-slate-50"
               >
                 Assets →

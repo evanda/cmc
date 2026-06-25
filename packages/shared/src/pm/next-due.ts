@@ -4,6 +4,12 @@
 // anchor the shared engine and prove the package's test wiring. Meter-threshold
 // and fixed-date triggers, lead-time WO generation, and drift handling
 // ("advance from completion vs scheduled") land in Phase 3.
+//
+// Date arithmetic note: month/year arithmetic clamps to the last valid day of
+// the target month rather than overflowing (e.g. Jan 31 + 3 mo = Apr 30, not
+// May 1). JavaScript's setUTCMonth/setUTCFullYear both overflow silently, so
+// we compute the target year+month first, find the last day, then set all
+// three fields atomically via setUTCFullYear(y, m, d).
 
 export type IntervalUnit = 'day' | 'week' | 'month' | 'year';
 
@@ -26,12 +32,23 @@ export function addInterval(from: Date, value: number, unit: IntervalUnit): Date
     case 'week':
       d.setUTCDate(d.getUTCDate() + value * 7);
       break;
-    case 'month':
-      d.setUTCMonth(d.getUTCMonth() + value);
+    case 'month': {
+      const day = d.getUTCDate();
+      const totalMonths = d.getUTCMonth() + value;
+      const newYear = d.getUTCFullYear() + Math.floor(totalMonths / 12);
+      const newMonth = totalMonths % 12;
+      const maxDay = new Date(Date.UTC(newYear, newMonth + 1, 0)).getUTCDate();
+      d.setUTCFullYear(newYear, newMonth, Math.min(day, maxDay));
       break;
-    case 'year':
-      d.setUTCFullYear(d.getUTCFullYear() + value);
+    }
+    case 'year': {
+      const day = d.getUTCDate();
+      const month = d.getUTCMonth();
+      const newYear = d.getUTCFullYear() + value;
+      const maxDay = new Date(Date.UTC(newYear, month + 1, 0)).getUTCDate();
+      d.setUTCFullYear(newYear, month, Math.min(day, maxDay));
       break;
+    }
   }
   return d;
 }

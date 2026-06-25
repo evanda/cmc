@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { floorFormSchema, type Floor } from '@cmc/shared';
+import { floorFormSchema, type Building, type Floor, type FloorForm } from '@cmc/shared';
 import { useBuildings, useCreateFloor, useDeleteFloor, useFloors, useUpdateFloor } from '../lib/queries';
 import { useAuth } from '../auth/AuthProvider';
 import { Button, EmptyState, Field, Modal, inputClass } from '../components/ui';
+import { GeoJsonPasteField } from '../components/GeoJsonPasteField';
 
 export function FloorsPage() {
   const { role } = useAuth();
@@ -94,7 +95,7 @@ export function FloorsPage() {
       {showForm && (
         <FloorForm
           initial={editing}
-          buildings={(buildings.data ?? []).map((b) => ({ id: b.id, name: b.name }))}
+          buildings={buildings.data ?? []}
           defaultBuildingId={buildingFilter}
           onClose={() => setShowForm(false)}
           onSubmit={async (values) => {
@@ -108,6 +109,36 @@ export function FloorsPage() {
   );
 }
 
+function validatePolygon(v: Record<string, unknown>): string | null {
+  const geom = v['type'] === 'Feature'
+    ? (v['geometry'] as Record<string, unknown> | undefined)
+    : v;
+  if (geom?.['type'] !== 'Polygon') return 'Expected a Polygon';
+  return null;
+}
+
+function validateCorners(v: Record<string, unknown>): string | null {
+  const err = validatePolygon(v);
+  if (err) return err;
+  const geom = v['type'] === 'Feature'
+    ? (v['geometry'] as Record<string, unknown> | undefined)
+    : v;
+  const ring = (geom!['coordinates'] as unknown[][])?.[0];
+  if (!ring || (ring.length !== 4 && ring.length !== 5))
+    return 'Image overlay needs exactly 4 corners (top-left → top-right → bottom-right → bottom-left)';
+  return null;
+}
+
+const CAMPUS_DEFAULT: [number, number] = [-80.428, 36.09];
+
+function buildingCenter(b: Building | undefined): [number, number] {
+  const coords = b?.footprint_geojson?.coordinates;
+  if (!coords?.[0]?.length) return CAMPUS_DEFAULT;
+  const ring = coords[0];
+  const s = ring.reduce((a: number[], p) => [a[0] + p[0], a[1] + p[1]], [0, 0]);
+  return [s[0] / ring.length, s[1] / ring.length] as [number, number];
+}
+
 function FloorForm({
   initial,
   buildings,
@@ -116,16 +147,24 @@ function FloorForm({
   onSubmit,
 }: {
   initial: Floor | null;
-  buildings: { id: string; name: string }[];
+  buildings: Building[];
   defaultBuildingId: string;
   onClose: () => void;
-  onSubmit: (values: { building_id: string; name: string; level: number }) => Promise<void>;
+  onSubmit: (values: FloorForm) => Promise<void>;
 }) {
   const [buildingId, setBuildingId] = useState(
     initial?.building_id ?? defaultBuildingId ?? buildings[0]?.id ?? '',
   );
+  const selectedBuilding = buildings.find((b) => b.id === buildingId);
   const [name, setName] = useState(initial?.name ?? '');
   const [level, setLevel] = useState(String(initial?.level ?? 1));
+  const [boundary, setBoundary] = useState<Record<string, unknown> | null>(
+    (initial?.boundary_geojson as Record<string, unknown> | null) ?? null,
+  );
+  const [imageUrl, setImageUrl] = useState(initial?.floorplan_image_url ?? '');
+  const [corners, setCorners] = useState<Record<string, unknown> | null>(
+    (initial?.geo_corners_geojson as Record<string, unknown> | null) ?? null,
+  );
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
 
@@ -135,7 +174,14 @@ function FloorForm({
         className="space-y-4"
         onSubmit={async (e) => {
           e.preventDefault();
-          const parsed = floorFormSchema.safeParse({ building_id: buildingId, name, level });
+          const parsed = floorFormSchema.safeParse({
+            building_id: buildingId,
+            name,
+            level,
+            boundary_geojson: boundary,
+            floorplan_image_url: imageUrl || undefined,
+            geo_corners_geojson: corners,
+          });
           if (!parsed.success) {
             setErrors(
               Object.fromEntries(parsed.error.issues.map((i) => [i.path[0] as string, i.message])),
@@ -172,6 +218,32 @@ function FloorForm({
             onChange={(e) => setLevel(e.target.value)}
           />
         </Field>
+        <GeoJsonPasteField
+          label="Floor boundary (optional)"
+          hint="Draw the actual outline of this floor — any shape, as many points as you need. Used as the floor outline on the map when this level is active."
+          value={boundary}
+          onChange={setBoundary}
+          validate={validatePolygon}
+          center={buildingCenter(selectedBuilding)}
+        />
+        <Field label="Floorplan image URL (optional)" error={errors.floorplan_image_url}>
+          <input
+            className={inputClass}
+            placeholder="https://…/floorplan.png"
+            value={imageUrl}
+            onChange={(e) => setImageUrl(e.target.value)}
+          />
+        </Field>
+        {imageUrl && (
+          <GeoJsonPasteField
+            label="Image overlay corners (required for image overlay)"
+            hint="MapLibre needs exactly 4 corners to stretch the image onto the map — draw a 4-point polygon on geojson.io tracing top-left → top-right → bottom-right → bottom-left of where the image should sit."
+            value={corners}
+            onChange={setCorners}
+            validate={validateCorners}
+            center={buildingCenter(selectedBuilding)}
+          />
+        )}
         <div className="flex justify-end gap-2">
           <Button type="button" variant="ghost" onClick={onClose}>
             Cancel

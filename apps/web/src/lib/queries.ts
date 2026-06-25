@@ -56,6 +56,13 @@ function crudHooks<TRow, TForm>(
 export function useOrgSettings() {
   return useQuery({ queryKey: ['org_settings'], queryFn: () => ds.getOrgSettings() });
 }
+export function useSetupOrgSettings() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: OrgSettingsForm) => ds.setupOrgSettings(input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['org_settings'] }),
+  });
+}
 export function useUpdateOrgSettings() {
   const qc = useQueryClient();
   return useMutation({
@@ -425,5 +432,40 @@ export function useDeletePmSchedule() {
   return useMutation({
     mutationFn: (id: string) => ds.deletePmSchedule(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['pm_schedules'] }),
+  });
+}
+
+// ── map POIs (plan §5.4) ─────────────────────────────────────────────────────
+export function usePois() {
+  return useQuery({ queryKey: ['pois'], queryFn: () => ds.listPois() });
+}
+
+// ── Fleet / vehicles (plan §4.4) ─────────────────────────────────────────────
+export function useVehicles() {
+  return useQuery({ queryKey: ['vehicles'], queryFn: () => ds.listVehicles() });
+}
+
+export function useCreateVehicle() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: Parameters<typeof ds.createVehicle>[0]) => ds.createVehicle(input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['vehicles'] }),
+  });
+}
+
+export function useUpdateVehicle() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, input }: { id: string; input: Parameters<typeof ds.updateVehicle>[1] }) =>
+      ds.updateVehicle(id, input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['vehicles'] }),
+  });
+}
+
+export function useDeleteVehicle() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => ds.deleteVehicle(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['vehicles'] }),
   });
 }

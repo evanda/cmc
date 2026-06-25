@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { buildingFormSchema, type Building } from '@cmc/shared';
+import { buildingFormSchema, type Building, type BuildingForm } from '@cmc/shared';
 import {
   useBuildings,
   useCreateBuilding,
@@ -8,6 +8,7 @@ import {
 } from '../lib/queries';
 import { useAuth } from '../auth/AuthProvider';
 import { Button, EmptyState, Field, Modal, inputClass } from '../components/ui';
+import { GeoJsonPasteField } from '../components/GeoJsonPasteField';
 
 export function BuildingsPage() {
   const { role } = useAuth();
@@ -80,6 +81,7 @@ export function BuildingsPage() {
       {showForm && (
         <BuildingForm
           initial={editing}
+          campusCenter={campusCenter(data ?? [])}
           onClose={() => setShowForm(false)}
           onSubmit={async (values) => {
             if (editing) await update.mutateAsync({ id: editing.id, ...values });
@@ -92,18 +94,50 @@ export function BuildingsPage() {
   );
 }
 
+const CAMPUS_DEFAULT: [number, number] = [-80.428, 36.09];
+
+function polygonCentroid(coords: number[][][]): [number, number] | null {
+  const ring = coords[0];
+  if (!ring?.length) return null;
+  const s = ring.reduce((a, p) => [a[0] + p[0], a[1] + p[1]], [0, 0]);
+  return [s[0] / ring.length, s[1] / ring.length];
+}
+
+function campusCenter(buildings: Building[]): [number, number] {
+  for (const b of buildings) {
+    if (b.footprint_geojson?.coordinates) {
+      const c = polygonCentroid(b.footprint_geojson.coordinates);
+      if (c) return c;
+    }
+  }
+  return CAMPUS_DEFAULT;
+}
+
+function validatePolygon(v: Record<string, unknown>): string | null {
+  const type = v['type'] === 'Feature'
+    ? (v['geometry'] as Record<string, unknown> | undefined)?.['type']
+    : v['type'];
+  if (type !== 'Polygon') return 'Expected a Polygon (draw one shape on geojson.io)';
+  return null;
+}
+
 function BuildingForm({
   initial,
+  campusCenter: center,
   onClose,
   onSubmit,
 }: {
   initial: Building | null;
+  campusCenter: [number, number];
   onClose: () => void;
-  onSubmit: (values: { name: string; description?: string; address?: string }) => Promise<void>;
+  onSubmit: (values: BuildingForm) => Promise<void>;
 }) {
   const [name, setName] = useState(initial?.name ?? '');
   const [description, setDescription] = useState(initial?.description ?? '');
   const [address, setAddress] = useState(initial?.address ?? '');
+  const [footprint, setFootprint] = useState<Record<string, unknown> | null>(
+    (initial?.footprint_geojson as Record<string, unknown> | null) ?? null,
+  );
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
 
@@ -113,7 +147,7 @@ function BuildingForm({
         className="space-y-4"
         onSubmit={async (e) => {
           e.preventDefault();
-          const parsed = buildingFormSchema.safeParse({ name, description, address });
+          const parsed = buildingFormSchema.safeParse({ name, description, address, footprint_geojson: footprint });
           if (!parsed.success) {
             setErrors(
               Object.fromEntries(
@@ -145,6 +179,14 @@ function BuildingForm({
             onChange={(e) => setDescription(e.target.value)}
           />
         </Field>
+        <GeoJsonPasteField
+          label="Building footprint (optional)"
+          hint="Draw the building outline on geojson.io and paste the result back — FeatureCollection, Feature, or plain Polygon all work."
+          value={footprint}
+          onChange={setFootprint}
+          validate={validatePolygon}
+          center={center}
+        />
         <div className="flex justify-end gap-2">
           <Button type="button" variant="ghost" onClick={onClose}>
             Cancel
