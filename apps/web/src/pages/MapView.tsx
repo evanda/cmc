@@ -322,23 +322,35 @@ export function MapView({
   }, [poisGeoJSON]);
 
   // When a highlight asset id is requested and POIs are loaded, fly to and select it.
-  // Falls back to highlightCoords if the asset has no linked POI.
+  // Falls back to name-match, then to highlightCoords if the asset has no linked POI.
   useEffect(() => {
     if (!highlightAssetId || !mapLoaded) return;
     if (poisGeoJSON) {
-      const feature = poisGeoJSON.features.find(
-        (f) => f.properties?.linked_asset_id === highlightAssetId,
-      );
+      const assetName = assets.find((a) => a.id === highlightAssetId)?.name;
+      const feature =
+        poisGeoJSON.features.find(
+          (f) => f.properties?.linked_asset_id === highlightAssetId,
+        ) ??
+        (assetName
+          ? poisGeoJSON.features.find(
+              (f) =>
+                f.properties?.label?.toLowerCase() === assetName.toLowerCase(),
+            )
+          : undefined);
       if (feature && feature.geometry.type === 'Point') {
         const [lng, lat] = feature.geometry.coordinates as [number, number];
         const p = feature.properties!;
+        // Switch level so the POI marker is actually visible.
+        if (p.level != null && p.level !== levelRef.current) {
+          setLevel(p.level as Level);
+        }
         setSelected({
           label: p.label ?? p.poi_type,
           poi_type: p.poi_type,
           building: p.building ?? null,
           level_name: p.level_name ?? null,
           notes: p.notes ?? null,
-          linked_asset_id: p.linked_asset_id ?? null,
+          linked_asset_id: p.linked_asset_id ?? highlightAssetId,
         });
         mapRef.current?.flyTo({ center: [lng, lat], zoom: 19, duration: 800 });
         return;
@@ -366,7 +378,7 @@ export function MapView({
       mapRef.current.flyTo({ center: highlightCoords, zoom: 19, duration: 800 });
     }
     return () => { highlightMarkerRef.current?.remove(); highlightMarkerRef.current = null; };
-  }, [highlightAssetId, poisGeoJSON, highlightCoords, mapLoaded]);
+  }, [highlightAssetId, poisGeoJSON, highlightCoords, mapLoaded, assets]);
 
   // When DB building footprints arrive, push them to the map source (if it exists yet).
   useEffect(() => {
