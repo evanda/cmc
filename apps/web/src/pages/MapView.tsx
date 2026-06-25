@@ -109,7 +109,6 @@ export function MapView({
   const floorsGeoJSONRef = useRef(floorsGeoJSON);
   floorsGeoJSONRef.current = floorsGeoJSON;
   // Cache static files once fetched so live-update effects can re-merge without re-fetching.
-  const mapLoadedRef = useRef(false);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -288,7 +287,6 @@ export function MapView({
         .map((f: GeoJSON.Feature) => f.properties?.level)
         .filter((x): x is number => typeof x === 'number');
       setLevels(buildLevels(poiLevels, floorLevels));
-      mapLoadedRef.current = true;
 
       // Expose for the screenshot harness (project a POI → pixel to click it).
       if (import.meta.env.VITE_DEMO) {
@@ -314,10 +312,10 @@ export function MapView({
     }
   }, [poisGeoJSON]);
 
-  // When DB building footprints arrive after load, push them to the map source.
+  // When DB building footprints arrive, push them to the map source (if it exists yet).
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !mapLoadedRef.current) return;
+    if (!map) return;
     const src = map.getSource('buildings');
     if (!src || !('setData' in src)) return;
     (src as { setData(d: GeoJSON.FeatureCollection): void }).setData(
@@ -325,10 +323,10 @@ export function MapView({
     );
   }, [buildingsGeoJSON]);
 
-  // When DB floor outlines arrive after load, push them to the map source.
+  // When DB floor outlines arrive, push them to the map source (if it exists yet).
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !mapLoadedRef.current) return;
+    if (!map) return;
     const src = map.getSource('floors');
     if (!src || !('setData' in src)) return;
     (src as { setData(d: GeoJSON.FeatureCollection): void }).setData(
