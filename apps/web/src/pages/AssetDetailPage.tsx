@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   WORK_ORDER_TYPES,
@@ -20,6 +20,7 @@ import {
   useDeleteAssetPhoto,
   useLocations,
   useOrgSettings,
+  usePois,
   useSetPrimaryPhoto,
   useUsers,
   useVendors,
@@ -57,6 +58,8 @@ export function AssetDetailPage() {
   const asset = useAsset(id);
   const categories = useAssetCategories();
   const locations = useLocations();
+  const { data: allPois } = usePois();
+  const linkedPoi = allPois?.find((p) => p.linked_asset_id === id);
   const users = useUsers();
   const photos = useAssetPhotos(id);
   const workOrders = useWorkOrders(id);
@@ -123,12 +126,19 @@ export function AssetDetailPage() {
               <Row label="Location" value={locName ?? 'Unplaced'} />
               <Row label="Make / Model" value={[a.make, a.model].filter(Boolean).join(' ') || '—'} />
               <Row label="Serial" value={a.serial ?? '—'} />
-              {a.geometry_geojson && (
+              {linkedPoi && (
                 <Row
                   label="Map location"
-                  value={`${a.geometry_geojson.coordinates[1].toFixed(5)}, ${a.geometry_geojson.coordinates[0].toFixed(5)}${
-                    a.level != null ? ` · level ${a.level}` : ''
-                  }`}
+                  value={
+                    <Link
+                      to={`/map?asset=${id}`}
+                      className="text-blue-600 hover:underline"
+                    >
+                      {linkedPoi.label}
+                      {linkedPoi.level != null ? ` · level ${linkedPoi.level}` : ''}
+                      {' — View on map →'}
+                    </Link>
+                  }
                 />
               )}
             </dl>
@@ -322,7 +332,7 @@ export function AssetDetailPage() {
   );
 }
 
-function Row({ label, value }: { label: string; value: string }) {
+function Row({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex justify-between gap-4">
       <dt className="text-slate-400">{label}</dt>

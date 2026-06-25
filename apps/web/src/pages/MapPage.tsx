@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import type { Building, Floor, Poi } from '@cmc/shared';
-import { WO_FILING_ROLES } from '@cmc/shared';
 import { MapView } from './MapView';
 import { useAuth } from '../auth/AuthProvider';
 import { useAssets, useAllWorkOrders, useBuildings, useFloors, useLocations, useOrgSettings, usePois } from '../lib/queries';
@@ -73,8 +72,10 @@ function poisToGeoJSON(
 
 export function MapPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const highlightAssetId = searchParams.get('asset') ?? undefined;
   const { role } = useAuth();
-  const canFileWorkOrder = role != null && (WO_FILING_ROLES as readonly string[]).includes(role);
+  const canFileWorkOrder = role !== 'trustee' && role != null;
   const { data: org } = useOrgSettings();
   const { data: assets } = useAssets();
   const { data: buildings } = useBuildings();
@@ -123,6 +124,7 @@ export function MapPage() {
         buildings={(buildings ?? []).map((b) => ({ id: b.id, name: b.name }))}
         openWoCountByBuilding={openWoCountByBuilding}
         onCreateWorkOrder={canFileWorkOrder ? (assetId) => navigate(`/work-orders?asset=${assetId}`) : undefined}
+        highlightAssetId={highlightAssetId}
         poisGeoJSON={poisGeoJSON}
         buildingsGeoJSON={buildingsGeoJSON}
         floorsGeoJSON={floorsGeoJSON}

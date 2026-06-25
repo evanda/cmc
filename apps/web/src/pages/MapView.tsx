@@ -65,6 +65,7 @@ export function MapView({
   buildings = [],
   openWoCountByBuilding = {},
   onCreateWorkOrder,
+  highlightAssetId,
   poisGeoJSON,
   buildingsGeoJSON,
   floorsGeoJSON,
@@ -75,6 +76,8 @@ export function MapView({
   openWoCountByBuilding?: Record<string, number>;
   /** Open a new work order pre-linked to this asset (plan §5.4, #37). */
   onCreateWorkOrder?: (assetId: string) => void;
+  /** If set, fly to the POI linked to this asset id and open its card. */
+  highlightAssetId?: string;
   poisGeoJSON?: GeoJSON.FeatureCollection;
   /** DB-backed building footprints — merged with the bundled buildings.geojson. */
   buildingsGeoJSON?: GeoJSON.FeatureCollection;
@@ -311,6 +314,26 @@ export function MapView({
       (src as { setData(d: GeoJSON.FeatureCollection): void }).setData(poisGeoJSON);
     }
   }, [poisGeoJSON]);
+
+  // When a highlight asset id is requested and POIs are loaded, fly to and select it.
+  useEffect(() => {
+    if (!highlightAssetId || !poisGeoJSON) return;
+    const feature = poisGeoJSON.features.find(
+      (f) => f.properties?.linked_asset_id === highlightAssetId,
+    );
+    if (!feature || feature.geometry.type !== 'Point') return;
+    const [lng, lat] = feature.geometry.coordinates as [number, number];
+    const p = feature.properties!;
+    setSelected({
+      label: p.label ?? p.poi_type,
+      poi_type: p.poi_type,
+      building: p.building ?? null,
+      level_name: p.level_name ?? null,
+      notes: p.notes ?? null,
+      linked_asset_id: p.linked_asset_id ?? null,
+    });
+    mapRef.current?.flyTo({ center: [lng, lat], zoom: 19, duration: 800 });
+  }, [highlightAssetId, poisGeoJSON]);
 
   // When DB building footprints arrive, push them to the map source (if it exists yet).
   useEffect(() => {
