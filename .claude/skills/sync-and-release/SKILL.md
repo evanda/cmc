@@ -188,7 +188,7 @@ destructive test before the user runs it.
 
 Format it like this so nothing is buried:
 
-> **Test here:** `<URL fetched from GitHub API above>` (Vercel preview — real prod build)
+> **Test here:** [Open preview](<URL fetched from GitHub API above>) (Vercel preview — real prod build)
 >
 > Here's what to check:
 > - [bullet]
