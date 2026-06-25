@@ -60,9 +60,14 @@ const POI_LABELS: Record<string, string> = {
 };
 
 function buildPoiFilter(level: Level, hiddenTypes: Set<string>) {
-  const lf = poiLevelFilter(level) as unknown[];
-  if (hiddenTypes.size === 0) return lf;
-  return ['all', lf, ['!', ['in', ['get', 'poi_type'], ['literal', [...hiddenTypes]]]]];
+  const parts: unknown[] = [];
+  const lf = poiLevelFilter(level);
+  if (lf) parts.push(lf);
+  if (hiddenTypes.size > 0)
+    parts.push(['!', ['in', ['get', 'poi_type'], ['literal', [...hiddenTypes]]]]);
+  if (parts.length === 0) return null;
+  if (parts.length === 1) return parts[0];
+  return ['all', ...parts];
 }
 
 export function MapView({
