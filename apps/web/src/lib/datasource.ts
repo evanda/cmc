@@ -201,16 +201,17 @@ function contactPatch(input: ContactForm) {
 }
 
 // Status edits also stamp completed_date when a WO is marked completed.
-// location_id / vendor_id are only written when explicitly provided (undefined = don't touch).
 function workOrderUpdatePatch(patch: WorkOrderUpdate) {
   return {
     status: patch.status,
     priority: patch.priority,
     assignee_user_id: patch.assignee_user_id ?? null,
     ...(patch.status === 'completed' ? { completed_date: new Date().toISOString().slice(0, 10) } : {}),
-    ...(patch.location_id !== undefined ? { location_id: patch.location_id ?? null } : {}),
-    ...(patch.vendor_id !== undefined ? { vendor_id: patch.vendor_id ?? null } : {}),
-    ...(patch.linked_asset_id !== undefined ? { linked_asset_id: patch.linked_asset_id ?? null } : {}),
+    ...(patch.completion_notes !== undefined ? { completion_notes: patch.completion_notes ?? null } : {}),
+    ...(patch.labor_hours !== undefined ? { labor_hours: patch.labor_hours ?? null } : {}),
+    ...(patch.actual_parts_cost !== undefined ? { actual_parts_cost: patch.actual_parts_cost ?? null } : {}),
+    ...(patch.actual_labor_cost !== undefined ? { actual_labor_cost: patch.actual_labor_cost ?? null } : {}),
+    ...(patch.actual_vendor_cost !== undefined ? { actual_vendor_cost: patch.actual_vendor_cost ?? null } : {}),
   };
 }
 
