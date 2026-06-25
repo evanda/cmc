@@ -129,16 +129,13 @@ export function MapView({
       const pois: GeoJSON.FeatureCollection =
         poisGeoJSONRef.current ?? (await fetch(`${base}/pois.geojson`).then((r) => r.json()));
 
-      // Cache the static file so the live-update effect can re-merge later.
+      // Cache the static file so the live-update effect can use it as a fallback.
       staticBuildingsRef.current = staticBuildings;
 
-      // Merge DB building footprints with the bundled static file additively.
-      // DB features render on top of static ones; static outlines are always kept
-      // so seed-file geometry is never silently dropped.
+      // Use DB building footprints when available; fall back to the bundled static
+      // file for demo mode or an unseeded instance. Same pattern as POIs above.
       const dbBuildings = buildingsGeoJSONRef.current;
-      const buildings: GeoJSON.FeatureCollection = dbBuildings
-        ? { type: 'FeatureCollection', features: [...staticBuildings.features, ...dbBuildings.features] }
-        : staticBuildings;
+      const buildings: GeoJSON.FeatureCollection = dbBuildings ?? staticBuildings;
 
       // Optional subtle satellite basemap — grayscale + faded so it reads as
       // ground context behind the vectors, not a competing layer. Church-specific
@@ -225,11 +222,9 @@ export function MapView({
         })),
       };
       staticFloorsRef.current = staticFloorsGeoJSON;
-      // Merge with DB floors if available.
+      // Use DB floor outlines when available; fall back to static for demo/unseeded.
       const dbFloors = floorsGeoJSONRef.current;
-      const mergedFloors: GeoJSON.FeatureCollection = dbFloors
-        ? { type: 'FeatureCollection', features: [...staticFloorsGeoJSON.features, ...dbFloors.features] }
-        : staticFloorsGeoJSON;
+      const mergedFloors: GeoJSON.FeatureCollection = dbFloors ?? staticFloorsGeoJSON;
       map.addSource('floors', { type: 'geojson', data: mergedFloors });
       map.addLayer({
         id: 'floor-fill',
@@ -394,11 +389,9 @@ export function MapView({
     function apply() {
       const src = map!.getSource('buildings');
       if (!src || !('setData' in src)) return;
-      const staticBuildings = staticBuildingsRef.current ?? { type: 'FeatureCollection' as const, features: [] };
-      const merged: GeoJSON.FeatureCollection = buildingsGeoJSON
-        ? { type: 'FeatureCollection', features: [...staticBuildings.features, ...buildingsGeoJSON.features] }
-        : staticBuildings;
-      (src as { setData(d: GeoJSON.FeatureCollection): void }).setData(merged);
+      const data: GeoJSON.FeatureCollection =
+        buildingsGeoJSON ?? staticBuildingsRef.current ?? { type: 'FeatureCollection', features: [] };
+      (src as { setData(d: GeoJSON.FeatureCollection): void }).setData(data);
     }
     if (mapStyleLoadedRef.current) {
       apply();
@@ -415,11 +408,9 @@ export function MapView({
     function apply() {
       const src = map!.getSource('floors');
       if (!src || !('setData' in src)) return;
-      const staticFloors = staticFloorsRef.current ?? { type: 'FeatureCollection' as const, features: [] };
-      const merged: GeoJSON.FeatureCollection = floorsGeoJSON
-        ? { type: 'FeatureCollection', features: [...staticFloors.features, ...floorsGeoJSON.features] }
-        : staticFloors;
-      (src as { setData(d: GeoJSON.FeatureCollection): void }).setData(merged);
+      const data: GeoJSON.FeatureCollection =
+        floorsGeoJSON ?? staticFloorsRef.current ?? { type: 'FeatureCollection', features: [] };
+      (src as { setData(d: GeoJSON.FeatureCollection): void }).setData(data);
     }
     if (mapStyleLoadedRef.current) {
       apply();
