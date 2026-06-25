@@ -413,7 +413,16 @@ const supabaseDataSource: DataSource = {
     ),
   inviteUser: async (email, role) => {
     const { error } = await supabase.functions.invoke('invite-user', { body: { email, role } });
-    if (error) throw new Error(error.message);
+    if (error) {
+      // FunctionsHttpError carries the response as error.context — extract the real message.
+      try {
+        const body = await (error as { context?: Response }).context?.json?.();
+        if (body?.error) throw new Error(body.error);
+      } catch (inner) {
+        if (inner instanceof Error && inner.message !== error.message) throw inner;
+      }
+      throw new Error(error.message);
+    }
   },
   deactivateUser: async (userId) => {
     unwrap(
