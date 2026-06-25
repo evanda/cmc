@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   WORK_ORDER_PRIORITIES,
@@ -47,6 +47,7 @@ export function WorkOrdersPage() {
   const workOrders = useAllWorkOrders();
   const assets = useAssets();
   const users = useUsers();
+  const locations = useLocations();
   const [open, setOpen] = useState<WorkOrder | null>(null);
   const [showNew, setShowNew] = useState(false);
   const [view, setView] = useState<View>('board');
@@ -55,24 +56,57 @@ export function WorkOrdersPage() {
   // pre-linked to that asset (plan §5.4, #37). Only staff can create WOs.
   const [searchParams, setSearchParams] = useSearchParams();
   const assetParam = searchParams.get('asset');
+  // Building filter: /work-orders?building=<id> from the map building card (plan §5.4, #5).
+  const buildingParam = searchParams.get('building');
+  const buildingNameParam = searchParams.get('buildingName');
   useEffect(() => {
     if (assetParam && canEdit) setShowNew(true);
   }, [assetParam, canEdit]);
   const closeNew = () => {
     setShowNew(false);
-    if (assetParam) setSearchParams({}, { replace: true });
+    if (assetParam) {
+      const next = new URLSearchParams(searchParams);
+      next.delete('asset');
+      setSearchParams(next, { replace: true });
+    }
   };
 
   const assetName = (id: string | null) =>
     id ? (assets.data?.find((a) => a.id === id)?.name ?? null) : null;
   const userName = (id: string | null) =>
     id ? (users.data?.find((u) => u.id === id)?.name ?? null) : null;
-  const items = workOrders.data ?? [];
+
+  // IDs of locations in the selected building (plan §5.4).
+  const buildingLocationIds = useMemo(() => {
+    if (!buildingParam) return null;
+    return new Set(
+      (locations.data ?? [])
+        .filter((l) => l.building_id === buildingParam)
+        .map((l) => l.id),
+    );
+  }, [buildingParam, locations.data]);
+
+  const items = (workOrders.data ?? []).filter(
+    (w) => !buildingLocationIds || (w.location_id != null && buildingLocationIds.has(w.location_id)),
+  );
 
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-slate-800">Work Orders</h1>
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-800">Work Orders</h1>
+          {buildingParam && (
+            <div className="mt-1 flex items-center gap-2 text-sm text-slate-500">
+              <span>Building: {buildingNameParam ?? buildingParam}</span>
+              <button
+                onClick={() => setSearchParams({}, { replace: true })}
+                className="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-500 hover:bg-slate-200"
+              >
+                Clear filter ×
+              </button>
+            </div>
+          )}
+        </div>
         <div className="flex items-center gap-3">
           <div className="flex rounded-lg border border-slate-300 p-0.5 text-sm">
             {(['board', 'list', 'calendar'] as View[]).map((v) => (

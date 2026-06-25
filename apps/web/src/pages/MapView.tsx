@@ -14,6 +14,8 @@ interface SelectedPoi {
   building: string | null;
   level_name: string | null;
   notes: string | null;
+  /** DB-sourced asset id — preferred over name-matching for navigation. */
+  linked_asset_id: string | null;
 }
 
 
@@ -288,6 +290,7 @@ export function MapView({
           building: p.building ?? null,
           level_name: p.level_name ?? null,
           notes: p.notes ?? null,
+          linked_asset_id: p.linked_asset_id ?? null,
         });
       });
       map.on('mouseenter', 'poi', () => (map.getCanvas().style.cursor = 'pointer'));
@@ -437,17 +440,23 @@ export function MapView({
             {selected.level_name ? ` · ${selected.level_name}` : ''}
           </div>
           {selected.notes && <p className="mt-2 text-xs text-slate-600">{selected.notes}</p>}
-          {assetIdByName.get(selected.label) ? (
+          {/* Use DB-sourced linked_asset_id when available; fall back to name
+              matching for the bundled static pois.geojson (demo / unseeded). */}
+          {(selected.linked_asset_id ?? assetIdByName.get(selected.label)) ? (
             <div className="mt-3 flex flex-col gap-1.5">
               <Link
-                to={`/assets/${assetIdByName.get(selected.label)}`}
+                to={`/assets/${selected.linked_asset_id ?? assetIdByName.get(selected.label)}`}
                 className="rounded bg-slate-800 px-3 py-1.5 text-center text-xs font-medium text-white hover:bg-slate-700"
               >
                 Open asset record →
               </Link>
               {onCreateWorkOrder && (
                 <button
-                  onClick={() => onCreateWorkOrder(assetIdByName.get(selected.label)!)}
+                  onClick={() =>
+                    onCreateWorkOrder(
+                      (selected.linked_asset_id ?? assetIdByName.get(selected.label))!,
+                    )
+                  }
                   className="rounded border border-slate-300 px-3 py-1.5 text-center text-xs font-medium text-slate-700 hover:bg-slate-50"
                 >
                   + Create work order
@@ -487,13 +496,21 @@ export function MapView({
             </div>
             <div className="mt-3 flex flex-col gap-1.5">
               <Link
-                to="/work-orders"
+                to={
+                  bid
+                    ? `/work-orders?building=${bid}&buildingName=${encodeURIComponent(selectedBuildingName)}`
+                    : '/work-orders'
+                }
                 className="rounded bg-slate-800 px-3 py-1.5 text-center text-xs font-medium text-white hover:bg-slate-700"
               >
                 Work orders →
               </Link>
               <Link
-                to="/assets"
+                to={
+                  bid
+                    ? `/assets?building=${bid}&buildingName=${encodeURIComponent(selectedBuildingName)}`
+                    : '/assets'
+                }
                 className="rounded border border-slate-300 px-3 py-1.5 text-center text-xs font-medium text-slate-700 hover:bg-slate-50"
               >
                 Assets →

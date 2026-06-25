@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   ASSET_STATUSES,
   CRITICALITIES,
@@ -34,6 +34,10 @@ export function AssetsPage() {
   const update = useUpdateAsset();
   const remove = useDeleteAsset();
 
+  const [searchParams, setSearchParams] = useSearchParams();
+  const buildingParam = searchParams.get('building');
+  const buildingNameParam = searchParams.get('buildingName');
+
   const [categoryFilter, setCategoryFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [editing, setEditing] = useState<Asset | null>(null);
@@ -44,20 +48,45 @@ export function AssetsPage() {
   const locName = (id: string | null) =>
     id ? (locations.data?.find((l) => l.id === id)?.name ?? '—') : '—';
 
+  // IDs of locations that belong to the selected building filter (plan §5.4).
+  const buildingLocationIds = useMemo(() => {
+    if (!buildingParam) return null;
+    return new Set(
+      (locations.data ?? [])
+        .filter((l) => l.building_id === buildingParam)
+        .map((l) => l.id),
+    );
+  }, [buildingParam, locations.data]);
+
   const rows = useMemo(
     () =>
       (assets.data ?? []).filter(
         (a) =>
           (!categoryFilter || a.category_id === categoryFilter) &&
-          (!statusFilter || a.status === statusFilter),
+          (!statusFilter || a.status === statusFilter) &&
+          (!buildingLocationIds ||
+            (a.location_id != null && buildingLocationIds.has(a.location_id))),
       ),
-    [assets.data, categoryFilter, statusFilter],
+    [assets.data, categoryFilter, statusFilter, buildingLocationIds],
   );
 
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-slate-800">Assets</h1>
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-800">Assets</h1>
+          {buildingParam && (
+            <div className="mt-1 flex items-center gap-2 text-sm text-slate-500">
+              <span>Building: {buildingNameParam ?? buildingParam}</span>
+              <button
+                onClick={() => setSearchParams({}, { replace: true })}
+                className="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-500 hover:bg-slate-200"
+              >
+                Clear filter ×
+              </button>
+            </div>
+          )}
+        </div>
         {canEdit && (
           <Button
             onClick={() => {
