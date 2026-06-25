@@ -286,6 +286,12 @@ supabase db push --db-url "$SUPABASE_DB_URL"
 Ask the user: **"Ready to cut a release?"** before proceeding. (They may want
 to batch multiple PRs before releasing.)
 
+> **Release rules — read before touching anything:**
+> 1. **Claude cannot push tags.** The user must run `git tag` and `git push origin release/vX.Y.Z` from their machine. Give them the exact SHA.
+> 2. **Tag the merge commit that's already on GitHub** — never a local-only commit. Get the SHA with `git rev-parse origin/main`.
+> 3. **Never ask the user to push `main`** — it's already there from the merge step.
+> 4. **Do not create a release commit locally.** If a version bump is needed, either skip it (tag the merge commit as-is) or put it in the next PR.
+
 ### 6a. Determine the next version
 
 ```bash
