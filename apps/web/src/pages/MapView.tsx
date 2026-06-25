@@ -89,6 +89,9 @@ export function MapView({
   // Cache static files once fetched so live-update effects can re-merge without re-fetching.
   const staticBuildingsRef = useRef<GeoJSON.FeatureCollection | null>(null);
   const staticFloorsRef = useRef<GeoJSON.FeatureCollection | null>(null);
+  // Set to true once map.on('load') fires — used by live-update effects so they don't
+  // rely on map.loaded() which tracks tile loading, not the style load event.
+  const mapStyleLoadedRef = useRef(false);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -110,6 +113,7 @@ export function MapView({
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
 
     map.on('load', async () => {
+      mapStyleLoadedRef.current = true;
       const [staticBuildings, areas, meta, floorsData] = await Promise.all([
         fetch(`${base}/buildings.geojson`).then((r) => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })),
         fetch(`${base}/areas.geojson`).then((r) => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })),
@@ -125,16 +129,13 @@ export function MapView({
       const pois: GeoJSON.FeatureCollection =
         poisGeoJSONRef.current ?? (await fetch(`${base}/pois.geojson`).then((r) => r.json()));
 
-      // Cache the static file so the live-update effect can re-merge later.
+      // Cache the static file so the live-update effect can use it as a fallback.
       staticBuildingsRef.current = staticBuildings;
 
-      // Merge DB building footprints with the bundled static file additively.
-      // DB features render on top of static ones; static outlines are always kept
-      // so seed-file geometry is never silently dropped.
+      // Use DB building footprints when available; fall back to the bundled static
+      // file for demo mode or an unseeded instance. Same pattern as POIs above.
       const dbBuildings = buildingsGeoJSONRef.current;
-      const buildings: GeoJSON.FeatureCollection = dbBuildings
-        ? { type: 'FeatureCollection', features: [...staticBuildings.features, ...dbBuildings.features] }
-        : staticBuildings;
+      const buildings: GeoJSON.FeatureCollection = dbBuildings ?? staticBuildings;
 
       // Optional subtle satellite basemap — grayscale + faded so it reads as
       // ground context behind the vectors, not a competing layer. Church-specific
@@ -221,11 +222,9 @@ export function MapView({
         })),
       };
       staticFloorsRef.current = staticFloorsGeoJSON;
-      // Merge with DB floors if available.
+      // Use DB floor outlines when available; fall back to static for demo/unseeded.
       const dbFloors = floorsGeoJSONRef.current;
-      const mergedFloors: GeoJSON.FeatureCollection = dbFloors
-        ? { type: 'FeatureCollection', features: [...staticFloorsGeoJSON.features, ...dbFloors.features] }
-        : staticFloorsGeoJSON;
+      const mergedFloors: GeoJSON.FeatureCollection = dbFloors ?? staticFloorsGeoJSON;
       map.addSource('floors', { type: 'geojson', data: mergedFloors });
       map.addLayer({
         id: 'floor-fill',
@@ -364,6 +363,7 @@ export function MapView({
     });
 
     return () => {
+      mapStyleLoadedRef.current = false;
       map.remove();
       maplibregl.removeProtocol('pmtiles');
     };
@@ -380,33 +380,44 @@ export function MapView({
     }
   }, [poisGeoJSON]);
 
-  // When DB building footprints arrive after load, re-merge with the static file
-  // and push the combined result to the map source.
+  // When DB building footprints arrive (before or after map load), merge with static
+  // and push to the source. If the map hasn't loaded yet we defer via map.once('load')
+  // so we don't miss the window between the query resolving and the load event firing.
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
-    const src = map.getSource('buildings');
-    if (!src || !('setData' in src)) return;
-    const staticBuildings = staticBuildingsRef.current;
-    if (!staticBuildings) return; // map hasn't finished loading yet; the on('load') handler will use the ref
-    const merged: GeoJSON.FeatureCollection = buildingsGeoJSON
-      ? { type: 'FeatureCollection', features: [...staticBuildings.features, ...buildingsGeoJSON.features] }
-      : staticBuildings;
-    (src as { setData(d: GeoJSON.FeatureCollection): void }).setData(merged);
+    function apply() {
+      const src = map!.getSource('buildings');
+      if (!src || !('setData' in src)) return;
+      const data: GeoJSON.FeatureCollection =
+        buildingsGeoJSON ?? staticBuildingsRef.current ?? { type: 'FeatureCollection', features: [] };
+      (src as { setData(d: GeoJSON.FeatureCollection): void }).setData(data);
+    }
+    if (mapStyleLoadedRef.current) {
+      apply();
+    } else {
+      map.once('load', apply);
+      return () => { map.off('load', apply); };
+    }
   }, [buildingsGeoJSON]);
 
-  // When DB floor outlines arrive after load, merge with static and update the source.
+  // Same pattern for floor outlines.
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
-    const src = map.getSource('floors');
-    if (!src || !('setData' in src)) return;
-    const staticFloors = staticFloorsRef.current;
-    if (!staticFloors) return;
-    const merged: GeoJSON.FeatureCollection = floorsGeoJSON
-      ? { type: 'FeatureCollection', features: [...staticFloors.features, ...floorsGeoJSON.features] }
-      : staticFloors;
-    (src as { setData(d: GeoJSON.FeatureCollection): void }).setData(merged);
+    function apply() {
+      const src = map!.getSource('floors');
+      if (!src || !('setData' in src)) return;
+      const data: GeoJSON.FeatureCollection =
+        floorsGeoJSON ?? staticFloorsRef.current ?? { type: 'FeatureCollection', features: [] };
+      (src as { setData(d: GeoJSON.FeatureCollection): void }).setData(data);
+    }
+    if (mapStyleLoadedRef.current) {
+      apply();
+    } else {
+      map.once('load', apply);
+      return () => { map.off('load', apply); };
+    }
   }, [floorsGeoJSON]);
 
   // Apply the level filter to POIs, floor outlines, and image overlays.

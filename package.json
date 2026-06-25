@@ -26,6 +26,7 @@
     "map:areas": "node map-data/place-server.mjs",
     "facility:export": "node scripts/facility-export.mjs",
     "facility:import": "node scripts/facility-import.mjs",
+    "geo:import": "node scripts/import-geo.mjs",
     "screenshots": "node scripts/screenshot.mjs"
   },
   "devDependencies": {

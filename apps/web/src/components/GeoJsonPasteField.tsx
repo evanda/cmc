@@ -21,7 +21,7 @@ export function GeoJsonPasteField({
   value,
   onChange,
   validate,
-  center = [-80.428, 36.09],
+  center = [-84.6879, 33.9441],
   zoom = 17,
 }: {
   label: string;
@@ -70,6 +70,12 @@ export function GeoJsonPasteField({
         const features = parsed['features'] as Record<string, unknown>[] | undefined;
         if (!features?.length) { setError('FeatureCollection is empty'); return; }
         parsed = features[0];
+      }
+      // Auto-unwrap Feature → its geometry so we always store a raw geometry object.
+      if (parsed['type'] === 'Feature') {
+        const geom = parsed['geometry'] as Record<string, unknown> | undefined;
+        if (!geom) { setError('Feature has no geometry'); return; }
+        parsed = geom;
       }
       const validationError = validate ? validate(parsed) : null;
       if (validationError) {

@@ -94,7 +94,7 @@ export function BuildingsPage() {
   );
 }
 
-const CAMPUS_DEFAULT: [number, number] = [-80.428, 36.09];
+const CAMPUS_DEFAULT: [number, number] = [-84.6879, 33.9441];
 
 function polygonCentroid(coords: number[][][]): [number, number] | null {
   const ring = coords[0];
