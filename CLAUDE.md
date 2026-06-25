@@ -30,6 +30,12 @@ mobile**, **single-tenant per deployment** (each church gets its own instance).
 - Keep church-specific values out of code (config/seed only).
 - Prefer **complete, runnable** output over scaffolding stubs.
 - **Ask before** adding dependencies not named in the plan.
+- **Always open a PR when done with a batch of fixes** — use `mcp__github__create_pull_request`
+  targeting `main`. Close the session by posting both the GitHub PR URL and the Vercel preview
+  URL so the user has a live environment to test against before merging. Vercel preview URLs
+  follow the pattern `https://cmc-git-<branch-slug>-evanda.vercel.app` where `<branch-slug>`
+  is the branch name with `/` → `-` and other special chars stripped
+  (e.g. `claude/confident-ride-ol6ulb` → `cmc-git-claude-confident-ride-ol6ulb-evanda.vercel.app`).
 
 ## Workflow
 
