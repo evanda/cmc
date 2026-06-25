@@ -156,7 +156,6 @@ function LocationForm({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const floors = useFloors(buildingId || undefined);
-  const selectedBuilding = buildings.find((b) => b.id === buildingId);
 
   return (
     <Modal title={initial ? 'Edit location' : 'New location'} onClose={onClose}>
