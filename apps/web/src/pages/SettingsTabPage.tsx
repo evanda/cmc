@@ -1,14 +1,14 @@
 import { useState } from 'react';
-import { MapPage } from './MapPage';
-import { BuildingsPage } from './BuildingsPage';
-import { FloorsPage } from './FloorsPage';
-import { LocationsPage } from './LocationsPage';
+import { SettingsPage } from './SettingsPage';
+import { UsersPage } from './UsersPage';
+import { useAuth } from '../auth/AuthProvider';
 
-const TABS = ['Map', 'Buildings', 'Floors', 'Locations'] as const;
+const TABS = ['Settings', 'Users'] as const;
 type Tab = (typeof TABS)[number];
 
-export function CampusPage() {
-  const [tab, setTab] = useState<Tab>('Map');
+export function SettingsTabPage() {
+  const { role } = useAuth();
+  const [tab, setTab] = useState<Tab>('Settings');
 
   return (
     <div>
@@ -27,10 +27,8 @@ export function CampusPage() {
           </button>
         ))}
       </div>
-      {tab === 'Map' && <MapPage />}
-      {tab === 'Buildings' && <BuildingsPage />}
-      {tab === 'Floors' && <FloorsPage />}
-      {tab === 'Locations' && <LocationsPage />}
+      {tab === 'Settings' && <SettingsPage />}
+      {tab === 'Users' && role === 'admin' && <UsersPage />}
     </div>
   );
 }

@@ -1,14 +1,13 @@
 import { useState } from 'react';
-import { MapPage } from './MapPage';
-import { BuildingsPage } from './BuildingsPage';
-import { FloorsPage } from './FloorsPage';
-import { LocationsPage } from './LocationsPage';
+import { AssetsPage } from './AssetsPage';
+import { PmSchedulesPage } from './PmSchedulesPage';
+import { FleetPage } from './FleetPage';
 
-const TABS = ['Map', 'Buildings', 'Floors', 'Locations'] as const;
+const TABS = ['Assets', 'PM Schedules', 'Fleet'] as const;
 type Tab = (typeof TABS)[number];
 
-export function CampusPage() {
-  const [tab, setTab] = useState<Tab>('Map');
+export function AssetsTabPage() {
+  const [tab, setTab] = useState<Tab>('Assets');
 
   return (
     <div>
@@ -27,10 +26,9 @@ export function CampusPage() {
           </button>
         ))}
       </div>
-      {tab === 'Map' && <MapPage />}
-      {tab === 'Buildings' && <BuildingsPage />}
-      {tab === 'Floors' && <FloorsPage />}
-      {tab === 'Locations' && <LocationsPage />}
+      {tab === 'Assets' && <AssetsPage />}
+      {tab === 'PM Schedules' && <PmSchedulesPage />}
+      {tab === 'Fleet' && <FleetPage />}
     </div>
   );
 }

@@ -6,19 +6,14 @@ import { LoginPage } from './pages/LoginPage';
 import { SetupWizardPage } from './pages/SetupWizardPage';
 import { AcceptInvitePage } from './pages/AcceptInvitePage';
 import { DashboardPage } from './pages/DashboardPage';
-import { AssetsPage } from './pages/AssetsPage';
+import { AssetsTabPage } from './pages/AssetsTabPage';
 import { AssetDetailPage } from './pages/AssetDetailPage';
 import { AssetByTokenPage } from './pages/AssetByTokenPage';
 import { WorkOrdersPage } from './pages/WorkOrdersPage';
 import { CampusPage } from './pages/CampusPage';
 import { VendorsPage } from './pages/VendorsPage';
-import { MapPage } from './pages/MapPage';
-import { UsersPage } from './pages/UsersPage';
-import { PmSchedulesPage } from './pages/PmSchedulesPage';
 import { ReportsPage } from './pages/ReportsPage';
-
-import { SettingsPage } from './pages/SettingsPage';
-import { FleetPage } from './pages/FleetPage';
+import { SettingsTabPage } from './pages/SettingsTabPage';
 
 // Ensures org_settings exists before rendering the main app layout.
 // If the DB row is missing (fresh deployment), redirects to /setup.
@@ -64,23 +59,23 @@ export function App() {
           <Route element={<OrgGuard />}>
             <Route element={<Layout />}>
               <Route index element={<DashboardPage />} />
-              <Route path="map" element={<MapPage />} />
+              <Route path="campus" element={<CampusPage />} />
+              <Route path="map" element={<Navigate to="/campus" replace />} />
               <Route path="requests" element={<Navigate to="/work-orders" replace />} />
               <Route path="work-orders" element={<WorkOrdersPage />} />
-              <Route path="pm" element={<PmSchedulesPage />} />
-              <Route path="reports" element={<ReportsPage />} />
-              <Route path="assets" element={<AssetsPage />} />
+              <Route path="assets" element={<AssetsTabPage />} />
               <Route path="assets/:id" element={<AssetDetailPage />} />
               <Route path="a/:token" element={<AssetByTokenPage />} />
+              <Route path="pm" element={<Navigate to="/assets" replace />} />
+              <Route path="fleet" element={<Navigate to="/assets" replace />} />
               <Route path="vendors" element={<VendorsPage />} />
-              <Route path="users" element={<UsersPage />} />
-              <Route path="campus" element={<CampusPage />} />
+              <Route path="reports" element={<ReportsPage />} />
+              <Route path="settings" element={<SettingsTabPage />} />
+              <Route path="users" element={<Navigate to="/settings" replace />} />
               <Route path="buildings" element={<Navigate to="/campus" replace />} />
               <Route path="floors" element={<Navigate to="/campus" replace />} />
               <Route path="locations" element={<Navigate to="/campus" replace />} />
               <Route path="expiry" element={<Navigate to="/reports" replace />} />
-              <Route path="fleet" element={<FleetPage />} />
-              <Route path="settings" element={<SettingsPage />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
           </Route>
