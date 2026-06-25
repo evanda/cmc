@@ -19,17 +19,6 @@ interface SelectedPoi {
 }
 
 
-interface FloorData {
-  building_code: string;
-  building: string;
-  name: string;
-  level: number;
-  floorplan_image_url: string | null;
-  boundary_geojson: GeoJSON.Polygon | null;
-  geo_corners_geojson: GeoJSON.Polygon | null;
-  rotation_deg: number;
-}
-
 // Single-map, level-switchable indoor model (plan §5). A neutral background +
 // georeferenced footprints/POIs renders fully offline; an optional subtle
 // grayscale satellite basemap (meta.json → basemap_tiles) adds ground context.
@@ -120,11 +109,7 @@ export function MapView({
   const floorsGeoJSONRef = useRef(floorsGeoJSON);
   floorsGeoJSONRef.current = floorsGeoJSON;
   // Cache static files once fetched so live-update effects can re-merge without re-fetching.
-  const staticBuildingsRef = useRef<GeoJSON.FeatureCollection | null>(null);
-  const staticFloorsRef = useRef<GeoJSON.FeatureCollection | null>(null);
-  // Set to true once map.on('load') fires — used by live-update effects so they don't
-  // rely on map.loaded() which tracks tile loading, not the style load event.
-  const mapStyleLoadedRef = useRef(false);
+  const mapLoadedRef = useRef(false);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -146,34 +131,17 @@ export function MapView({
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
 
     map.on('load', async () => {
-      mapStyleLoadedRef.current = true;
-      const [staticBuildings, areas, meta, floorsData] = await Promise.all([
-        fetch(`${base}/buildings.geojson`).then((r) => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })),
-        fetch(`${base}/areas.geojson`).then((r) => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })),
-        fetch(`${base}/meta.json`)
-          .then((r) => r.json())
-          .catch(() => ({})),
-        fetch(`${base}/floors.json`)
-          .then((r) => r.json())
-          .catch(() => []),
-      ]);
-      // Use DB-sourced pois if available (seeded via `pnpm assets:seed`), otherwise
-      // fall back to the bundled static file (demo mode or unseeded instance).
+      // Only meta.json is loaded from the static facility directory — it carries
+      // the optional basemap tile URL. All geographic data (buildings, floors, POIs)
+      // comes exclusively from the DB via props.
+      const meta = await fetch(`${base}/meta.json`).then((r) => r.json()).catch(() => ({}));
+
       const pois: GeoJSON.FeatureCollection =
-        poisGeoJSONRef.current ?? (await fetch(`${base}/pois.geojson`).then((r) => r.json()));
+        poisGeoJSONRef.current ?? { type: 'FeatureCollection', features: [] };
 
-      // Cache the static file so the live-update effect can use it as a fallback.
-      staticBuildingsRef.current = staticBuildings;
+      const buildings: GeoJSON.FeatureCollection =
+        buildingsGeoJSONRef.current ?? { type: 'FeatureCollection', features: [] };
 
-      // Use DB building footprints when available; fall back to the bundled static
-      // file for demo mode or an unseeded instance. Same pattern as POIs above.
-      const dbBuildings = buildingsGeoJSONRef.current;
-      const buildings: GeoJSON.FeatureCollection = dbBuildings ?? staticBuildings;
-
-      // Optional subtle satellite basemap — grayscale + faded so it reads as
-      // ground context behind the vectors, not a competing layer. Church-specific
-      // (configured per facility in meta.json, plan §7.6); generic in code.
-      // Supports pmtiles:// archives (no tile server needed) and https:// XYZ templates.
       const basemap = resolveBasemapUrl(meta?.basemap_tiles, base);
       if (basemap) {
         map.addSource(
@@ -208,20 +176,6 @@ export function MapView({
         map.addControl(new maplibregl.AttributionControl({ compact: true }));
       }
 
-      map.addSource('areas', { type: 'geojson', data: areas });
-      map.addLayer({
-        id: 'area-fill',
-        type: 'fill',
-        source: 'areas',
-        paint: { 'fill-color': '#86efac', 'fill-opacity': 0.35 },
-      });
-      map.addLayer({
-        id: 'area-line',
-        type: 'line',
-        source: 'areas',
-        paint: { 'line-color': '#16a34a', 'line-dasharray': [2, 1] },
-      });
-
       map.addSource('buildings', { type: 'geojson', data: buildings });
       map.addLayer({
         id: 'building-fill',
@@ -236,29 +190,9 @@ export function MapView({
         paint: { 'line-color': '#475569', 'line-width': 2 },
       });
 
-      // Per-level floor outlines. Prefers boundary_geojson (any complex polygon) over
-      // geo_corners_geojson (the 4-corner image-overlay quad) — at site level: hidden.
-      const validFloors = (floorsData as FloorData[]).filter(
-        (f) => f.boundary_geojson ?? f.geo_corners_geojson,
-      );
-      const staticFloorsGeoJSON: GeoJSON.FeatureCollection = {
-        type: 'FeatureCollection',
-        features: validFloors.map((f) => ({
-          type: 'Feature' as const,
-          geometry: (f.boundary_geojson ?? f.geo_corners_geojson) as GeoJSON.Polygon,
-          properties: {
-            level: f.level,
-            building: f.building,
-            building_code: f.building_code,
-            name: f.name,
-          },
-        })),
-      };
-      staticFloorsRef.current = staticFloorsGeoJSON;
-      // Use DB floor outlines when available; fall back to static for demo/unseeded.
-      const dbFloors = floorsGeoJSONRef.current;
-      const mergedFloors: GeoJSON.FeatureCollection = dbFloors ?? staticFloorsGeoJSON;
-      map.addSource('floors', { type: 'geojson', data: mergedFloors });
+      const floors: GeoJSON.FeatureCollection =
+        floorsGeoJSONRef.current ?? { type: 'FeatureCollection', features: [] };
+      map.addSource('floors', { type: 'geojson', data: floors });
       map.addLayer({
         id: 'floor-fill',
         type: 'fill',
@@ -274,40 +208,7 @@ export function MapView({
         layout: { visibility: 'none' },
       });
 
-      // Floorplan image overlays: one image source + raster layer per floor that
-      // has a drawing (floorplan_image_url is non-null). Shown only when the
-      // matching level is active (plan §5.1 — image source with 4 corner coords).
-      const imageOverlays: { layerId: string; level: number }[] = [];
-      for (const floor of floorsData as FloorData[]) {
-        if (!floor.floorplan_image_url || !floor.geo_corners_geojson) continue;
-        const coords = floor.geo_corners_geojson.coordinates[0];
-        if (coords.length < 4) continue;
-        const sourceId = `floor-img-src-${floor.building_code}-${floor.level}`;
-        const layerId = `floor-img-${floor.building_code}-${floor.level}`;
-        const url = /^https?:\/\//.test(floor.floorplan_image_url)
-          ? floor.floorplan_image_url
-          : `${base}/${floor.floorplan_image_url}`;
-        // MapLibre image source takes [topLeft, topRight, bottomRight, bottomLeft].
-        map.addSource(sourceId, {
-          type: 'image',
-          url,
-          coordinates: [
-            coords[0] as [number, number],
-            coords[1] as [number, number],
-            coords[2] as [number, number],
-            coords[3] as [number, number],
-          ],
-        });
-        map.addLayer({
-          id: layerId,
-          type: 'raster',
-          source: sourceId,
-          paint: { 'raster-opacity': 0.8 },
-          layout: { visibility: 'none' },
-        });
-        imageOverlays.push({ layerId, level: floor.level });
-      }
-      floorImageLayersRef.current = imageOverlays;
+      floorImageLayersRef.current = [];
 
       map.addSource('pois', { type: 'geojson', data: pois });
       map.addLayer({
@@ -379,14 +280,15 @@ export function MapView({
       }
       map.fitBounds(b, { padding: 60, duration: 0 });
 
-      // Discover levels: union of POI levels + floor levels (plan §5.2).
+      // Discover levels from DB POIs and DB floors.
       const poiLevels = [
         ...new Set(pois.features.map((f: GeoJSON.Feature) => f.properties?.level)),
       ].filter((x): x is number => typeof x === 'number');
-      const floorLevels = (floorsData as FloorData[])
-        .map((f) => f.level)
+      const floorLevels = floors.features
+        .map((f: GeoJSON.Feature) => f.properties?.level)
         .filter((x): x is number => typeof x === 'number');
       setLevels(buildLevels(poiLevels, floorLevels));
+      mapLoadedRef.current = true;
 
       // Expose for the screenshot harness (project a POI → pixel to click it).
       if (import.meta.env.VITE_DEMO) {
@@ -396,7 +298,6 @@ export function MapView({
     });
 
     return () => {
-      mapStyleLoadedRef.current = false;
       map.remove();
       maplibregl.removeProtocol('pmtiles');
     };
@@ -413,44 +314,26 @@ export function MapView({
     }
   }, [poisGeoJSON]);
 
-  // When DB building footprints arrive (before or after map load), merge with static
-  // and push to the source. If the map hasn't loaded yet we defer via map.once('load')
-  // so we don't miss the window between the query resolving and the load event firing.
+  // When DB building footprints arrive after load, push them to the map source.
   useEffect(() => {
     const map = mapRef.current;
-    if (!map) return;
-    function apply() {
-      const src = map!.getSource('buildings');
-      if (!src || !('setData' in src)) return;
-      const data: GeoJSON.FeatureCollection =
-        buildingsGeoJSON ?? staticBuildingsRef.current ?? { type: 'FeatureCollection', features: [] };
-      (src as { setData(d: GeoJSON.FeatureCollection): void }).setData(data);
-    }
-    if (mapStyleLoadedRef.current) {
-      apply();
-    } else {
-      map.once('load', apply);
-      return () => { map.off('load', apply); };
-    }
+    if (!map || !mapLoadedRef.current) return;
+    const src = map.getSource('buildings');
+    if (!src || !('setData' in src)) return;
+    (src as { setData(d: GeoJSON.FeatureCollection): void }).setData(
+      buildingsGeoJSON ?? { type: 'FeatureCollection', features: [] },
+    );
   }, [buildingsGeoJSON]);
 
-  // Same pattern for floor outlines.
+  // When DB floor outlines arrive after load, push them to the map source.
   useEffect(() => {
     const map = mapRef.current;
-    if (!map) return;
-    function apply() {
-      const src = map!.getSource('floors');
-      if (!src || !('setData' in src)) return;
-      const data: GeoJSON.FeatureCollection =
-        floorsGeoJSON ?? staticFloorsRef.current ?? { type: 'FeatureCollection', features: [] };
-      (src as { setData(d: GeoJSON.FeatureCollection): void }).setData(data);
-    }
-    if (mapStyleLoadedRef.current) {
-      apply();
-    } else {
-      map.once('load', apply);
-      return () => { map.off('load', apply); };
-    }
+    if (!map || !mapLoadedRef.current) return;
+    const src = map.getSource('floors');
+    if (!src || !('setData' in src)) return;
+    (src as { setData(d: GeoJSON.FeatureCollection): void }).setData(
+      floorsGeoJSON ?? { type: 'FeatureCollection', features: [] },
+    );
   }, [floorsGeoJSON]);
 
   // Apply the level filter to POIs, floor outlines, and image overlays.
@@ -459,11 +342,6 @@ export function MapView({
     if (!map || !map.getLayer('poi')) return;
 
     map.setFilter('poi', buildPoiFilter(level, hiddenTypesRef.current) as Parameters<typeof map.setFilter>[1]);
-
-    // Areas only visible at site level (exterior features).
-    const areaVis = level === 'site' ? 'visible' : 'none';
-    if (map.getLayer('area-fill')) map.setLayoutProperty('area-fill', 'visibility', areaVis);
-    if (map.getLayer('area-line')) map.setLayoutProperty('area-line', 'visibility', areaVis);
 
     // Floor outlines: visible only for a specific level, filtered to that level.
     if (level !== 'site') {
