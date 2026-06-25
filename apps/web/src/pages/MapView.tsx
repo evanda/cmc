@@ -89,6 +89,9 @@ export function MapView({
   // Cache static files once fetched so live-update effects can re-merge without re-fetching.
   const staticBuildingsRef = useRef<GeoJSON.FeatureCollection | null>(null);
   const staticFloorsRef = useRef<GeoJSON.FeatureCollection | null>(null);
+  // Set to true once map.on('load') fires — used by live-update effects so they don't
+  // rely on map.loaded() which tracks tile loading, not the style load event.
+  const mapStyleLoadedRef = useRef(false);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -110,6 +113,7 @@ export function MapView({
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
 
     map.on('load', async () => {
+      mapStyleLoadedRef.current = true;
       const [staticBuildings, areas, meta, floorsData] = await Promise.all([
         fetch(`${base}/buildings.geojson`).then((r) => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })),
         fetch(`${base}/areas.geojson`).then((r) => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })),
@@ -364,6 +368,7 @@ export function MapView({
     });
 
     return () => {
+      mapStyleLoadedRef.current = false;
       map.remove();
       maplibregl.removeProtocol('pmtiles');
     };
@@ -395,7 +400,7 @@ export function MapView({
         : staticBuildings;
       (src as { setData(d: GeoJSON.FeatureCollection): void }).setData(merged);
     }
-    if (map.loaded()) {
+    if (mapStyleLoadedRef.current) {
       apply();
     } else {
       map.once('load', apply);
@@ -416,7 +421,7 @@ export function MapView({
         : staticFloors;
       (src as { setData(d: GeoJSON.FeatureCollection): void }).setData(merged);
     }
-    if (map.loaded()) {
+    if (mapStyleLoadedRef.current) {
       apply();
     } else {
       map.once('load', apply);
