@@ -24,9 +24,6 @@ feedback_issues.json
 # Generated screenshots (regenerate via `pnpm screenshots`)
 screenshots/
 
-# Web map data — generated from map-data/ by scripts/sync-map-data.mjs (single
-# source of truth is map-data/facilities/; this copy is rebuilt on dev/build)
-apps/web/public/facilities/
 
 # Placement-tool save backups (place-server.mjs writes pois.geojson.bak)
 map-data/facilities/*/*.bak
