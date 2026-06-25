@@ -12,6 +12,23 @@ migrations, and cut a release.
 
 ---
 
+## Standing Rules (apply to ALL development, not just syncme)
+
+1. **Open a PR immediately on the first push to any feature branch.** Don't wait
+   until a "batch" is done. The PR is what triggers Vercel to build a preview —
+   without it, there is no testable URL.
+
+2. **Always give the user the Vercel preview URL** after any push. Fetch it from
+   PR comments via `mcp__github__pull_request_read` (method `get_comments`) —
+   look for the Vercel bot comment containing the `*.vercel.app` URL. Retry after
+   ~30 s if the build hasn't finished. Never say "Vercel will pick it up" and
+   stop — either give the URL or give the PR link with an explicit ETA.
+
+3. **Never end a session without a working preview URL.** If the build is still
+   running, say so, give the PR link, and offer to wait.
+
+---
+
 ## Execution Guide for Agents
 
 **Trigger:** the user saying "syncme" (alone or with context like "syncme

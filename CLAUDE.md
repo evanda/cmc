@@ -30,13 +30,16 @@ mobile**, **single-tenant per deployment** (each church gets its own instance).
 - Keep church-specific values out of code (config/seed only).
 - Prefer **complete, runnable** output over scaffolding stubs.
 - **Ask before** adding dependencies not named in the plan.
-- **Always open a PR when done with a batch of fixes** — use `mcp__github__create_pull_request`
-  targeting `main`. Then fetch the Vercel preview URL from the PR's status checks using
-  `mcp__github__pull_request_read` (method `get_checks` or `get`) — Vercel posts it as a
-  deployment status once the build completes. Include both the GitHub PR URL and the Vercel
-  preview URL in your closing message. Do **not** guess or construct the preview URL from the
-  branch name — Vercel uses an opaque hash (e.g. `https://cmc-8ybzivewy-church-maintenance-coordinator.vercel.app`)
-  that must be read from the PR.
+- **Open a PR immediately on the first push to any feature branch** — use `mcp__github__create_pull_request`
+  targeting `main`. Don't wait until a "batch" is done; open the PR on first push so a Vercel
+  preview exists throughout development.
+- **Always provide the Vercel preview URL** — after creating or pushing to a PR, fetch the URL
+  from PR comments using `mcp__github__pull_request_read` (method `get_comments`) — Vercel posts
+  it as a bot comment once the build completes. Poll until the comment appears (retry after ~30s).
+  Include the preview URL in every reply that touches deployed code. Do **not** guess or construct
+  the URL from the branch name — Vercel uses an opaque hash that must be read from the PR comment.
+- **Never close a session without a working preview URL.** If the build hasn't finished, say so
+  and give the PR link so the user can find it themselves. Do not end on "Vercel will pick it up."
 
 ## Workflow
 
