@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { ExpiryBoardPage } from './ExpiryBoardPage';
 import {
   capitalForecast,
@@ -60,7 +61,11 @@ function TabBar({ tab, setTab }: { tab: Tab; setTab: (t: Tab) => void }) {
 }
 
 export function ReportsPage() {
-  const [tab, setTab] = useState<Tab>('Spend & Forecast');
+  const [searchParams] = useSearchParams();
+  const initialTab = TABS.includes(searchParams.get('tab') as Tab)
+    ? (searchParams.get('tab') as Tab)
+    : 'Spend & Forecast';
+  const [tab, setTab] = useState<Tab>(initialTab);
   const { data: org } = useOrgSettings();
   const currency = org?.currency ?? 'USD';
   const money = (n: number) =>

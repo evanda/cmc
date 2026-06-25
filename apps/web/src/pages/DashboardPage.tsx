@@ -92,7 +92,7 @@ export function DashboardPage() {
         <StatCard label="Locations" value={locations.data?.length ?? '—'} to="/campus" />
       </div>
       <Link
-        to="/reports"
+        to="/reports?tab=Expiry"
         className="block rounded-lg border border-slate-200 bg-white px-5 py-4 text-sm transition hover:border-slate-400"
       >
         <span className="font-medium text-slate-700">Contracts & warranties: </span>
