@@ -64,7 +64,13 @@ export function GeoJsonPasteField({
       return;
     }
     try {
-      const parsed = JSON.parse(text) as Record<string, unknown>;
+      let parsed = JSON.parse(text) as Record<string, unknown>;
+      // Auto-unwrap FeatureCollection → first Feature (what geojson.io copies)
+      if (parsed['type'] === 'FeatureCollection') {
+        const features = parsed['features'] as Record<string, unknown>[] | undefined;
+        if (!features?.length) { setError('FeatureCollection is empty'); return; }
+        parsed = features[0];
+      }
       const validationError = validate ? validate(parsed) : null;
       if (validationError) {
         setError(validationError);
@@ -107,7 +113,7 @@ export function GeoJsonPasteField({
         <textarea
           className={inputClass + ' font-mono text-xs'}
           rows={4}
-          placeholder='Paste GeoJSON here after drawing on geojson.io…'
+          placeholder='Paste anything from geojson.io — FeatureCollection, Feature, or plain geometry. FeatureCollections are unwrapped to the first feature automatically.'
           value={raw}
           onChange={(e) => handleChange(e.target.value)}
         />

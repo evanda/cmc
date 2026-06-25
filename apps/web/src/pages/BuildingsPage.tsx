@@ -181,7 +181,7 @@ function BuildingForm({
         </Field>
         <GeoJsonPasteField
           label="Building footprint (optional)"
-          hint="Draw the building outline on geojson.io, then paste the GeoJSON back."
+          hint="Draw the building outline on geojson.io and paste the result back — FeatureCollection, Feature, or plain Polygon all work."
           value={footprint}
           onChange={setFootprint}
           validate={validatePolygon}

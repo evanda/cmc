@@ -214,8 +214,8 @@ function FloorForm({
           />
         </Field>
         <GeoJsonPasteField
-          label="Floor corners (optional)"
-          hint="Draw a 4-corner polygon on geojson.io that matches this floor's footprint. Used to overlay the floorplan image on the map."
+          label="Floor image corners (optional)"
+          hint="MapLibre image overlays require exactly 4 corners — draw a 4-point polygon on geojson.io tracing the image's top-left → top-right → bottom-right → bottom-left corners over the building footprint. More complex shapes are not supported here."
           value={corners}
           onChange={setCorners}
           validate={validateCorners}
