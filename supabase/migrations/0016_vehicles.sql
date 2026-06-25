@@ -42,7 +42,7 @@ alter table public.vehicles enable row level security;
 
 -- All authenticated users can read.
 create policy vehicles_select on public.vehicles
-  for select using (auth.role() = 'authenticated');
+  for select to authenticated using (true);
 
 -- Only staff (admin / technician) can create, update, or delete.
 create policy vehicles_write on public.vehicles

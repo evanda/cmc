@@ -31,7 +31,8 @@ grant select, insert, update, delete
      public.vendors, public.vendor_documents, public.contacts,
      public.service_contracts, public.pois,
      public.pm_schedules, public.task_templates,
-     public.meters, public.meter_readings
+     public.meters, public.meter_readings,
+     public.vehicles
   to authenticated;
 
 -- Shorthand: set the JWT sub claim so auth.uid() returns this value.
