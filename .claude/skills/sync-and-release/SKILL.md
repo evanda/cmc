@@ -337,9 +337,11 @@ git config user.email noreply@anthropic.com && git config user.name Claude
 git tag release/vX.Y.Z
 ```
 
-Then tell the user to run:
+Claude's git credentials cannot push tags (403). The user must create and push the tag
+from their own machine. Give them the exact SHA to tag (the squash-merge commit):
 
 ```bash
+git tag release/vX.Y.Z <SHA>
 git push origin release/vX.Y.Z
 ```
 
