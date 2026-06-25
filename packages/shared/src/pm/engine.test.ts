@@ -51,6 +51,17 @@ describe('upcomingDueDate', () => {
       '2027-04-15T00:00:00.000Z',
     );
   });
+
+  it('meter triggers return null (no date-based due; use meterUnitsRemaining instead)', () => {
+    expect(upcomingDueDate(meter, new Date('2026-01-01T00:00:00Z'), today)).toBeNull();
+  });
+
+  it('calendar: anchor in the future returns anchor + interval (not yet stale)', () => {
+    // anchor 2026-08-01 is after today; next due = 2026-11-01
+    expect(
+      upcomingDueDate(calendar, new Date('2026-08-01T00:00:00Z'), today)?.toISOString(),
+    ).toBe('2026-11-01T00:00:00.000Z');
+  });
 });
 
 describe('meterUnitsRemaining', () => {
@@ -161,5 +172,20 @@ describe('advanceAnchor', () => {
       scheduledDate: new Date('2026-04-01T00:00:00Z'),
     });
     expect(next.toISOString()).toBe('2026-04-01T00:00:00.000Z');
+  });
+
+  it('advance_from scheduled without a scheduledDate falls back to prevAnchor (meter trigger has no date)', () => {
+    // meter triggers have no nextDueDate; without scheduledDate, the anchor stays put
+    const next = advanceAnchor(meter, prev, {
+      advanceFrom: 'scheduled',
+      completedDate: new Date('2026-04-05T00:00:00Z'),
+    });
+    expect(next.toISOString()).toBe(prev.toISOString());
+  });
+
+  it('advance_from completion always uses the completed date, even for meter triggers', () => {
+    const completed = new Date('2026-04-05T00:00:00Z');
+    const next = advanceAnchor(meter, prev, { advanceFrom: 'completion', completedDate: completed });
+    expect(next.toISOString()).toBe(completed.toISOString());
   });
 });
