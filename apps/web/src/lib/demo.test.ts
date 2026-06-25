@@ -415,3 +415,53 @@ describe('demo data source — setupOrgSettings (#14)', () => {
     expect(org?.distance_unit).toBe('km');
   });
 });
+
+describe('demo data source — updateWorkOrder location & vendor (#48)', () => {
+  it('persists location_id when provided', async () => {
+    const locs = await ds.listLocations();
+    const locId = locs[0]?.id;
+    if (!locId) return; // no locations seeded — skip
+    const wo = await ds.createWorkOrderFromForm({ title: 'Loc test', type: 'reactive', priority: 'medium', status: 'open' });
+    const updated = await ds.updateWorkOrder(wo.id, {
+      status: wo.status,
+      priority: wo.priority,
+      assignee_user_id: null,
+      location_id: locId,
+    });
+    expect(updated.location_id).toBe(locId);
+  });
+
+  it('persists vendor_id when provided', async () => {
+    const vendors = await ds.listVendors();
+    const vendorId = vendors[0]?.id;
+    if (!vendorId) return; // no vendors seeded — skip
+    const wo = await ds.createWorkOrderFromForm({ title: 'Vendor test', type: 'reactive', priority: 'medium', status: 'open' });
+    const updated = await ds.updateWorkOrder(wo.id, {
+      status: wo.status,
+      priority: wo.priority,
+      assignee_user_id: null,
+      vendor_id: vendorId,
+    });
+    expect(updated.vendor_id).toBe(vendorId);
+  });
+
+  it('does not clear location_id when omitted from patch', async () => {
+    const locs = await ds.listLocations();
+    const locId = locs[0]?.id;
+    if (!locId) return;
+    const wo = await ds.createWorkOrderFromForm({
+      title: 'Preserve loc test',
+      type: 'reactive',
+      priority: 'medium',
+      status: 'open',
+      location_id: locId,
+    });
+    const updated = await ds.updateWorkOrder(wo.id, {
+      status: wo.status,
+      priority: wo.priority,
+      assignee_user_id: null,
+      // no location_id — should not overwrite
+    });
+    expect(updated.location_id).toBe(locId);
+  });
+});

@@ -9,6 +9,7 @@ import {
   type WorkOrderStatus,
 } from '@cmc/shared';
 import {
+  useAddPhotosToWorkOrder,
   useAllWorkOrders,
   useAssets,
   useCreateWorkOrderFromForm,
@@ -215,6 +216,7 @@ function NewWorkOrderModal({
   onClose: () => void;
 }) {
   const create = useCreateWorkOrderFromForm();
+  const addPhotos = useAddPhotosToWorkOrder();
   const locations = useLocations();
   const vendors = useVendors();
   // Pre-link to an asset when opened from the map (#37); seed the title with its
@@ -231,6 +233,7 @@ function NewWorkOrderModal({
     vendor_id: '',
     due_date: '',
   });
+  const [pendingPhotos, setPendingPhotos] = useState<File[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) =>
@@ -257,7 +260,10 @@ function NewWorkOrderModal({
             return;
           }
           setBusy(true);
-          await create.mutateAsync(parsed.data);
+          const newWo = await create.mutateAsync(parsed.data);
+          if (pendingPhotos.length > 0) {
+            await addPhotos.mutateAsync({ workOrderId: newWo.id, files: pendingPhotos });
+          }
           setBusy(false);
           onClose();
         }}
@@ -330,6 +336,42 @@ function NewWorkOrderModal({
           <Field label="Due date">
             <input type="date" className={inputClass} value={f.due_date} onChange={set('due_date')} />
           </Field>
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-slate-600 mb-1">
+            Photos <span className="font-normal text-slate-400">(optional — attached as issue documentation)</span>
+          </label>
+          <label className="inline-flex cursor-pointer items-center gap-1.5 rounded border border-slate-200 px-2.5 py-1 text-xs text-slate-600 hover:bg-slate-50">
+            + Add photos
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={(e) => {
+                const files = Array.from(e.target.files ?? []);
+                if (files.length) setPendingPhotos((prev) => [...prev, ...files]);
+                e.target.value = '';
+              }}
+            />
+          </label>
+          {pendingPhotos.length > 0 && (
+            <ul className="mt-1.5 space-y-0.5">
+              {pendingPhotos.map((file, i) => (
+                <li key={i} className="flex items-center gap-1.5 text-xs text-slate-600">
+                  <span className="flex-1 truncate">{file.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => setPendingPhotos((prev) => prev.filter((_, j) => j !== i))}
+                    className="shrink-0 text-slate-400 hover:text-slate-700"
+                    aria-label="Remove"
+                  >
+                    ✕
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
         <div className="flex justify-end gap-2 pt-1">
           <Button type="button" variant="ghost" onClick={onClose}>

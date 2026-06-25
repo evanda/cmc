@@ -135,11 +135,14 @@ export const workOrderFormSchema = z.object({
 });
 export type WorkOrderForm = z.infer<typeof workOrderFormSchema>;
 
-// ── Work Order triage edit — status / assignee / priority (plan §4.2) ────────
+// ── Work Order triage edit — status / assignee / priority / location / vendor ──
 export const workOrderUpdateSchema = z.object({
   status: z.enum(WORK_ORDER_STATUSES),
   priority: z.enum(WORK_ORDER_PRIORITIES),
   assignee_user_id: z.string().uuid().nullish(),
+  // Optional — only sent when the user explicitly edits these fields.
+  location_id: z.string().uuid().nullish(),
+  vendor_id: z.string().uuid().nullish(),
 });
 export type WorkOrderUpdate = z.infer<typeof workOrderUpdateSchema>;
 

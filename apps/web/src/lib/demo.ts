@@ -432,6 +432,8 @@ export const demoDataSource: DataSource = {
     w.status = patch.status;
     w.priority = patch.priority;
     w.assignee_user_id = patch.assignee_user_id ?? null;
+    if (patch.location_id !== undefined) w.location_id = patch.location_id ?? null;
+    if (patch.vendor_id !== undefined) w.vendor_id = patch.vendor_id ?? null;
     if (patch.status === 'completed' && !w.completed_date) w.completed_date = '2026-06-23';
     return w;
   },
