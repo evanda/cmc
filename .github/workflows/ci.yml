@@ -53,3 +53,7 @@ jobs:
             psql -v ON_ERROR_STOP=1 -d cmc_ci -f "$f"
           done
           echo "✓ all migrations applied cleanly"
+      - name: Verify RLS role boundaries
+        run: |
+          psql -v ON_ERROR_STOP=1 -d cmc_ci -f supabase/tests/rls.sql
+          echo "✓ RLS boundary checks passed"
