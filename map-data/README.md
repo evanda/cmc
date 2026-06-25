@@ -116,5 +116,11 @@ copy under `apps/web/public/facilities/` — that copy is **generated** (gitigno
 by `scripts/sync-map-data.mjs`, which runs automatically on `pnpm dev` and
 `pnpm build`. So you only ever edit one place; never hand-copy into `public/`.
 
+> **These files are for offline testing and viewer development only — not for
+> validating live app data.** The live app reads from Supabase (`floors`,
+> `pois`, `buildings` tables). The JSON files here can fall behind the DB at
+> any time. To check the state of production data, query Supabase directly —
+> not these files.
+
 `python3 authoring/gen_authoring.py` refreshes the read-only
 `authoring/pois-<id>.csv` checklist from `pois.geojson` (honors `FACILITY=<id>`).
