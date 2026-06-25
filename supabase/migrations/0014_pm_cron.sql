@@ -183,17 +183,24 @@ $$;
 
 -- ── 3. pg_cron: schedule pm_daily_run() at 06:00 UTC every day ──────────────
 -- Requires pg_cron to be enabled (Supabase Dashboard → Extensions → pg_cron).
--- Safe to run even if pg_cron is not yet enabled — the extension block below
--- will fail gracefully and the cron.schedule() call is idempotent on re-run.
-create extension if not exists pg_cron with schema extensions;
+-- Wrapped in a DO block so plain-Postgres CI environments (which lack pg_cron)
+-- skip this section without erroring; in Supabase it runs normally.
+do $$
+begin
+  create extension if not exists pg_cron with schema extensions;
 
--- Remove any prior schedule so this migration is re-runnable.
-select cron.unschedule('pm-daily-run') where exists (
-  select 1 from cron.job where jobname = 'pm-daily-run'
-);
+  -- Remove any prior schedule so this migration is re-runnable.
+  perform cron.unschedule('pm-daily-run') where exists (
+    select 1 from cron.job where jobname = 'pm-daily-run'
+  );
 
-select cron.schedule(
-  'pm-daily-run',          -- job name
-  '0 6 * * *',             -- 06:00 UTC daily
-  'select public.pm_daily_run();'
-);
+  perform cron.schedule(
+    'pm-daily-run',          -- job name
+    '0 6 * * *',             -- 06:00 UTC daily
+    'select public.pm_daily_run();'
+  );
+exception
+  when others then
+    raise notice 'pg_cron not available, skipping cron schedule: %', sqlerrm;
+end;
+$$;
