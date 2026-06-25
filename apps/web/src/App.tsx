@@ -18,7 +18,7 @@ import { PmSchedulesPage } from './pages/PmSchedulesPage';
 import { ReportsPage } from './pages/ReportsPage';
 
 import { SettingsPage } from './pages/SettingsPage';
-import { ExpiryBoardPage } from './pages/ExpiryBoardPage';
+
 
 // Ensures org_settings exists before rendering the main app layout.
 // If the DB row is missing (fresh deployment), redirects to /setup.
@@ -78,7 +78,7 @@ export function App() {
               <Route path="buildings" element={<Navigate to="/campus" replace />} />
               <Route path="floors" element={<Navigate to="/campus" replace />} />
               <Route path="locations" element={<Navigate to="/campus" replace />} />
-              <Route path="expiry" element={<ExpiryBoardPage />} />
+              <Route path="expiry" element={<Navigate to="/reports" replace />} />
               <Route path="settings" element={<SettingsPage />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>

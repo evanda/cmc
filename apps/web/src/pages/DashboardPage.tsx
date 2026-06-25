@@ -10,7 +10,6 @@ import {
   usePmSchedules,
   useServiceContracts,
   useVendors,
-  useWorkRequests,
 } from '../lib/queries';
 
 function StatCard({ label, value, to }: { label: string; value: number | string; to: string }) {
@@ -32,7 +31,6 @@ export function DashboardPage() {
   const floors = useFloors();
   const locations = useLocations();
   const workOrders = useAllWorkOrders();
-  const requests = useWorkRequests();
   const vendors = useVendors();
   const contracts = useServiceContracts();
   const pms = usePmSchedules();
@@ -55,7 +53,6 @@ export function DashboardPage() {
     return Math.ceil((due.getTime() - now.getTime()) / 86_400_000) <= s.lead_time_days;
   }).length;
 
-  const openRequests = requests.data?.length;
   const activeWorkOrders = workOrders.data?.filter((w) =>
     ACTIVE_WORK_ORDER_STATUSES.includes(w.status),
   ).length;
@@ -65,6 +62,7 @@ export function DashboardPage() {
     serviceContracts: contracts.data ?? [],
   });
   const expiringSoon = expiryReport.all.length;
+  const expiryLoaded = !assets.isLoading && !vendors.isLoading && !contracts.isLoading;
 
   return (
     <div>
@@ -75,18 +73,29 @@ export function DashboardPage() {
         Asset registry and campus structure. Work orders, vendors, and the map arrive in later
         Phase 1–2 work.
       </p>
-      <div className="mb-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <StatCard label="Open requests" value={openRequests ?? '—'} to="/requests" />
+      <div className="mb-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
         <StatCard label="Active work orders" value={activeWorkOrders ?? '—'} to="/work-orders" />
         <StatCard label="PMs due soon" value={pmsDueSoon ?? '—'} to="/pm" />
-        <StatCard label="Expiring soon" value={expiringSoon} to="/expiry" />
-      </div>
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <StatCard label="Assets" value={assets.data?.length ?? '—'} to="/assets" />
-        <StatCard label="Buildings" value={buildings.data?.length ?? '—'} to="/buildings" />
-        <StatCard label="Floors" value={floors.data?.length ?? '—'} to="/floors" />
-        <StatCard label="Locations" value={locations.data?.length ?? '—'} to="/locations" />
       </div>
+      <div className="mb-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
+        <StatCard label="Buildings" value={buildings.data?.length ?? '—'} to="/campus" />
+        <StatCard label="Floors" value={floors.data?.length ?? '—'} to="/campus" />
+        <StatCard label="Locations" value={locations.data?.length ?? '—'} to="/campus" />
+      </div>
+      <Link
+        to="/reports"
+        className="block rounded-lg border border-slate-200 bg-white px-5 py-4 text-sm transition hover:border-slate-400"
+      >
+        <span className="font-medium text-slate-700">Contracts & warranties: </span>
+        {!expiryLoaded ? (
+          <span className="text-slate-400">Loading…</span>
+        ) : expiringSoon === 0 ? (
+          <span className="text-slate-500">Nothing expiring in the next 60 days</span>
+        ) : (
+          <span className="font-medium text-amber-700">{expiringSoon} item{expiringSoon === 1 ? '' : 's'} expiring within 60 days →</span>
+        )}
+      </Link>
     </div>
   );
 }
