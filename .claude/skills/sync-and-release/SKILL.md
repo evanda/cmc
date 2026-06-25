@@ -216,6 +216,18 @@ Only proceed after the user explicitly approves ("looks good", "merge it", etc.)
 > branch) is a destructive default-branch action — present the commands for the
 > user to run, then continue once they confirm the merge landed.
 
+**Before presenting merge commands, YOU MUST verify all of the following — silently fix
+any issues before asking the user to do anything:**
+
+1. `pnpm -r typecheck` — must pass clean
+2. `pnpm -r test` — must pass clean
+3. `git rebase origin/main` — branch must be on top of main (no conflicts)
+4. `mcp__github__pull_request_read(get)` — `mergeable_state` must be `clean` (not `dirty`, `unstable`, or `draft`)
+5. Vercel build — fetch PR comments and confirm the build is `Ready`, not `Building`
+
+If any check fails, fix it, push, and re-verify before presenting the merge command.
+Never hand the user a merge command for a dirty, draft, or build-failing PR.
+
 **Before merging, push any commits made during testing:**
 
 ```bash
