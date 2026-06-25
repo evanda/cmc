@@ -261,6 +261,7 @@ export function AssetDetailPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
+                {/* Status icon + row shading — keep in sync with WorkOrderViews list table */}
                 {workOrders.data.map((w) => {
                   const done = w.status === 'completed' || w.status === 'closed';
                   return (
