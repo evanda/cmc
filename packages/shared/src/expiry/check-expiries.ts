@@ -1,6 +1,13 @@
-import type { Asset, ServiceContract, Vendor } from '../types/domain.js';
+import type { Asset, ServiceContract, Vehicle, Vendor } from '../types/domain.js';
 
-export type ExpiryKind = 'warranty' | 'vendor_coi' | 'vendor_contract' | 'service_contract';
+export type ExpiryKind =
+  | 'warranty'
+  | 'vendor_coi'
+  | 'vendor_contract'
+  | 'service_contract'
+  | 'vehicle_reg'
+  | 'vehicle_insurance'
+  | 'vehicle_inspection';
 
 export type ExpiryItem = {
   id: string;
@@ -16,6 +23,9 @@ export type ExpiryReport = {
   vendorCois: ExpiryItem[];
   vendorContracts: ExpiryItem[];
   serviceContracts: ExpiryItem[];
+  vehicleReg: ExpiryItem[];
+  vehicleInsurance: ExpiryItem[];
+  vehicleInspection: ExpiryItem[];
   /** All items sorted by daysUntil ascending (most urgent first). */
   all: ExpiryItem[];
 };
@@ -25,15 +35,17 @@ function days(dateStr: string, today: Date): number {
 }
 
 /**
- * Scan assets/vendors/service-contracts for expiring items.
+ * Scan assets/vendors/service-contracts/vehicles for expiring items.
  * Items already expired (daysUntil < 0) are always returned.
  * Items with no expiry date are silently skipped.
+ * `vehicles` entries should include the linked asset name in the `name` field.
  */
 export function checkExpiries(
   data: {
     assets: Pick<Asset, 'id' | 'name' | 'warranty_expiry'>[];
     vendors: Pick<Vendor, 'id' | 'name' | 'coi_expiry' | 'contract_expiry'>[];
     serviceContracts: Pick<ServiceContract, 'id' | 'description' | 'end_date'>[];
+    vehicles?: Array<Pick<Vehicle, 'id' | 'registration_expiry' | 'insurance_expiry' | 'inspection_expiry'> & { name: string }>;
   },
   windowDays = 60,
   today = new Date(),
@@ -88,9 +100,62 @@ export function checkExpiries(
     }))
     .filter((item) => inWindow(item.daysUntil));
 
-  const all = [...warranties, ...vendorCois, ...vendorContracts, ...serviceContracts].sort(
-    (a, b) => a.daysUntil - b.daysUntil,
-  );
+  const vehicleList = data.vehicles ?? [];
 
-  return { warranties, vendorCois, vendorContracts, serviceContracts, all };
+  const vehicleReg: ExpiryItem[] = vehicleList
+    .filter((v) => v.registration_expiry != null)
+    .map((v) => ({
+      id: v.id,
+      name: `${v.name} — registration`,
+      expiry: v.registration_expiry!,
+      daysUntil: days(v.registration_expiry!, today),
+      kind: 'vehicle_reg' as const,
+      link: '/fleet',
+    }))
+    .filter((item) => inWindow(item.daysUntil));
+
+  const vehicleInsurance: ExpiryItem[] = vehicleList
+    .filter((v) => v.insurance_expiry != null)
+    .map((v) => ({
+      id: v.id,
+      name: `${v.name} — insurance`,
+      expiry: v.insurance_expiry!,
+      daysUntil: days(v.insurance_expiry!, today),
+      kind: 'vehicle_insurance' as const,
+      link: '/fleet',
+    }))
+    .filter((item) => inWindow(item.daysUntil));
+
+  const vehicleInspection: ExpiryItem[] = vehicleList
+    .filter((v) => v.inspection_expiry != null)
+    .map((v) => ({
+      id: v.id,
+      name: `${v.name} — inspection`,
+      expiry: v.inspection_expiry!,
+      daysUntil: days(v.inspection_expiry!, today),
+      kind: 'vehicle_inspection' as const,
+      link: '/fleet',
+    }))
+    .filter((item) => inWindow(item.daysUntil));
+
+  const all = [
+    ...warranties,
+    ...vendorCois,
+    ...vendorContracts,
+    ...serviceContracts,
+    ...vehicleReg,
+    ...vehicleInsurance,
+    ...vehicleInspection,
+  ].sort((a, b) => a.daysUntil - b.daysUntil);
+
+  return {
+    warranties,
+    vendorCois,
+    vendorContracts,
+    serviceContracts,
+    vehicleReg,
+    vehicleInsurance,
+    vehicleInspection,
+    all,
+  };
 }

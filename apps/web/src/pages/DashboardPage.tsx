@@ -9,6 +9,7 @@ import {
   useOrgSettings,
   usePmSchedules,
   useServiceContracts,
+  useVehicles,
   useVendors,
 } from '../lib/queries';
 
@@ -33,6 +34,7 @@ export function DashboardPage() {
   const workOrders = useAllWorkOrders();
   const vendors = useVendors();
   const contracts = useServiceContracts();
+  const vehiclesQ = useVehicles();
   const pms = usePmSchedules();
 
   const now = new Date();
@@ -56,10 +58,16 @@ export function DashboardPage() {
   const activeWorkOrders = workOrders.data?.filter((w) =>
     ACTIVE_WORK_ORDER_STATUSES.includes(w.status),
   ).length;
+  const assetNameMap = Object.fromEntries((assets.data ?? []).map((a) => [a.id, a.name]));
+  const namedVehicles = (vehiclesQ.data ?? []).map((v) => ({
+    ...v,
+    name: assetNameMap[v.asset_id] ?? 'Vehicle',
+  }));
   const expiryReport = checkExpiries({
     assets: assets.data ?? [],
     vendors: vendors.data ?? [],
     serviceContracts: contracts.data ?? [],
+    vehicles: namedVehicles,
   });
   const expiringSoon = expiryReport.all.length;
   const expiryLoaded = !assets.isLoading && !vendors.isLoading && !contracts.isLoading;

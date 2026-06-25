@@ -13,6 +13,7 @@ import type {
   PmSchedule,
   ServiceContract,
   User,
+  Vehicle,
   Vendor,
   WorkOrder,
   WorkOrderAttachment,
@@ -78,6 +79,7 @@ export const vendors: Vendor[] = [];
 export const serviceContracts: ServiceContract[] = [];
 export const contacts: Contact[] = [];
 export const pmSchedules: PmSchedule[] = [];
+export const vehicles: Vehicle[] = [];
 
 export const catId = (name: string) => categories.find((c) => c.name === name)!.id;
 export const locId = (name: string) => locations.find((l) => l.name === name)?.id ?? null;

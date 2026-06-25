@@ -11,6 +11,7 @@ import type {
   LocationForm,
   PmScheduleForm,
   ServiceContractForm,
+  VehicleForm,
   VendorForm,
   WorkLogForm,
   WorkOrder,
@@ -38,6 +39,7 @@ import {
   serviceContracts,
   users,
   userId,
+  vehicles,
   vendors,
   woPhotos,
   workOrders,
@@ -601,5 +603,53 @@ export const demoDataSource: DataSource = {
   // Demo mode: map reads POIs from bundled GeoJSON via the existing fetch path
   // in MapView. Returning an empty array signals MapView to use the fallback.
   listPois: async () => [],
+
+  listVehicles: async () => (live(vehicles) as typeof vehicles).sort((a, b) => {
+    const nameA = a.make ?? '';
+    const nameB = b.make ?? '';
+    return nameA.localeCompare(nameB);
+  }),
+  createVehicle: async (input: VehicleForm) => {
+    const v = {
+      id: id(),
+      ...base(),
+      asset_id: input.asset_id,
+      vin: input.vin ?? null,
+      plate: input.plate ?? null,
+      year: input.year ?? null,
+      make: input.make ?? null,
+      model: input.model ?? null,
+      fuel_type: input.fuel_type ?? null,
+      capacity: input.capacity ?? null,
+      registration_expiry: input.registration_expiry ?? null,
+      insurance_expiry: input.insurance_expiry ?? null,
+      inspection_expiry: input.inspection_expiry ?? null,
+      driver_contact_id: input.driver_contact_id ?? null,
+    } as (typeof vehicles)[0];
+    vehicles.push(v);
+    return v;
+  },
+  updateVehicle: async (vid: string, input: VehicleForm) => {
+    const v = vehicles.find((x) => x.id === vid)!;
+    Object.assign(v, {
+      asset_id: input.asset_id,
+      vin: input.vin ?? null,
+      plate: input.plate ?? null,
+      year: input.year ?? null,
+      make: input.make ?? null,
+      model: input.model ?? null,
+      fuel_type: input.fuel_type ?? null,
+      capacity: input.capacity ?? null,
+      registration_expiry: input.registration_expiry ?? null,
+      insurance_expiry: input.insurance_expiry ?? null,
+      inspection_expiry: input.inspection_expiry ?? null,
+      driver_contact_id: input.driver_contact_id ?? null,
+    });
+    return v;
+  },
+  deleteVehicle: async (vid: string) => {
+    const v = vehicles.find((x) => x.id === vid);
+    if (v) v.deleted_at = now;
+  },
 };
 

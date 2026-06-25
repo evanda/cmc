@@ -25,6 +25,8 @@ import type {
   ServiceContractForm,
   User,
   UserRole,
+  Vehicle,
+  VehicleForm,
   Vendor,
   VendorForm,
   WorkLogForm,
@@ -109,6 +111,11 @@ export interface DataSource {
   deletePmSchedule(id: string): Promise<void>;
   // Spatial POIs — map markers linked to assets (plan §5.4).
   listPois(): Promise<Poi[]>;
+  // Fleet / vehicles (plan §4.4).
+  listVehicles(): Promise<Vehicle[]>;
+  createVehicle(input: VehicleForm): Promise<Vehicle>;
+  updateVehicle(id: string, input: VehicleForm): Promise<Vehicle>;
+  deleteVehicle(id: string): Promise<void>;
 }
 
 function pmSchedulePatch(input: PmScheduleForm) {
@@ -156,6 +163,23 @@ function serviceContractPatch(input: ServiceContractForm) {
     start_date: input.start_date ?? null,
     end_date: input.end_date ?? null,
     renewal_reminder_days: input.renewal_reminder_days ?? null,
+  };
+}
+
+function vehiclePatch(input: VehicleForm) {
+  return {
+    asset_id: input.asset_id,
+    vin: input.vin ?? null,
+    plate: input.plate ?? null,
+    year: input.year ?? null,
+    make: input.make ?? null,
+    model: input.model ?? null,
+    fuel_type: input.fuel_type ?? null,
+    capacity: input.capacity ?? null,
+    registration_expiry: input.registration_expiry ?? null,
+    insurance_expiry: input.insurance_expiry ?? null,
+    inspection_expiry: input.inspection_expiry ?? null,
+    driver_contact_id: input.driver_contact_id ?? null,
   };
 }
 
@@ -716,6 +740,34 @@ const supabaseDataSource: DataSource = {
     unwrap<Poi[]>(
       await supabase.from('pois').select('*').is('deleted_at', null).order('label'),
     ),
+
+  listVehicles: async () =>
+    unwrap<Vehicle[]>(
+      await supabase.from('vehicles').select('*').is('deleted_at', null).order('created_at'),
+    ),
+  createVehicle: async (input) =>
+    unwrap<Vehicle>(
+      await supabase.from('vehicles').insert(vehiclePatch(input)).select().single(),
+    ),
+  updateVehicle: async (vid, input) =>
+    unwrap<Vehicle>(
+      await supabase
+        .from('vehicles')
+        .update(vehiclePatch(input))
+        .eq('id', vid)
+        .select()
+        .single(),
+    ),
+  deleteVehicle: async (vid) => {
+    unwrap(
+      await supabase
+        .from('vehicles')
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', vid)
+        .select()
+        .single(),
+    );
+  },
 };
 
 export const ds: DataSource = isDemo ? demoDataSource : supabaseDataSource;

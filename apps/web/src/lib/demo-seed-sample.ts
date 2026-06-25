@@ -18,6 +18,7 @@ import {
   userId,
   vendorId,
   vendors,
+  vehicles,
   workOrders,
 } from './demo-store';
 
@@ -299,6 +300,41 @@ export function seedSampleCampus() {
       location_id: locId('Main Court'),
     }),
   );
+
+  // Fleet: 3 buses as assets + vehicle profiles (plan §4.4).
+  seedAsset('Bus 1 — Activity Bus', 'Vehicles/Fleet', null, {
+    make: 'Blue Bird', model: 'All American RE', criticality: 'high',
+  });
+  seedAsset('Bus 2 — Transit Bus', 'Vehicles/Fleet', null, {
+    make: 'IC Bus', model: 'CE300', criticality: 'high',
+  });
+  seedAsset('Bus 3 — Activity Bus', 'Vehicles/Fleet', null, {
+    make: 'Thomas Built', model: 'C2 Saf-T-Liner', criticality: 'medium',
+  });
+
+  const busAssets = ['Bus 1 — Activity Bus', 'Bus 2 — Transit Bus', 'Bus 3 — Activity Bus'];
+  const busData = [
+    { vin: '1BAFJ5BJ9KF000101', plate: 'SCH-441', year: 2019, make: 'Blue Bird', model: 'All American RE',
+      fuel_type: 'Diesel', capacity: 52,
+      registration_expiry: '2026-11-30', insurance_expiry: '2027-01-15', inspection_expiry: '2026-09-30' },
+    { vin: '4DRBTAAN6CB000202', plate: 'SCH-442', year: 2012, make: 'IC Bus', model: 'CE300',
+      fuel_type: 'Diesel', capacity: 72,
+      registration_expiry: '2026-10-31', insurance_expiry: '2027-01-15', inspection_expiry: '2026-08-15' },
+    { vin: '4UZAANDX5DCAM0303', plate: 'SCH-443', year: 2014, make: 'Thomas Built', model: 'C2 Saf-T-Liner',
+      fuel_type: 'Diesel', capacity: 48,
+      registration_expiry: '2026-12-31', insurance_expiry: '2027-01-15', inspection_expiry: '2026-10-01' },
+  ];
+
+  busAssets.forEach((name, i) => {
+    const asset = assetByName(name);
+    vehicles.push({
+      id: id(),
+      ...base(),
+      asset_id: asset.id,
+      ...busData[i],
+      driver_contact_id: null,
+    });
+  });
 
   // Requests awaiting triage (work orders in 'requested' status — plan §3.1).
   seedRequest({

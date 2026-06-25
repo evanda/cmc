@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { checkExpiries, type ExpiryItem } from '@cmc/shared';
-import { useAssets, useServiceContracts, useVendors } from '../lib/queries';
+import { useAssets, useServiceContracts, useVehicles, useVendors } from '../lib/queries';
 import { EmptyState } from '../components/ui';
 
 function ExpiryRow({ item }: { item: ExpiryItem }) {
@@ -62,13 +62,22 @@ export function ExpiryBoardPage() {
   const assets = useAssets();
   const vendors = useVendors();
   const contracts = useServiceContracts();
+  const vehiclesQ = useVehicles();
 
-  const isLoading = assets.isLoading || vendors.isLoading || contracts.isLoading;
+  const isLoading = assets.isLoading || vendors.isLoading || contracts.isLoading || vehiclesQ.isLoading;
+
+  // Build named vehicle list for expiry check (vehicles need their asset name).
+  const assetMap = Object.fromEntries((assets.data ?? []).map((a) => [a.id, a.name]));
+  const namedVehicles = (vehiclesQ.data ?? []).map((v) => ({
+    ...v,
+    name: assetMap[v.asset_id] ?? 'Vehicle',
+  }));
 
   const report = checkExpiries({
     assets: assets.data ?? [],
     vendors: vendors.data ?? [],
     serviceContracts: contracts.data ?? [],
+    vehicles: namedVehicles,
   });
 
   return (
@@ -77,7 +86,7 @@ export function ExpiryBoardPage() {
         <div>
           <h1 className="text-2xl font-semibold text-slate-800">Expiry Board</h1>
           <p className="mt-1 text-sm text-slate-500">
-            Warranties, COIs, vendor contracts, and service agreements expiring within 60 days.
+            Warranties, COIs, vendor contracts, service agreements, and vehicle renewals expiring within 60 days.
           </p>
         </div>
         {!isLoading && (
@@ -94,6 +103,9 @@ export function ExpiryBoardPage() {
           <Section title="Vendor COIs" items={report.vendorCois} />
           <Section title="Vendor Contracts" items={report.vendorContracts} />
           <Section title="Service Contracts" items={report.serviceContracts} />
+          <Section title="Vehicle Registration" items={report.vehicleReg} />
+          <Section title="Vehicle Insurance" items={report.vehicleInsurance} />
+          <Section title="Vehicle Inspection" items={report.vehicleInspection} />
         </>
       )}
     </div>

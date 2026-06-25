@@ -193,6 +193,23 @@ export const pmScheduleFormSchema = z.object({
 });
 export type PmScheduleForm = z.infer<typeof pmScheduleFormSchema>;
 
+// ── Fleet / Vehicles (plan §4.4, Phase 3) ────────────────────────────────────
+export const vehicleFormSchema = z.object({
+  asset_id: z.string().uuid('Pick an asset'),
+  vin: optionalText,
+  plate: optionalText,
+  year: z.coerce.number().int().min(1900).max(2200).optional().nullable(),
+  make: optionalText,
+  model: optionalText,
+  fuel_type: optionalText,
+  capacity: z.coerce.number().int().min(1).max(999).optional().nullable(),
+  registration_expiry: optionalText,
+  insurance_expiry: optionalText,
+  inspection_expiry: optionalText,
+  driver_contact_id: z.string().uuid().optional().nullable(),
+});
+export type VehicleForm = z.infer<typeof vehicleFormSchema>;
+
 const hexColor = z
   .string()
   .trim()

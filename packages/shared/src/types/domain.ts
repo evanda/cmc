@@ -200,6 +200,22 @@ export type MeterReading = BaseRow & {
   recorded_by: string | null;
 };
 
+/** Vehicle profile extending an asset with registration/fleet fields (plan §4.4). */
+export type Vehicle = BaseRow & {
+  asset_id: string;
+  vin: string | null;
+  plate: string | null;
+  year: number | null;
+  make: string | null;
+  model: string | null;
+  fuel_type: string | null;
+  capacity: number | null;
+  registration_expiry: string | null;   // YYYY-MM-DD
+  insurance_expiry: string | null;      // YYYY-MM-DD
+  inspection_expiry: string | null;     // YYYY-MM-DD
+  driver_contact_id: string | null;
+};
+
 /** External company that performs work (plan §4.5). */
 export type Vendor = BaseRow & {
   name: string;

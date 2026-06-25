@@ -118,4 +118,113 @@ describe('checkExpiries', () => {
     expect(result.warranties.map((w) => w.id)).toContain('a1');
     expect(result.warranties.map((w) => w.id)).not.toContain('a2');
   });
+
+  it('returns empty vehicle arrays when no vehicles supplied', () => {
+    const result = checkExpiries(
+      { assets: noAssets, vendors: noVendors, serviceContracts: noContracts },
+      60,
+      TODAY,
+    );
+    expect(result.vehicleReg).toHaveLength(0);
+    expect(result.vehicleInsurance).toHaveLength(0);
+    expect(result.vehicleInspection).toHaveLength(0);
+  });
+
+  it('surfaces vehicle registration expiry in window', () => {
+    const result = checkExpiries(
+      {
+        assets: noAssets,
+        vendors: noVendors,
+        serviceContracts: noContracts,
+        vehicles: [
+          {
+            id: 'v1',
+            name: 'Bus 1',
+            registration_expiry: d(20),
+            insurance_expiry: null,
+            inspection_expiry: null,
+          },
+        ],
+      },
+      60,
+      TODAY,
+    );
+    expect(result.vehicleReg).toHaveLength(1);
+    expect(result.vehicleReg[0].name).toBe('Bus 1 — registration');
+    expect(result.vehicleReg[0].kind).toBe('vehicle_reg');
+    expect(result.vehicleReg[0].link).toBe('/fleet');
+    expect(result.vehicleReg[0].daysUntil).toBe(20);
+  });
+
+  it('surfaces all three vehicle expiry types independently', () => {
+    const result = checkExpiries(
+      {
+        assets: noAssets,
+        vendors: noVendors,
+        serviceContracts: noContracts,
+        vehicles: [
+          {
+            id: 'v1',
+            name: 'Bus 2',
+            registration_expiry: d(10),
+            insurance_expiry: d(30),
+            inspection_expiry: d(50),
+          },
+        ],
+      },
+      60,
+      TODAY,
+    );
+    expect(result.vehicleReg).toHaveLength(1);
+    expect(result.vehicleInsurance).toHaveLength(1);
+    expect(result.vehicleInspection).toHaveLength(1);
+    expect(result.vehicleInsurance[0].kind).toBe('vehicle_insurance');
+    expect(result.vehicleInspection[0].kind).toBe('vehicle_inspection');
+  });
+
+  it('excludes vehicle expiry beyond window', () => {
+    const result = checkExpiries(
+      {
+        assets: noAssets,
+        vendors: noVendors,
+        serviceContracts: noContracts,
+        vehicles: [
+          {
+            id: 'v1',
+            name: 'Bus 3',
+            registration_expiry: d(90),
+            insurance_expiry: null,
+            inspection_expiry: null,
+          },
+        ],
+      },
+      60,
+      TODAY,
+    );
+    expect(result.vehicleReg).toHaveLength(0);
+  });
+
+  it('includes vehicle expiry in the all array sorted correctly', () => {
+    const result = checkExpiries(
+      {
+        assets: [{ id: 'a1', name: 'HVAC', warranty_expiry: d(15) }],
+        vendors: noVendors,
+        serviceContracts: noContracts,
+        vehicles: [
+          {
+            id: 'v1',
+            name: 'Bus 1',
+            registration_expiry: d(5),
+            insurance_expiry: d(25),
+            inspection_expiry: null,
+          },
+        ],
+      },
+      60,
+      TODAY,
+    );
+    // reg (5), warranty (15), insurance (25)
+    expect(result.all.map((i) => i.daysUntil)).toEqual([5, 15, 25]);
+    expect(result.all[0].kind).toBe('vehicle_reg');
+  });
 });

@@ -439,3 +439,33 @@ export function useDeletePmSchedule() {
 export function usePois() {
   return useQuery({ queryKey: ['pois'], queryFn: () => ds.listPois() });
 }
+
+// ── Fleet / vehicles (plan §4.4) ─────────────────────────────────────────────
+export function useVehicles() {
+  return useQuery({ queryKey: ['vehicles'], queryFn: () => ds.listVehicles() });
+}
+
+export function useCreateVehicle() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: Parameters<typeof ds.createVehicle>[0]) => ds.createVehicle(input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['vehicles'] }),
+  });
+}
+
+export function useUpdateVehicle() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, input }: { id: string; input: Parameters<typeof ds.updateVehicle>[1] }) =>
+      ds.updateVehicle(id, input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['vehicles'] }),
+  });
+}
+
+export function useDeleteVehicle() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => ds.deleteVehicle(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['vehicles'] }),
+  });
+}
