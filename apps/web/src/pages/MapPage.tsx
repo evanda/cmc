@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import type { Building, Floor, Poi } from '@cmc/shared';
 import { MapView } from './MapView';
 import { useAuth } from '../auth/AuthProvider';
-import { useAssets, useAllWorkOrders, useBuildings, useFloors, useLocations, useOrgSettings, usePois } from '../lib/queries';
+import { useAsset, useAssets, useAllWorkOrders, useBuildings, useFloors, useLocations, useOrgSettings, usePois } from '../lib/queries';
 import { countOpenWosByBuilding } from '../lib/map-utils';
 
 function levelName(level: number): string {
@@ -74,6 +74,11 @@ export function MapPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const highlightAssetId = searchParams.get('asset') ?? undefined;
+  const { data: highlightAsset } = useAsset(highlightAssetId ?? '');
+  const highlightCoords: [number, number] | undefined =
+    highlightAsset?.geometry_geojson
+      ? [highlightAsset.geometry_geojson.coordinates[0], highlightAsset.geometry_geojson.coordinates[1]]
+      : undefined;
   const { role } = useAuth();
   const canFileWorkOrder = role !== 'trustee' && role != null;
   const { data: org } = useOrgSettings();
@@ -125,6 +130,7 @@ export function MapPage() {
         openWoCountByBuilding={openWoCountByBuilding}
         onCreateWorkOrder={canFileWorkOrder ? (assetId) => navigate(`/work-orders?asset=${assetId}`) : undefined}
         highlightAssetId={highlightAssetId}
+        highlightCoords={highlightCoords}
         poisGeoJSON={poisGeoJSON}
         buildingsGeoJSON={buildingsGeoJSON}
         floorsGeoJSON={floorsGeoJSON}

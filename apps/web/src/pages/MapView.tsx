@@ -66,6 +66,7 @@ export function MapView({
   openWoCountByBuilding = {},
   onCreateWorkOrder,
   highlightAssetId,
+  highlightCoords,
   poisGeoJSON,
   buildingsGeoJSON,
   floorsGeoJSON,
@@ -78,6 +79,8 @@ export function MapView({
   onCreateWorkOrder?: (assetId: string) => void;
   /** If set, fly to the POI linked to this asset id and open its card. */
   highlightAssetId?: string;
+  /** Fallback coordinates [lng, lat] when highlightAssetId has no linked POI. */
+  highlightCoords?: [number, number];
   poisGeoJSON?: GeoJSON.FeatureCollection;
   /** DB-backed building footprints — merged with the bundled buildings.geojson. */
   buildingsGeoJSON?: GeoJSON.FeatureCollection;
@@ -316,24 +319,33 @@ export function MapView({
   }, [poisGeoJSON]);
 
   // When a highlight asset id is requested and POIs are loaded, fly to and select it.
+  // Falls back to highlightCoords if the asset has no linked POI.
   useEffect(() => {
-    if (!highlightAssetId || !poisGeoJSON) return;
-    const feature = poisGeoJSON.features.find(
-      (f) => f.properties?.linked_asset_id === highlightAssetId,
-    );
-    if (!feature || feature.geometry.type !== 'Point') return;
-    const [lng, lat] = feature.geometry.coordinates as [number, number];
-    const p = feature.properties!;
-    setSelected({
-      label: p.label ?? p.poi_type,
-      poi_type: p.poi_type,
-      building: p.building ?? null,
-      level_name: p.level_name ?? null,
-      notes: p.notes ?? null,
-      linked_asset_id: p.linked_asset_id ?? null,
-    });
-    mapRef.current?.flyTo({ center: [lng, lat], zoom: 19, duration: 800 });
-  }, [highlightAssetId, poisGeoJSON]);
+    if (!highlightAssetId) return;
+    if (poisGeoJSON) {
+      const feature = poisGeoJSON.features.find(
+        (f) => f.properties?.linked_asset_id === highlightAssetId,
+      );
+      if (feature && feature.geometry.type === 'Point') {
+        const [lng, lat] = feature.geometry.coordinates as [number, number];
+        const p = feature.properties!;
+        setSelected({
+          label: p.label ?? p.poi_type,
+          poi_type: p.poi_type,
+          building: p.building ?? null,
+          level_name: p.level_name ?? null,
+          notes: p.notes ?? null,
+          linked_asset_id: p.linked_asset_id ?? null,
+        });
+        mapRef.current?.flyTo({ center: [lng, lat], zoom: 19, duration: 800 });
+        return;
+      }
+    }
+    // No linked POI — fly to the asset's own coordinates if provided.
+    if (highlightCoords) {
+      mapRef.current?.flyTo({ center: highlightCoords, zoom: 19, duration: 800 });
+    }
+  }, [highlightAssetId, poisGeoJSON, highlightCoords]);
 
   // When DB building footprints arrive, push them to the map source (if it exists yet).
   useEffect(() => {
