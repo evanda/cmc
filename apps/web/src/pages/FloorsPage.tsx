@@ -129,7 +129,7 @@ function validateCorners(v: Record<string, unknown>): string | null {
   return null;
 }
 
-const CAMPUS_DEFAULT: [number, number] = [-80.428, 36.09];
+const CAMPUS_DEFAULT: [number, number] = [-84.6879, 33.9441];
 
 function buildingCenter(b: Building | undefined): [number, number] {
   const coords = b?.footprint_geojson?.coordinates;

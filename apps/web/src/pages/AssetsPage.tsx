@@ -21,7 +21,7 @@ import { useAuth } from '../auth/AuthProvider';
 import { Button, EmptyState, Field, Modal, inputClass } from '../components/ui';
 import { LocationPicker, type PlacedPoint } from '../components/LocationPicker';
 
-const CAMPUS_DEFAULT: [number, number] = [-80.428, 36.09];
+const CAMPUS_DEFAULT: [number, number] = [-84.6879, 33.9441];
 
 function campusCenter(buildings: Building[]): [number, number] {
   for (const b of buildings) {

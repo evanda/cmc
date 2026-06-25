@@ -380,33 +380,48 @@ export function MapView({
     }
   }, [poisGeoJSON]);
 
-  // When DB building footprints arrive after load, re-merge with the static file
-  // and push the combined result to the map source.
+  // When DB building footprints arrive (before or after map load), merge with static
+  // and push to the source. If the map hasn't loaded yet we defer via map.once('load')
+  // so we don't miss the window between the query resolving and the load event firing.
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
-    const src = map.getSource('buildings');
-    if (!src || !('setData' in src)) return;
-    const staticBuildings = staticBuildingsRef.current;
-    if (!staticBuildings) return; // map hasn't finished loading yet; the on('load') handler will use the ref
-    const merged: GeoJSON.FeatureCollection = buildingsGeoJSON
-      ? { type: 'FeatureCollection', features: [...staticBuildings.features, ...buildingsGeoJSON.features] }
-      : staticBuildings;
-    (src as { setData(d: GeoJSON.FeatureCollection): void }).setData(merged);
+    function apply() {
+      const src = map!.getSource('buildings');
+      if (!src || !('setData' in src)) return;
+      const staticBuildings = staticBuildingsRef.current ?? { type: 'FeatureCollection' as const, features: [] };
+      const merged: GeoJSON.FeatureCollection = buildingsGeoJSON
+        ? { type: 'FeatureCollection', features: [...staticBuildings.features, ...buildingsGeoJSON.features] }
+        : staticBuildings;
+      (src as { setData(d: GeoJSON.FeatureCollection): void }).setData(merged);
+    }
+    if (map.loaded()) {
+      apply();
+    } else {
+      map.once('load', apply);
+      return () => { map.off('load', apply); };
+    }
   }, [buildingsGeoJSON]);
 
-  // When DB floor outlines arrive after load, merge with static and update the source.
+  // Same pattern for floor outlines.
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
-    const src = map.getSource('floors');
-    if (!src || !('setData' in src)) return;
-    const staticFloors = staticFloorsRef.current;
-    if (!staticFloors) return;
-    const merged: GeoJSON.FeatureCollection = floorsGeoJSON
-      ? { type: 'FeatureCollection', features: [...staticFloors.features, ...floorsGeoJSON.features] }
-      : staticFloors;
-    (src as { setData(d: GeoJSON.FeatureCollection): void }).setData(merged);
+    function apply() {
+      const src = map!.getSource('floors');
+      if (!src || !('setData' in src)) return;
+      const staticFloors = staticFloorsRef.current ?? { type: 'FeatureCollection' as const, features: [] };
+      const merged: GeoJSON.FeatureCollection = floorsGeoJSON
+        ? { type: 'FeatureCollection', features: [...staticFloors.features, ...floorsGeoJSON.features] }
+        : staticFloors;
+      (src as { setData(d: GeoJSON.FeatureCollection): void }).setData(merged);
+    }
+    if (map.loaded()) {
+      apply();
+    } else {
+      map.once('load', apply);
+      return () => { map.off('load', apply); };
+    }
   }, [floorsGeoJSON]);
 
   // Apply the level filter to POIs, floor outlines, and image overlays.
