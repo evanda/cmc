@@ -21,6 +21,22 @@
 -- Allow the superuser session to impersonate the 'authenticated' Postgres role.
 grant authenticated to current_user;
 
+-- In Supabase, table-level grants to 'authenticated' are set up automatically
+-- by the platform. In plain-Postgres CI they don't exist, so we add them here
+-- to match the real environment.
+grant select, insert, update, delete
+  on public.users, public.assets, public.work_orders, public.org_settings,
+     public.buildings, public.floors, public.locations, public.vendors,
+     public.contacts, public.pois, public.pm_schedules, public.task_templates,
+     public.meters, public.meter_readings, public.vehicles,
+     public.work_order_comments, public.work_order_attachments,
+     public.asset_documents, public.asset_photos,
+     public.checklist_templates, public.checklist_items,
+     public.inspection_runs, public.inspection_results,
+     public.vendor_documents, public.service_contracts,
+     public.audit_log
+  to authenticated;
+
 -- Shorthand: set the JWT sub claim so auth.uid() returns this value.
 create or replace function _test_set_uid(uid uuid) returns void language sql as $$
   select set_config('request.jwt.claim.sub', uid::text, true);
