@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ACTIVE_WORK_ORDER_STATUSES, checkExpiries, upcomingDueDate } from '@cmc/shared';
+import { ACTIVE_WORK_ORDER_STATUSES, checkExpiries, upcomingDueDate, type ExpiryItem } from '@cmc/shared';
 import {
   useAllWorkOrders,
   useAssets,
@@ -12,6 +12,32 @@ import {
   useVehicles,
   useVendors,
 } from '../lib/queries';
+
+function ExpiryRow({ item }: { item: ExpiryItem }) {
+  const { daysUntil } = item;
+  const badge =
+    daysUntil < 0
+      ? 'bg-red-100 text-red-700'
+      : daysUntil <= 7
+        ? 'bg-red-100 text-red-700'
+        : daysUntil <= 30
+          ? 'bg-amber-100 text-amber-700'
+          : 'bg-slate-100 text-slate-500';
+  const badgeLabel = daysUntil < 0 ? 'Expired' : `${daysUntil}d`;
+  return (
+    <tr className="border-t border-slate-100 first:border-0">
+      <td className="py-1.5">
+        <Link to={item.link} className="text-slate-800 hover:underline">
+          {item.name}
+        </Link>
+      </td>
+      <td className="py-1.5 pr-3 text-right text-slate-500">{item.expiry}</td>
+      <td className="py-1.5 text-right">
+        <span className={`rounded px-2 py-0.5 text-xs ${badge}`}>{badgeLabel}</span>
+      </td>
+    </tr>
+  );
+}
 
 function StatCard({ label, value, to }: { label: string; value: number | string; to: string }) {
   return (
@@ -91,19 +117,32 @@ export function DashboardPage() {
         <StatCard label="Floors" value={floors.data?.length ?? '—'} to="/campus" />
         <StatCard label="Locations" value={locations.data?.length ?? '—'} to="/campus" />
       </div>
-      <Link
-        to="/reports?tab=Expiry"
-        className="block rounded-lg border border-slate-200 bg-white px-5 py-4 text-sm transition hover:border-slate-400"
-      >
-        <span className="font-medium text-slate-700">Contracts & warranties: </span>
+      <div className="rounded-lg border border-slate-200 bg-white px-5 py-4 text-sm">
+        <div className="mb-2 flex items-center justify-between">
+          <span className="font-medium text-slate-700">Contracts &amp; warranties</span>
+          {expiringSoon > 0 && (
+            <Link
+              to="/reports?tab=Expiry"
+              className="text-xs text-slate-500 hover:underline"
+            >
+              View all on Expiry Board →
+            </Link>
+          )}
+        </div>
         {!expiryLoaded ? (
           <span className="text-slate-400">Loading…</span>
         ) : expiringSoon === 0 ? (
           <span className="text-slate-500">Nothing expiring in the next 60 days</span>
         ) : (
-          <span className="font-medium text-amber-700">{expiringSoon} item{expiringSoon === 1 ? '' : 's'} expiring within 60 days →</span>
+          <table className="w-full">
+            <tbody>
+              {expiryReport.all.map((item) => (
+                <ExpiryRow key={`${item.kind}-${item.id}`} item={item} />
+              ))}
+            </tbody>
+          </table>
         )}
-      </Link>
+      </div>
     </div>
   );
 }
