@@ -61,6 +61,31 @@ export function upcomingDueDate(trigger: PmTrigger, anchor: Date, today: Date): 
   return due;
 }
 
+export type PmStatusState = 'overdue' | 'soon' | 'ok';
+
+/**
+ * Date-based status of a schedule's *current* (uncompleted) cycle — for
+ * dashboards/reports. Unlike {@link upcomingDueDate}, which rolls a stale anchor
+ * forward to the next future occurrence (so an overdue PM reads as "on track"),
+ * this keeps the first uncompleted due date so overdue is detectable:
+ *   - `overdue` — the cycle's due date is in the past.
+ *   - `soon`    — due within `leadTimeDays`.
+ *   - `ok`      — due later, or a meter trigger (no date → `dueDate: null`).
+ */
+export function pmScheduleStatus(
+  trigger: PmTrigger,
+  anchor: Date,
+  today: Date,
+  leadTimeDays: number,
+): { state: PmStatusState; dueDate: Date | null } {
+  const due = nextDueDate(trigger, anchor);
+  if (!due) return { state: 'ok', dueDate: null };
+  const days = Math.ceil((due.getTime() - today.getTime()) / 86_400_000);
+  if (days < 0) return { state: 'overdue', dueDate: due };
+  if (days <= leadTimeDays) return { state: 'soon', dueDate: due };
+  return { state: 'ok', dueDate: due };
+}
+
 /** Units remaining until a meter-triggered PM is due (≤ 0 means due). */
 export function meterUnitsRemaining(trigger: PmTrigger, sinceLastService: number): number | null {
   if (trigger.type !== 'meter' || trigger.meterThreshold == null) return null;

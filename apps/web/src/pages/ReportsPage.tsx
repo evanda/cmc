@@ -4,7 +4,7 @@ import { ExpiryBoardPage } from './ExpiryBoardPage';
 import {
   capitalForecast,
   capitalForecastTotal,
-  upcomingDueDate,
+  pmScheduleStatus,
   type WorkOrder,
 } from '@cmc/shared';
 import {
@@ -126,7 +126,8 @@ export function ReportsPage() {
     let soon = 0;
     let ok = 0;
     for (const s of pms.data ?? []) {
-      const due = upcomingDueDate(
+      if (!s.active) continue;
+      const { state } = pmScheduleStatus(
         {
           type: s.trigger_type,
           intervalValue: s.interval_value,
@@ -137,14 +138,10 @@ export function ReportsPage() {
         },
         new Date(s.anchor_date),
         TODAY,
+        s.lead_time_days,
       );
-      if (!due) {
-        ok++;
-        continue;
-      }
-      const days = Math.ceil((due.getTime() - TODAY.getTime()) / 86_400_000);
-      if (days < 0) overdue++;
-      else if (days <= s.lead_time_days) soon++;
+      if (state === 'overdue') overdue++;
+      else if (state === 'soon') soon++;
       else ok++;
     }
     return { overdue, soon, ok };
