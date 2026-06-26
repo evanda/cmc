@@ -5,6 +5,14 @@
 #
 # Carried over from evanda/bub unchanged — it is stack-agnostic.
 
+# Dedup guard: if this hook already ran this session (e.g. via global ~/.claude/hooks/),
+# exit silently. Whichever copy runs first (global or project) wins; the other skips.
+[ -n "${CLAUDE_SESSION_ID:-}" ] && {
+  _G="/tmp/.ch-origin-${CLAUDE_SESSION_ID}"
+  [ -f "$_G" ] && exit 0
+  touch "$_G"
+}
+
 dir="${CLAUDE_PROJECT_DIR:-$(pwd)}"
 cd "$dir" 2>/dev/null || exit 0
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 || exit 0

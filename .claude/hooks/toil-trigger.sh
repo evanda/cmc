@@ -2,6 +2,15 @@
 # Trigger: if the user submits 'toil', inject the claude-async routine prompt.
 input=$(cat)
 
+# Dedup guard: prevent double-fire when both global and project hooks are active.
+# Uses a hash of the prompt so each unique 'toil' submission can still trigger once.
+[ -n "${CLAUDE_SESSION_ID:-}" ] && {
+  _H=$(printf '%s' "$input" | cksum | cut -d' ' -f1)
+  _G="/tmp/.ch-toil-${CLAUDE_SESSION_ID}-${_H}"
+  [ -f "$_G" ] && exit 0
+  touch "$_G"
+}
+
 if echo "$input" | node -e "
   let d='';
   process.stdin.on('data', c => d += c);
