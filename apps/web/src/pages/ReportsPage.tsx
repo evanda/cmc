@@ -68,8 +68,11 @@ export function ReportsPage() {
   const [tab, setTab] = useState<Tab>(initialTab);
   const { data: org } = useOrgSettings();
   const currency = org?.currency ?? 'USD';
-  const money = (n: number) =>
-    new Intl.NumberFormat('en-US', { style: 'currency', currency, maximumFractionDigits: 0 }).format(n);
+  const fmt = useMemo(
+    () => new Intl.NumberFormat('en-US', { style: 'currency', currency, maximumFractionDigits: 0 }),
+    [currency],
+  );
+  const money = (n: number) => fmt.format(n);
 
   const assets = useAssets();
   const categories = useAssetCategories();

@@ -339,7 +339,7 @@ export function MapView({
           : undefined);
       if (feature && feature.geometry.type === 'Point') {
         const [lng, lat] = feature.geometry.coordinates as [number, number];
-        const p = feature.properties!;
+        const p = feature.properties ?? {};
         // Switch level so the POI marker is actually visible.
         if (p.level != null && p.level !== levelRef.current) {
           setLevel(p.level as Level);

@@ -104,8 +104,7 @@ export function DashboardPage() {
         {org?.facility_name ?? 'Campus'} — Overview
       </h1>
       <p className="mb-6 text-sm text-slate-500">
-        Asset registry and campus structure. Work orders, vendors, and the map arrive in later
-        Phase 1–2 work.
+        Asset registry, work orders, preventive maintenance, vendors, and campus map.
       </p>
       <div className="mb-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
         <StatCard label="Active work orders" value={activeWorkOrders ?? '—'} to="/work-orders" />
