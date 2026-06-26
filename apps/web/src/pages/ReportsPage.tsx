@@ -37,7 +37,7 @@ function Bar({ value, max, label, amount }: { value: number; max: number; label:
   );
 }
 
-const TABS = ['Spend & Forecast', 'PM Status', 'Expiry'] as const;
+const TABS = ['Spend & Forecast', 'Preventive Maintenance', 'Expiry'] as const;
 type Tab = (typeof TABS)[number];
 
 function TabBar({ tab, setTab }: { tab: Tab; setTab: (t: Tab) => void }) {
@@ -225,9 +225,9 @@ export function ReportsPage() {
         </>
       )}
 
-      {tab === 'PM Status' && (
+      {tab === 'Preventive Maintenance' && (
         <section className="rounded-lg border border-slate-200 bg-white p-5">
-          <h2 className="mb-1 text-lg font-semibold text-slate-800">PM status</h2>
+          <h2 className="mb-1 text-lg font-semibold text-slate-800">Preventive maintenance</h2>
           <p className="mb-4 text-sm text-slate-500">
             Schedule health from the engine. (True on-time compliance % needs the daily job&apos;s
             completion history — issue #18.)

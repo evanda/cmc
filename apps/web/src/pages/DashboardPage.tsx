@@ -178,7 +178,7 @@ export function DashboardPage() {
         <StatCard
           label="Maintenance due soon"
           value={pms.isLoading ? '—' : pmSoon}
-          to="/reports?tab=PM Status"
+          to="/reports?tab=Preventive Maintenance"
         />
         <StatCard label="Assets" value={assets.data?.length ?? '—'} to="/assets" />
       </div>
@@ -190,14 +190,19 @@ export function DashboardPage() {
       <div className="mb-4 rounded-lg border border-slate-200 bg-white px-5 py-4 text-sm">
         <div className="mb-3 flex items-center justify-between">
           <span className="font-medium text-slate-700">Preventive maintenance</span>
-          <Link to="/reports?tab=PM Status" className="text-xs text-slate-500 hover:underline">
-            View PM status →
+          <Link
+            to="/reports?tab=Preventive Maintenance"
+            className="text-xs text-slate-500 hover:underline"
+          >
+            View report →
           </Link>
         </div>
         {pms.isLoading || workOrders.isLoading ? (
           <span className="text-slate-400">Loading…</span>
         ) : (pms.data?.length ?? 0) === 0 ? (
-          <span className="text-slate-500">No PM schedules yet — add one under Assets → PM.</span>
+          <span className="text-slate-500">
+            No maintenance schedules yet — add one under Assets → Maintenance Schedules.
+          </span>
         ) : (
           <>
             <div className="mb-3 grid grid-cols-3 gap-3">
@@ -212,13 +217,19 @@ export function DashboardPage() {
                     <OverdueRow
                       key={`pm-${p.id}`}
                       label={p.name}
-                      tag="PM"
+                      tag="Schedule"
                       days={p.days}
-                      to="/reports?tab=PM Status"
+                      to="/reports?tab=Preventive Maintenance"
                     />
                   ))}
                   {overdueWos.map((w) => (
-                    <OverdueRow key={`wo-${w.id}`} label={w.title} tag="WO" days={w.days} to="/work-orders" />
+                    <OverdueRow
+                      key={`wo-${w.id}`}
+                      label={w.title}
+                      tag="Work order"
+                      days={w.days}
+                      to="/work-orders"
+                    />
                   ))}
                 </tbody>
               </table>
