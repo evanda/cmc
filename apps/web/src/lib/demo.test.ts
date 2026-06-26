@@ -46,6 +46,53 @@ describe('demo data source — runPmJob', () => {
   });
 });
 
+describe('demo data source — updatePmSchedule', () => {
+  it('updates name, trigger, and compliance flag of an existing schedule', async () => {
+    const schedules = await ds.listPmSchedules();
+    const target = schedules[0];
+    if (!target) return;
+
+    const updated = await ds.updatePmSchedule(target.id, {
+      name: 'Updated HVAC filter swap',
+      asset_id: null,
+      trigger_type: 'calendar',
+      interval_value: 6,
+      interval_unit: 'month',
+      anchor_date: target.anchor_date,
+      lead_time_days: 7,
+      assignee_user_id: null,
+      is_compliance: true,
+      category: 'HVAC',
+    });
+
+    expect(updated.name).toBe('Updated HVAC filter swap');
+    expect(updated.interval_value).toBe(6);
+    expect(updated.lead_time_days).toBe(7);
+    expect(updated.is_compliance).toBe(true);
+    expect(updated.category).toBe('HVAC');
+
+    // Verify the change is reflected in the list.
+    const listed = await ds.listPmSchedules();
+    expect(listed.find((s) => s.id === target.id)?.name).toBe('Updated HVAC filter swap');
+  });
+
+  it('throws when given an unknown id', async () => {
+    await expect(
+      ds.updatePmSchedule('00000000-0000-0000-0000-000000000000', {
+        name: 'Ghost',
+        asset_id: null,
+        trigger_type: 'calendar',
+        interval_value: 1,
+        interval_unit: 'month',
+        anchor_date: '2025-01-01',
+        lead_time_days: 14,
+        assignee_user_id: null,
+        is_compliance: false,
+      }),
+    ).rejects.toThrow('Schedule not found');
+  });
+});
+
 describe('demo data source — updateOrgSettings', () => {
   it('updates the facility name and address', async () => {
     const updated = await ds.updateOrgSettings({

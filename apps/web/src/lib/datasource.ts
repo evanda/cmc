@@ -108,6 +108,7 @@ export interface DataSource {
   // Preventive maintenance (plan §4.3).
   listPmSchedules(): Promise<PmSchedule[]>;
   createPmSchedule(input: PmScheduleForm): Promise<PmSchedule>;
+  updatePmSchedule(id: string, input: PmScheduleForm): Promise<PmSchedule>;
   deletePmSchedule(id: string): Promise<void>;
   /** Run the PM engine now (staff only); returns how many WOs it generated. */
   runPmJob(): Promise<{ generated: number; skipped: number }>;
@@ -746,6 +747,15 @@ const supabaseDataSource: DataSource = {
   createPmSchedule: async (input) =>
     unwrap<PmSchedule>(
       await supabase.from('pm_schedules').insert(pmSchedulePatch(input)).select().single(),
+    ),
+  updatePmSchedule: async (id, input) =>
+    unwrap<PmSchedule>(
+      await supabase
+        .from('pm_schedules')
+        .update(pmSchedulePatch(input))
+        .eq('id', id)
+        .select()
+        .single(),
     ),
   deletePmSchedule: async (id) => {
     unwrap(

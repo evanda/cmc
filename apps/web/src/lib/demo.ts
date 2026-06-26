@@ -614,6 +614,27 @@ export const demoDataSource: DataSource = {
     pmSchedules.push(s);
     return s;
   },
+  updatePmSchedule: async (sid, input) => {
+    const s = pmSchedules.find((x) => x.id === sid);
+    if (!s) throw new Error('Schedule not found');
+    Object.assign(s, {
+      name: input.name,
+      asset_id: input.asset_id ?? null,
+      trigger_type: input.trigger_type,
+      interval_value: input.interval_value ?? null,
+      interval_unit: input.interval_unit ?? null,
+      fixed_month: input.fixed_month ?? null,
+      fixed_day: input.fixed_day ?? null,
+      meter_threshold: input.meter_threshold ?? null,
+      anchor_date: input.anchor_date,
+      lead_time_days: input.lead_time_days,
+      assignee_user_id: input.assignee_user_id ?? null,
+      is_compliance: input.is_compliance,
+      category: input.category ?? null,
+      updated_at: now,
+    });
+    return s;
+  },
   deletePmSchedule: async (sid) => {
     const s = pmSchedules.find((x) => x.id === sid);
     if (s) s.deleted_at = now;

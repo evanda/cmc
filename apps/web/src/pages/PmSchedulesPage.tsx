@@ -13,6 +13,7 @@ import {
   useDeletePmSchedule,
   usePmSchedules,
   useRunPmJob,
+  useUpdatePmSchedule,
   useUsers,
 } from '../lib/queries';
 import { useAuth } from '../auth/AuthProvider';
@@ -48,6 +49,7 @@ export function PmSchedulesPage() {
   const remove = useDeletePmSchedule();
   const runJob = useRunPmJob();
   const [showForm, setShowForm] = useState(false);
+  const [editing, setEditing] = useState<PmSchedule | null>(null);
 
   const assetName = (id: string | null) =>
     id ? (assets.data?.find((a) => a.id === id)?.name ?? null) : null;
@@ -134,12 +136,17 @@ export function PmSchedulesPage() {
                     </td>
                     {canEdit && (
                       <td className="px-4 py-2.5 text-right">
-                        <Button
-                          variant="danger"
-                          onClick={() => confirm(`Delete "${s.name}"?`) && remove.mutate(s.id)}
-                        >
-                          Delete
-                        </Button>
+                        <div className="flex items-center justify-end gap-2">
+                          <Button variant="ghost" onClick={() => setEditing(s)}>
+                            Edit
+                          </Button>
+                          <Button
+                            variant="danger"
+                            onClick={() => confirm(`Delete "${s.name}"?`) && remove.mutate(s.id)}
+                          >
+                            Delete
+                          </Button>
+                        </div>
                       </td>
                     )}
                   </tr>
@@ -158,33 +165,43 @@ export function PmSchedulesPage() {
           onClose={() => setShowForm(false)}
         />
       )}
+      {editing && (
+        <PmForm
+          assets={(assets.data ?? []).map((a) => ({ id: a.id, name: a.name }))}
+          initial={editing}
+          onClose={() => setEditing(null)}
+        />
+      )}
     </div>
   );
 }
 
 function PmForm({
   assets,
+  initial,
   onClose,
 }: {
   assets: { id: string; name: string }[];
+  initial?: PmSchedule;
   onClose: () => void;
 }) {
   const create = useCreatePmSchedule();
+  const update = useUpdatePmSchedule();
   const users = useUsers();
   const [f, setF] = useState({
-    name: '',
-    asset_id: '',
-    trigger_type: 'calendar',
-    interval_value: '3',
-    interval_unit: 'month',
-    fixed_month: '',
-    fixed_day: '',
-    meter_threshold: '',
-    anchor_date: new Date().toISOString().slice(0, 10),
-    lead_time_days: '14',
-    assignee_user_id: '',
-    category: '',
-    is_compliance: false,
+    name: initial?.name ?? '',
+    asset_id: initial?.asset_id ?? '',
+    trigger_type: initial?.trigger_type ?? 'calendar',
+    interval_value: initial?.interval_value != null ? String(initial.interval_value) : '3',
+    interval_unit: initial?.interval_unit ?? 'month',
+    fixed_month: initial?.fixed_month != null ? String(initial.fixed_month) : '',
+    fixed_day: initial?.fixed_day != null ? String(initial.fixed_day) : '',
+    meter_threshold: initial?.meter_threshold != null ? String(initial.meter_threshold) : '',
+    anchor_date: initial?.anchor_date ?? new Date().toISOString().slice(0, 10),
+    lead_time_days: initial?.lead_time_days != null ? String(initial.lead_time_days) : '14',
+    assignee_user_id: initial?.assignee_user_id ?? '',
+    category: initial?.category ?? '',
+    is_compliance: initial?.is_compliance ?? false,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
@@ -192,7 +209,7 @@ function PmForm({
     setF((p) => ({ ...p, [k]: e.target.value }));
 
   return (
-    <Modal title="New maintenance schedule" onClose={onClose}>
+    <Modal title={initial ? 'Edit maintenance schedule' : 'New maintenance schedule'} onClose={onClose}>
       <form
         className="space-y-3"
         onSubmit={async (e) => {
@@ -209,7 +226,11 @@ function PmForm({
             return;
           }
           setBusy(true);
-          await create.mutateAsync(parsed.data);
+          if (initial) {
+            await update.mutateAsync({ id: initial.id, input: parsed.data });
+          } else {
+            await create.mutateAsync(parsed.data);
+          }
           setBusy(false);
           onClose();
         }}
@@ -303,7 +324,7 @@ function PmForm({
             Cancel
           </Button>
           <Button type="submit" disabled={busy}>
-            {busy ? 'Saving…' : 'Save'}
+            {busy ? 'Saving…' : initial ? 'Save changes' : 'Save'}
           </Button>
         </div>
       </form>
