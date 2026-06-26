@@ -1,9 +1,12 @@
 import React, { useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
+  ACTIVE_WORK_ORDER_STATUSES,
   WORK_ORDER_TYPES,
+  pmScheduleStatus,
   workLogFormSchema,
   type Criticality,
+  type PmSchedule,
   type User,
   type WorkOrder,
   type WorkOrderPhotoKind,
@@ -20,6 +23,7 @@ import {
   useDeleteAssetPhoto,
   useLocations,
   useOrgSettings,
+  usePmSchedules,
   usePois,
   useSetPrimaryPhoto,
   useUsers,
@@ -63,6 +67,7 @@ export function AssetDetailPage() {
   const users = useUsers();
   const photos = useAssetPhotos(id);
   const workOrders = useWorkOrders(id);
+  const pms = usePmSchedules();
 
   const addPhoto = useAddAssetPhoto(id);
   const setPrimary = useSetPrimaryPhoto(id);
@@ -84,6 +89,13 @@ export function AssetDetailPage() {
   if (asset.isLoading) return <p className="text-sm text-slate-500">Loading…</p>;
   if (!asset.data) return <EmptyState>Asset not found.</EmptyState>;
   const a = asset.data;
+
+  // Split work into what's still open vs. the completed/closed history log.
+  const allWos = workOrders.data ?? [];
+  const openWos = allWos.filter((w) => ACTIVE_WORK_ORDER_STATUSES.includes(w.status));
+  const historyWos = allWos.filter((w) => !ACTIVE_WORK_ORDER_STATUSES.includes(w.status));
+  const assetPms = (pms.data ?? []).filter((s) => s.asset_id === id && s.active);
+  const todayStr = new Date().toISOString().slice(0, 10);
 
   const contactEmail = a.contact_email ?? org?.maintenance_contact_email ?? null;
   const contactName = a.contact_name ?? (a.contact_email ? null : 'Maintenance team');
@@ -233,20 +245,90 @@ export function AssetDetailPage() {
         </section>
       </div>
 
+      {/* Open work & maintenance schedules — what's outstanding for this asset */}
+      <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div className="rounded-lg border border-slate-200 bg-white p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+              Open work orders
+            </h2>
+            {canFileWo && (
+              <Button variant="ghost" onClick={() => navigate(`/work-orders?asset=${id}`)}>
+                + New
+              </Button>
+            )}
+          </div>
+          {openWos.length > 0 ? (
+            <ul className="divide-y divide-slate-100 text-sm">
+              {openWos.map((w) => {
+                const overdue = !!w.due_date && w.due_date < todayStr;
+                return (
+                  <li key={w.id}>
+                    <button
+                      onClick={() => setViewWo(w)}
+                      className="flex w-full items-center justify-between gap-2 py-2 text-left hover:bg-slate-50"
+                    >
+                      <span className="min-w-0">
+                        <span className="font-medium text-slate-800">{w.title}</span>
+                        <span className="ml-2 text-xs text-slate-400">{w.type}</span>
+                      </span>
+                      <span className="flex shrink-0 items-center gap-2">
+                        {w.due_date && (
+                          <span
+                            className={`rounded px-2 py-0.5 text-xs ${
+                              overdue ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-500'
+                            }`}
+                          >
+                            due {w.due_date}
+                          </span>
+                        )}
+                        <span className="rounded bg-blue-100 px-2 py-0.5 text-xs text-blue-700">
+                          {w.status}
+                        </span>
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <p className="text-sm text-slate-400">No open work orders.</p>
+          )}
+        </div>
+
+        <div className="rounded-lg border border-slate-200 bg-white p-4">
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
+            Maintenance schedules
+          </h2>
+          {assetPms.length > 0 ? (
+            <ul className="divide-y divide-slate-100 text-sm">
+              {assetPms.map((s) => (
+                <li key={s.id} className="flex items-center justify-between gap-2 py-2">
+                  <Link
+                    to="/reports?tab=Preventive Maintenance"
+                    className="font-medium text-slate-800 hover:underline"
+                  >
+                    {s.name}
+                  </Link>
+                  <PmDueBadge schedule={s} />
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-slate-400">No maintenance schedules for this asset.</p>
+          )}
+        </div>
+      </section>
+
       {/* Work history */}
       <section>
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-slate-800">Work history</h2>
           <div className="flex gap-2">
-            {canFileWo && (
-              <Button variant="ghost" onClick={() => navigate(`/work-orders?asset=${id}`)}>
-                + New work order
-              </Button>
-            )}
             {canEdit && <Button onClick={() => setShowLog(true)}>+ Log work</Button>}
           </div>
         </div>
-        {workOrders.data && workOrders.data.length > 0 ? (
+        {historyWos.length > 0 ? (
           <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
             <table className="w-full text-sm">
               <thead className="border-b border-slate-200 bg-slate-50 text-left text-xs uppercase text-slate-500">
@@ -261,8 +343,8 @@ export function AssetDetailPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {/* Status icon + row shading — keep in sync with WorkOrderViews list table */}
-                {workOrders.data.map((w) => {
+                {/* Completed / closed / cancelled work — open items live above. */}
+                {historyWos.map((w) => {
                   const done = w.status === 'completed' || w.status === 'closed';
                   return (
                   <tr
@@ -320,7 +402,7 @@ export function AssetDetailPage() {
             </table>
           </div>
         ) : (
-          <EmptyState>No work logged yet. {canEdit && 'Log the first entry.'}</EmptyState>
+          <EmptyState>No completed work yet. {canEdit && 'Log the first entry.'}</EmptyState>
         )}
       </section>
 
@@ -342,6 +424,37 @@ export function AssetDetailPage() {
       )}
       {showQr && <QrLabelModal asset={a} onClose={() => setShowQr(false)} />}
     </div>
+  );
+}
+
+function PmDueBadge({ schedule: s }: { schedule: PmSchedule }) {
+  const { state, dueDate } = pmScheduleStatus(
+    {
+      type: s.trigger_type,
+      intervalValue: s.interval_value,
+      intervalUnit: s.interval_unit,
+      meterThreshold: s.meter_threshold,
+      fixedMonth: s.fixed_month,
+      fixedDay: s.fixed_day,
+    },
+    new Date(s.anchor_date),
+    new Date(),
+    s.lead_time_days,
+  );
+  if (!dueDate) {
+    return <span className="rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-500">meter-based</span>;
+  }
+  const cls =
+    state === 'overdue'
+      ? 'bg-red-100 text-red-700'
+      : state === 'soon'
+        ? 'bg-amber-100 text-amber-700'
+        : 'bg-slate-100 text-slate-500';
+  const label = state === 'overdue' ? 'overdue' : 'due';
+  return (
+    <span className={`shrink-0 rounded px-2 py-0.5 text-xs ${cls}`}>
+      {label} {dueDate.toISOString().slice(0, 10)}
+    </span>
   );
 }
 
