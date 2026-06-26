@@ -176,7 +176,7 @@ export function PmSchedulesPage() {
   );
 }
 
-function PmForm({
+export function PmForm({
   assets,
   initial,
   onClose,

@@ -15,11 +15,13 @@ import { ds } from '../lib/datasource';
 import { WorkOrderModal } from './WorkOrderModal';
 import { QrLabelModal } from './QrLabelModal';
 import { AssetForm, campusCenter } from './AssetsPage';
+import { PmForm } from './PmSchedulesPage';
 import {
   useAddAssetPhoto,
   useAsset,
   useAssetCategories,
   useAssetPhotos,
+  useAssets,
   useBuildings,
   useCreateWorkOrder,
   useDeleteAssetPhoto,
@@ -64,6 +66,7 @@ export function AssetDetailPage() {
   const currency = org?.currency ?? 'USD';
 
   const asset = useAsset(id);
+  const assetList = useAssets();
   const categories = useAssetCategories();
   const locations = useLocations();
   const buildings = useBuildings();
@@ -84,6 +87,8 @@ export function AssetDetailPage() {
   const [viewWo, setViewWo] = useState<WorkOrder | null>(null);
   const [showQr, setShowQr] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
+  const [showPhotos, setShowPhotos] = useState(false);
+  const [editPm, setEditPm] = useState<PmSchedule | null>(null);
 
   const userName = (uid: string | null) =>
     uid ? (users.data?.find((u) => u.id === uid)?.name ?? '—') : null;
@@ -104,6 +109,7 @@ export function AssetDetailPage() {
   const historyWos = allWos.filter((w) => !ACTIVE_WORK_ORDER_STATUSES.includes(w.status));
   const assetPms = (pms.data ?? []).filter((s) => s.asset_id === id && s.active);
   const vehicle = vehicles.data?.find((v) => v.asset_id === id);
+  const profilePhoto = photos.data?.find((p) => p.is_primary) ?? photos.data?.[0];
   const todayStr = new Date().toISOString().slice(0, 10);
 
   const contactEmail = a.contact_email ?? org?.maintenance_contact_email ?? null;
@@ -116,6 +122,19 @@ export function AssetDetailPage() {
           ← Assets
         </Link>
         <div className="mt-1 flex items-center gap-3">
+          {profilePhoto && (
+            <button
+              onClick={() => setShowPhotos(true)}
+              className="shrink-0"
+              title="View photos"
+            >
+              <img
+                src={profilePhoto.url}
+                alt=""
+                className="h-12 w-12 rounded-md border border-slate-200 object-cover"
+              />
+            </button>
+          )}
           <h1 className="text-2xl font-semibold text-slate-800">{a.name}</h1>
           <span className={`rounded px-2 py-0.5 text-xs ${critStyle[a.criticality]}`}>
             {a.criticality}
@@ -127,16 +146,21 @@ export function AssetDetailPage() {
           >
             {a.status}
           </span>
-          {canEdit && (
-            <div className="ml-auto flex gap-2">
+          <div className="ml-auto flex gap-2">
+            <Button variant="ghost" onClick={() => setShowPhotos(true)}>
+              Photos{photos.data?.length ? ` (${photos.data.length})` : ''}
+            </Button>
+            {canEdit && (
               <Button variant="ghost" onClick={() => setShowEdit(true)}>
                 Edit
               </Button>
+            )}
+            {canEdit && (
               <Button variant="ghost" onClick={() => setShowQr(true)}>
                 QR label
               </Button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
 
@@ -221,147 +245,92 @@ export function AssetDetailPage() {
           </section>
         </div>
 
-        {/* Photos */}
-        <section className="rounded-lg border border-slate-200 bg-white p-4 lg:col-span-2">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Photos</h2>
-            {canEdit && (
-              <>
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (f) addPhoto.mutate(f);
-                    e.target.value = '';
-                  }}
-                />
-                <Button variant="ghost" onClick={() => fileRef.current?.click()}>
-                  + Add photo
+        {/* Open work + maintenance — the operational info, kept beside Details */}
+        <div className="space-y-4 lg:col-span-2">
+          <div className="rounded-lg border border-slate-200 bg-white p-4">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                Open work orders
+              </h2>
+              {canFileWo && (
+                <Button variant="ghost" onClick={() => navigate(`/work-orders?asset=${id}`)}>
+                  + New
                 </Button>
-              </>
-            )}
-          </div>
-          {photos.data && photos.data.length > 0 ? (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-              {photos.data.map((p) => (
-                <figure key={p.id} className="overflow-hidden rounded border border-slate-200">
-                  <img src={p.url} alt={p.caption ?? ''} className="h-32 w-full object-cover" />
-                  <figcaption className="flex items-center justify-between px-2 py-1 text-xs">
-                    <span className="flex items-center gap-1 text-slate-500">
-                      {p.is_primary && (
-                        <span className="rounded bg-blue-100 px-1 text-[10px] text-blue-700">
-                          primary
-                        </span>
-                      )}
-                      <span className="truncate">{p.caption}</span>
-                    </span>
-                    {canEdit && (
-                      <span className="flex gap-1">
-                        {!p.is_primary && (
-                          <button
-                            className="text-slate-400 hover:text-blue-600"
-                            onClick={() => setPrimary.mutate(p.id)}
-                            title="Set as primary"
-                          >
-                            ★
-                          </button>
-                        )}
-                        <button
-                          className="text-slate-400 hover:text-red-600"
-                          onClick={() => deletePhoto.mutate(p.id)}
-                          title="Delete"
-                        >
-                          ✕
-                        </button>
-                      </span>
-                    )}
-                  </figcaption>
-                </figure>
-              ))}
+              )}
             </div>
-          ) : (
-            <p className="text-sm text-slate-400">No photos yet.</p>
-          )}
-        </section>
-      </div>
-
-      {/* Open work & maintenance schedules — what's outstanding for this asset */}
-      <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <div className="rounded-lg border border-slate-200 bg-white p-4">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-              Open work orders
-            </h2>
-            {canFileWo && (
-              <Button variant="ghost" onClick={() => navigate(`/work-orders?asset=${id}`)}>
-                + New
-              </Button>
+            {openWos.length > 0 ? (
+              <ul className="divide-y divide-slate-100 text-sm">
+                {openWos.map((w) => {
+                  const overdue = !!w.due_date && w.due_date < todayStr;
+                  return (
+                    <li key={w.id}>
+                      <button
+                        onClick={() => setViewWo(w)}
+                        className="flex w-full items-center justify-between gap-2 py-2 text-left hover:bg-slate-50"
+                      >
+                        <span className="min-w-0">
+                          <span className="font-medium text-slate-800">{w.title}</span>
+                          <span className="ml-2 text-xs text-slate-400">{w.type}</span>
+                        </span>
+                        <span className="flex shrink-0 items-center gap-2">
+                          {w.due_date && (
+                            <span
+                              className={`rounded px-2 py-0.5 text-xs ${
+                                overdue ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-500'
+                              }`}
+                            >
+                              due {w.due_date}
+                            </span>
+                          )}
+                          <span className="rounded bg-blue-100 px-2 py-0.5 text-xs text-blue-700">
+                            {w.status}
+                          </span>
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <p className="text-sm text-slate-400">No open work orders.</p>
             )}
           </div>
-          {openWos.length > 0 ? (
-            <ul className="divide-y divide-slate-100 text-sm">
-              {openWos.map((w) => {
-                const overdue = !!w.due_date && w.due_date < todayStr;
-                return (
-                  <li key={w.id}>
-                    <button
-                      onClick={() => setViewWo(w)}
-                      className="flex w-full items-center justify-between gap-2 py-2 text-left hover:bg-slate-50"
-                    >
-                      <span className="min-w-0">
-                        <span className="font-medium text-slate-800">{w.title}</span>
-                        <span className="ml-2 text-xs text-slate-400">{w.type}</span>
-                      </span>
-                      <span className="flex shrink-0 items-center gap-2">
-                        {w.due_date && (
-                          <span
-                            className={`rounded px-2 py-0.5 text-xs ${
-                              overdue ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-500'
-                            }`}
-                          >
-                            due {w.due_date}
-                          </span>
-                        )}
-                        <span className="rounded bg-blue-100 px-2 py-0.5 text-xs text-blue-700">
-                          {w.status}
-                        </span>
-                      </span>
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          ) : (
-            <p className="text-sm text-slate-400">No open work orders.</p>
-          )}
-        </div>
 
-        <div className="rounded-lg border border-slate-200 bg-white p-4">
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
-            Maintenance schedules
-          </h2>
-          {assetPms.length > 0 ? (
-            <ul className="divide-y divide-slate-100 text-sm">
-              {assetPms.map((s) => (
-                <li key={s.id} className="flex items-center justify-between gap-2 py-2">
-                  <Link
-                    to="/reports?tab=Preventive Maintenance"
-                    className="font-medium text-slate-800 hover:underline"
-                  >
-                    {s.name}
-                  </Link>
-                  <PmDueBadge schedule={s} />
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-sm text-slate-400">No maintenance schedules for this asset.</p>
-          )}
+          <div className="rounded-lg border border-slate-200 bg-white p-4">
+            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
+              Maintenance schedules
+            </h2>
+            {assetPms.length > 0 ? (
+              <ul className="divide-y divide-slate-100 text-sm">
+                {assetPms.map((s) => {
+                  const row = (
+                    <>
+                      <span className="font-medium text-slate-800">{s.name}</span>
+                      <PmDueBadge schedule={s} />
+                    </>
+                  );
+                  return (
+                    <li key={s.id}>
+                      {canEdit ? (
+                        <button
+                          onClick={() => setEditPm(s)}
+                          className="flex w-full items-center justify-between gap-2 py-2 text-left hover:bg-slate-50"
+                        >
+                          {row}
+                        </button>
+                      ) : (
+                        <div className="flex items-center justify-between gap-2 py-2">{row}</div>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <p className="text-sm text-slate-400">No maintenance schedules for this asset.</p>
+            )}
+          </div>
         </div>
-      </section>
+      </div>
 
       {/* Work history */}
       <section>
@@ -478,6 +447,78 @@ export function AssetDetailPage() {
             setShowEdit(false);
           }}
         />
+      )}
+      {editPm && (
+        <PmForm
+          assets={(assetList.data ?? []).map((x) => ({ id: x.id, name: x.name }))}
+          initial={editPm}
+          onClose={() => setEditPm(null)}
+        />
+      )}
+      {showPhotos && (
+        <Modal title="Photos" onClose={() => setShowPhotos(false)}>
+          {canEdit && (
+            <div className="mb-3 flex justify-end">
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) addPhoto.mutate(f);
+                  e.target.value = '';
+                }}
+              />
+              <Button variant="ghost" onClick={() => fileRef.current?.click()}>
+                + Add photo
+              </Button>
+            </div>
+          )}
+          {photos.data && photos.data.length > 0 ? (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {photos.data.map((p) => (
+                <figure key={p.id} className="overflow-hidden rounded border border-slate-200">
+                  <img src={p.url} alt={p.caption ?? ''} className="h-32 w-full object-cover" />
+                  <figcaption className="flex items-center justify-between px-2 py-1 text-xs">
+                    <span className="flex items-center gap-1 text-slate-500">
+                      {p.is_primary && (
+                        <span className="rounded bg-blue-100 px-1 text-[10px] text-blue-700">
+                          primary
+                        </span>
+                      )}
+                      <span className="truncate">{p.caption}</span>
+                    </span>
+                    {canEdit && (
+                      <span className="flex gap-1">
+                        {!p.is_primary && (
+                          <button
+                            className="text-slate-400 hover:text-blue-600"
+                            onClick={() => setPrimary.mutate(p.id)}
+                            title="Set as primary"
+                          >
+                            ★
+                          </button>
+                        )}
+                        <button
+                          className="text-slate-400 hover:text-red-600"
+                          onClick={() => deletePhoto.mutate(p.id)}
+                          title="Delete"
+                        >
+                          ✕
+                        </button>
+                      </span>
+                    )}
+                  </figcaption>
+                </figure>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-slate-400">
+              No photos yet.{canEdit && ' Use “+ Add photo” above.'}
+            </p>
+          )}
+        </Modal>
       )}
     </div>
   );
