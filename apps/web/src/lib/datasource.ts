@@ -109,6 +109,8 @@ export interface DataSource {
   listPmSchedules(): Promise<PmSchedule[]>;
   createPmSchedule(input: PmScheduleForm): Promise<PmSchedule>;
   deletePmSchedule(id: string): Promise<void>;
+  /** Run the PM engine now (staff only); returns how many WOs it generated. */
+  runPmJob(): Promise<{ generated: number; skipped: number }>;
   // Spatial POIs — map markers linked to assets (plan §5.4).
   listPois(): Promise<Poi[]>;
   // Fleet / vehicles (plan §4.4).
@@ -754,6 +756,12 @@ const supabaseDataSource: DataSource = {
         .select()
         .single(),
     );
+  },
+  runPmJob: async () => {
+    const result = unwrap<{ generated: number; skipped: number }>(
+      await supabase.rpc('pm_generate_now'),
+    );
+    return { generated: result.generated ?? 0, skipped: result.skipped ?? 0 };
   },
 
   listPois: async () =>

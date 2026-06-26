@@ -22,6 +22,7 @@ import type {
   WorkOrderUpdate,
   WorkRequestForm,
 } from '@cmc/shared';
+import { nextDueDate, shouldGenerateWorkOrder } from '@cmc/shared';
 import type { DataSource } from './datasource';
 import {
   assets,
@@ -616,6 +617,64 @@ export const demoDataSource: DataSource = {
   deletePmSchedule: async (sid) => {
     const s = pmSchedules.find((x) => x.id === sid);
     if (s) s.deleted_at = now;
+  },
+  runPmJob: async () => {
+    // Mirror pm_daily_run() (0014): generate a WO for each active calendar/
+    // fixed schedule due within its lead window that has no open WO yet.
+    const today = new Date();
+    let generated = 0;
+    let skipped = 0;
+    for (const s of pmSchedules.filter((x) => x.active && !x.deleted_at)) {
+      const hasOpenWorkOrder = workOrders.some(
+        (w) =>
+          w.source_pm_id === s.id &&
+          !w.deleted_at &&
+          ['open', 'in_progress', 'on_hold'].includes(w.status),
+      );
+      if (hasOpenWorkOrder) {
+        skipped++;
+        continue;
+      }
+      const due = shouldGenerateWorkOrder(
+        {
+          type: s.trigger_type,
+          intervalValue: s.interval_value,
+          intervalUnit: s.interval_unit,
+          meterThreshold: s.meter_threshold,
+          fixedMonth: s.fixed_month,
+          fixedDay: s.fixed_day,
+        },
+        new Date(s.anchor_date),
+        { today, leadTimeDays: s.lead_time_days, hasOpenWorkOrder: false },
+      );
+      if (!due) continue;
+      const dueDate = nextDueDate(
+        {
+          type: s.trigger_type,
+          intervalValue: s.interval_value,
+          intervalUnit: s.interval_unit,
+          fixedMonth: s.fixed_month,
+          fixedDay: s.fixed_day,
+        },
+        new Date(s.anchor_date),
+      );
+      workOrders.push(
+        buildWO({
+          title: s.name,
+          type: 'preventive',
+          status: 'open',
+          source_pm_id: s.id,
+          linked_asset_id: s.asset_id,
+          location_id: s.location_id,
+          assignee_user_id: s.assignee_user_id,
+          vendor_id: s.vendor_id,
+          scheduled_date: dueDate ? dueDate.toISOString().slice(0, 10) : null,
+          due_date: dueDate ? dueDate.toISOString().slice(0, 10) : null,
+        }),
+      );
+      generated++;
+    }
+    return { generated, skipped };
   },
 
   // Demo mode: map reads POIs from bundled GeoJSON via the existing fetch path

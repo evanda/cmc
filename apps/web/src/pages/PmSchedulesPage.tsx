@@ -12,6 +12,7 @@ import {
   useCreatePmSchedule,
   useDeletePmSchedule,
   usePmSchedules,
+  useRunPmJob,
   useUsers,
 } from '../lib/queries';
 import { useAuth } from '../auth/AuthProvider';
@@ -45,6 +46,7 @@ export function PmSchedulesPage() {
   const schedules = usePmSchedules();
   const assets = useAssets();
   const remove = useDeletePmSchedule();
+  const runJob = useRunPmJob();
   const [showForm, setShowForm] = useState(false);
 
   const assetName = (id: string | null) =>
@@ -54,12 +56,31 @@ export function PmSchedulesPage() {
     <div>
       <div className="mb-1 flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-slate-800">Maintenance Schedules</h1>
-        {canEdit && <Button onClick={() => setShowForm(true)}>+ New maintenance schedule</Button>}
+        {canEdit && (
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" onClick={() => runJob.mutate()} disabled={runJob.isPending}>
+              {runJob.isPending ? 'Generating…' : 'Generate due work orders'}
+            </Button>
+            <Button onClick={() => setShowForm(true)}>+ New maintenance schedule</Button>
+          </div>
+        )}
       </div>
-      <p className="mb-4 text-sm text-slate-500">
-        Recurring scheduled work. The engine computes each schedule&apos;s next-due date and (once
-        the daily job runs) generates a work order ahead of it.
+      <p className="mb-2 text-sm text-slate-500">
+        Recurring scheduled work. The engine computes each schedule&apos;s next-due date and
+        generates a work order ahead of it — automatically every night, or on demand via
+        &ldquo;Generate due work orders&rdquo;.
       </p>
+      {runJob.isSuccess && (
+        <p className="mb-4 text-sm text-green-700">
+          Generated {runJob.data.generated} work order{runJob.data.generated === 1 ? '' : 's'}
+          {runJob.data.skipped > 0 && ` · ${runJob.data.skipped} already had an open one`}.
+        </p>
+      )}
+      {runJob.isError && (
+        <p className="mb-4 text-sm text-red-700">
+          Couldn&apos;t generate work orders: {(runJob.error as Error).message}
+        </p>
+      )}
 
       {schedules.isLoading ? (
         <p className="text-sm text-slate-500">Loading…</p>

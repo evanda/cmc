@@ -450,6 +450,17 @@ export function useDeletePmSchedule() {
   });
 }
 
+export function useRunPmJob() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => ds.runPmJob(),
+    onSuccess: () => {
+      invalidateWorkOrders(qc);
+      qc.invalidateQueries({ queryKey: ['pm_schedules'] });
+    },
+  });
+}
+
 // ── map POIs (plan §5.4) ─────────────────────────────────────────────────────
 export function usePois() {
   return useQuery({ queryKey: ['pois'], queryFn: () => ds.listPois() });

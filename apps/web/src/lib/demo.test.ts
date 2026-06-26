@@ -31,6 +31,21 @@ describe('demo data source — seed', () => {
   });
 });
 
+describe('demo data source — runPmJob', () => {
+  it('generates preventive work orders for due schedules and is idempotent per cycle', async () => {
+    const first = await ds.runPmJob();
+    expect(first.generated).toBeGreaterThan(0);
+    const pmWos = (await ds.listAllWorkOrders()).filter((w) => w.source_pm_id);
+    expect(pmWos.length).toBeGreaterThanOrEqual(first.generated);
+    expect(pmWos.every((w) => w.type === 'preventive')).toBe(true);
+
+    // A second run skips schedules that now have an open WO (no duplicates).
+    const second = await ds.runPmJob();
+    expect(second.generated).toBe(0);
+    expect(second.skipped).toBeGreaterThanOrEqual(first.generated);
+  });
+});
+
 describe('demo data source — updateOrgSettings', () => {
   it('updates the facility name and address', async () => {
     const updated = await ds.updateOrgSettings({
