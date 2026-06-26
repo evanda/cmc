@@ -105,12 +105,21 @@ export function DashboardPage() {
   const now = new Date();
   const todayStr = now.toISOString().slice(0, 10);
 
+  // The open work order a PM cycle has already spawned (plan §4.3), so an
+  // overdue schedule can deep-link straight to its WO rather than the list.
+  const openWoByPm = new Map<string, string>();
+  for (const w of workOrders.data ?? []) {
+    if (w.source_pm_id && ACTIVE_WORK_ORDER_STATUSES.includes(w.status)) {
+      if (!openWoByPm.has(w.source_pm_id)) openWoByPm.set(w.source_pm_id, w.id);
+    }
+  }
+
   // ── PM schedule health (plan §4.3): overdue / due-soon / on-track, computed
   // from the first uncompleted cycle so overdue is visible (not rolled forward).
   let pmOverdue = 0;
   let pmSoon = 0;
   let pmOk = 0;
-  const overduePms: { id: string; name: string; days: number }[] = [];
+  const overduePms: { id: string; name: string; days: number; link: string }[] = [];
   for (const s of pms.data ?? []) {
     if (!s.active) continue;
     const { state, dueDate } = pmScheduleStatus(
@@ -129,7 +138,14 @@ export function DashboardPage() {
     if (state === 'overdue') {
       pmOverdue++;
       const days = dueDate ? Math.floor((now.getTime() - dueDate.getTime()) / 86_400_000) : 0;
-      overduePms.push({ id: s.id, name: s.name, days });
+      // Its open WO if one exists, else the linked asset, else the PM report.
+      const woId = openWoByPm.get(s.id);
+      const link = woId
+        ? `/work-orders?wo=${woId}`
+        : s.asset_id
+          ? `/assets/${s.asset_id}`
+          : '/reports?tab=Preventive Maintenance';
+      overduePms.push({ id: s.id, name: s.name, days, link });
     } else if (state === 'soon') {
       pmSoon++;
     } else {
@@ -145,6 +161,7 @@ export function DashboardPage() {
       id: w.id,
       title: w.title,
       days: Math.floor((now.getTime() - new Date(w.due_date as string).getTime()) / 86_400_000),
+      link: `/work-orders?wo=${w.id}`,
     }))
     .sort((a, b) => b.days - a.days);
 
@@ -219,7 +236,7 @@ export function DashboardPage() {
                       label={p.name}
                       tag="Schedule"
                       days={p.days}
-                      to="/reports?tab=Preventive Maintenance"
+                      to={p.link}
                     />
                   ))}
                   {overdueWos.map((w) => (
@@ -228,7 +245,7 @@ export function DashboardPage() {
                       label={w.title}
                       tag="Work order"
                       days={w.days}
-                      to="/work-orders"
+                      to={w.link}
                     />
                   ))}
                 </tbody>

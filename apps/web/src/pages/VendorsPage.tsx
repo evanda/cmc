@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   contactFormSchema,
   serviceContractFormSchema,
@@ -31,6 +32,16 @@ export function VendorsPage() {
   const canEdit = role === 'admin' || role === 'technician';
   const [tab, setTab] = useState<Tab>('vendors');
 
+  // Deep link from an expiry row: /vendors?vendor=<id> opens that vendor.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const vendorParam = searchParams.get('vendor');
+  const clearVendorParam = () => {
+    if (!vendorParam) return;
+    const next = new URLSearchParams(searchParams);
+    next.delete('vendor');
+    setSearchParams(next, { replace: true });
+  };
+
   const tabs: { key: Tab; label: string }[] = [
     { key: 'vendors', label: 'Vendors' },
     { key: 'contracts', label: 'Service Contracts' },
@@ -56,7 +67,9 @@ export function VendorsPage() {
         ))}
       </div>
 
-      {tab === 'vendors' && <VendorsTab canEdit={canEdit} />}
+      {tab === 'vendors' && (
+        <VendorsTab canEdit={canEdit} openId={vendorParam} onOpened={clearVendorParam} />
+      )}
       {tab === 'contracts' && <ContractsTab canEdit={canEdit} />}
       {tab === 'contacts' && <ContactsTab canEdit={canEdit} />}
     </div>
@@ -64,13 +77,33 @@ export function VendorsPage() {
 }
 
 // ── Vendors ──────────────────────────────────────────────────────────────────
-function VendorsTab({ canEdit }: { canEdit: boolean }) {
+function VendorsTab({
+  canEdit,
+  openId,
+  onOpened,
+}: {
+  canEdit: boolean;
+  openId?: string | null;
+  onOpened?: () => void;
+}) {
   const vendors = useVendors();
   const create = useCreateVendor();
   const update = useUpdateVendor();
   const remove = useDeleteVendor();
   const [editing, setEditing] = useState<Vendor | null>(null);
   const [show, setShow] = useState(false);
+
+  // Open the deep-linked vendor's detail once the list has loaded.
+  useEffect(() => {
+    if (!openId || !vendors.data) return;
+    const v = vendors.data.find((x) => x.id === openId);
+    if (v && canEdit) {
+      setEditing(v);
+      setShow(true);
+    }
+    onOpened?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openId, vendors.data]);
 
   return (
     <div>

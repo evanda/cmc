@@ -44,8 +44,8 @@ export function checkExpiries(
   data: {
     assets: Pick<Asset, 'id' | 'name' | 'warranty_expiry'>[];
     vendors: Pick<Vendor, 'id' | 'name' | 'coi_expiry' | 'contract_expiry'>[];
-    serviceContracts: Pick<ServiceContract, 'id' | 'description' | 'end_date'>[];
-    vehicles?: Array<Pick<Vehicle, 'id' | 'registration_expiry' | 'insurance_expiry' | 'inspection_expiry'> & { name: string }>;
+    serviceContracts: Pick<ServiceContract, 'id' | 'description' | 'end_date' | 'vendor_id'>[];
+    vehicles?: Array<Pick<Vehicle, 'id' | 'asset_id' | 'registration_expiry' | 'insurance_expiry' | 'inspection_expiry'> & { name: string }>;
   },
   windowDays = 60,
   today = new Date(),
@@ -72,7 +72,7 @@ export function checkExpiries(
       expiry: v.coi_expiry!,
       daysUntil: days(v.coi_expiry!, today),
       kind: 'vendor_coi' as const,
-      link: '/vendors',
+      link: `/vendors?vendor=${v.id}`,
     }))
     .filter((item) => inWindow(item.daysUntil));
 
@@ -84,7 +84,7 @@ export function checkExpiries(
       expiry: v.contract_expiry!,
       daysUntil: days(v.contract_expiry!, today),
       kind: 'vendor_contract' as const,
-      link: '/vendors',
+      link: `/vendors?vendor=${v.id}`,
     }))
     .filter((item) => inWindow(item.daysUntil));
 
@@ -96,7 +96,7 @@ export function checkExpiries(
       expiry: c.end_date!,
       daysUntil: days(c.end_date!, today),
       kind: 'service_contract' as const,
-      link: '/vendors',
+      link: c.vendor_id ? `/vendors?vendor=${c.vendor_id}` : '/vendors',
     }))
     .filter((item) => inWindow(item.daysUntil));
 
@@ -110,7 +110,7 @@ export function checkExpiries(
       expiry: v.registration_expiry!,
       daysUntil: days(v.registration_expiry!, today),
       kind: 'vehicle_reg' as const,
-      link: '/fleet',
+      link: `/assets/${v.asset_id}`,
     }))
     .filter((item) => inWindow(item.daysUntil));
 
@@ -122,7 +122,7 @@ export function checkExpiries(
       expiry: v.insurance_expiry!,
       daysUntil: days(v.insurance_expiry!, today),
       kind: 'vehicle_insurance' as const,
-      link: '/fleet',
+      link: `/assets/${v.asset_id}`,
     }))
     .filter((item) => inWindow(item.daysUntil));
 
@@ -134,7 +134,7 @@ export function checkExpiries(
       expiry: v.inspection_expiry!,
       daysUntil: days(v.inspection_expiry!, today),
       kind: 'vehicle_inspection' as const,
-      link: '/fleet',
+      link: `/assets/${v.asset_id}`,
     }))
     .filter((item) => inWindow(item.daysUntil));
 

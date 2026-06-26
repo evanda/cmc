@@ -72,6 +72,23 @@ export function WorkOrdersPage() {
     }
   };
 
+  // Deep link to a specific work order: /work-orders?wo=<id> opens its modal
+  // (e.g. from the dashboard's overdue list). Cleared when the modal closes.
+  const woParam = searchParams.get('wo');
+  useEffect(() => {
+    if (!woParam || open) return;
+    const wo = workOrders.data?.find((w) => w.id === woParam);
+    if (wo) setOpen(wo);
+  }, [woParam, workOrders.data, open]);
+  const closeOpen = () => {
+    setOpen(null);
+    if (woParam) {
+      const next = new URLSearchParams(searchParams);
+      next.delete('wo');
+      setSearchParams(next, { replace: true });
+    }
+  };
+
   const assetName = (id: string | null) =>
     id ? (assets.data?.find((a) => a.id === id)?.name ?? null) : null;
   const userName = (id: string | null) =>
@@ -189,7 +206,7 @@ export function WorkOrdersPage() {
           users={users.data ?? []}
           currency={currency}
           canEdit={canEdit}
-          onClose={() => setOpen(null)}
+          onClose={closeOpen}
         />
       )}
       {showNew && (
