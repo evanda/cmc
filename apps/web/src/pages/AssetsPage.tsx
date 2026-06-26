@@ -23,7 +23,7 @@ import { LocationPicker, type PlacedPoint } from '../components/LocationPicker';
 
 const CAMPUS_DEFAULT: [number, number] = [-84.6879, 33.9441];
 
-function campusCenter(buildings: Building[]): [number, number] {
+export function campusCenter(buildings: Building[]): [number, number] {
   for (const b of buildings) {
     const ring = b.footprint_geojson?.coordinates?.[0];
     if (ring?.length) {
@@ -238,7 +238,7 @@ export function AssetsPage() {
   );
 }
 
-function AssetForm({
+export function AssetForm({
   initial,
   categories,
   locations,

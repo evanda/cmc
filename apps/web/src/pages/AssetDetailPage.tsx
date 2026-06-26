@@ -14,11 +14,13 @@ import {
 import { ds } from '../lib/datasource';
 import { WorkOrderModal } from './WorkOrderModal';
 import { QrLabelModal } from './QrLabelModal';
+import { AssetForm, campusCenter } from './AssetsPage';
 import {
   useAddAssetPhoto,
   useAsset,
   useAssetCategories,
   useAssetPhotos,
+  useBuildings,
   useCreateWorkOrder,
   useDeleteAssetPhoto,
   useLocations,
@@ -26,12 +28,14 @@ import {
   usePmSchedules,
   usePois,
   useSetPrimaryPhoto,
+  useUpdateAsset,
   useUsers,
+  useVehicles,
   useVendors,
   useWorkOrders,
 } from '../lib/queries';
 import { useAuth } from '../auth/AuthProvider';
-import { Button, EmptyState, Field, Modal, inputClass } from '../components/ui';
+import { Button, EmptyState, ExpiryBadge, Field, Modal, inputClass } from '../components/ui';
 
 const critStyle: Record<Criticality, string> = {
   low: 'bg-slate-100 text-slate-600',
@@ -62,12 +66,15 @@ export function AssetDetailPage() {
   const asset = useAsset(id);
   const categories = useAssetCategories();
   const locations = useLocations();
+  const buildings = useBuildings();
   const { data: allPois } = usePois();
   const linkedPoi = allPois?.find((p) => p.linked_asset_id === id);
   const users = useUsers();
   const photos = useAssetPhotos(id);
   const workOrders = useWorkOrders(id);
   const pms = usePmSchedules();
+  const vehicles = useVehicles();
+  const updateAsset = useUpdateAsset();
 
   const addPhoto = useAddAssetPhoto(id);
   const setPrimary = useSetPrimaryPhoto(id);
@@ -76,6 +83,7 @@ export function AssetDetailPage() {
   const [showLog, setShowLog] = useState(false);
   const [viewWo, setViewWo] = useState<WorkOrder | null>(null);
   const [showQr, setShowQr] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
 
   const userName = (uid: string | null) =>
     uid ? (users.data?.find((u) => u.id === uid)?.name ?? '—') : null;
@@ -95,6 +103,7 @@ export function AssetDetailPage() {
   const openWos = allWos.filter((w) => ACTIVE_WORK_ORDER_STATUSES.includes(w.status));
   const historyWos = allWos.filter((w) => !ACTIVE_WORK_ORDER_STATUSES.includes(w.status));
   const assetPms = (pms.data ?? []).filter((s) => s.asset_id === id && s.active);
+  const vehicle = vehicles.data?.find((v) => v.asset_id === id);
   const todayStr = new Date().toISOString().slice(0, 10);
 
   const contactEmail = a.contact_email ?? org?.maintenance_contact_email ?? null;
@@ -119,9 +128,14 @@ export function AssetDetailPage() {
             {a.status}
           </span>
           {canEdit && (
-            <Button variant="ghost" onClick={() => setShowQr(true)} className="ml-auto">
-              QR label
-            </Button>
+            <div className="ml-auto flex gap-2">
+              <Button variant="ghost" onClick={() => setShowEdit(true)}>
+                Edit
+              </Button>
+              <Button variant="ghost" onClick={() => setShowQr(true)}>
+                QR label
+              </Button>
+            </div>
           )}
         </div>
       </div>
@@ -157,6 +171,35 @@ export function AssetDetailPage() {
             </dl>
             {a.notes && <p className="mt-3 text-sm text-slate-600">{a.notes}</p>}
           </section>
+
+          {vehicle && (
+            <section className="rounded-lg border border-slate-200 bg-white p-4">
+              <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
+                Vehicle
+              </h2>
+              <dl className="space-y-1.5 text-sm">
+                <Row
+                  label="Year / Make / Model"
+                  value={[vehicle.year, vehicle.make, vehicle.model].filter(Boolean).join(' ') || '—'}
+                />
+                <Row label="VIN" value={vehicle.vin ?? '—'} />
+                <Row label="Plate" value={vehicle.plate ?? '—'} />
+                {vehicle.fuel_type && <Row label="Fuel" value={vehicle.fuel_type} />}
+                {vehicle.capacity != null && <Row label="Capacity" value={String(vehicle.capacity)} />}
+                <Row label="Registration" value={<ExpiryBadge date={vehicle.registration_expiry} />} />
+                <Row label="Insurance" value={<ExpiryBadge date={vehicle.insurance_expiry} />} />
+                <Row label="Inspection" value={<ExpiryBadge date={vehicle.inspection_expiry} />} />
+              </dl>
+              {canEdit && (
+                <Link
+                  to="/assets?tab=Fleet"
+                  className="mt-3 inline-block text-xs text-blue-600 hover:underline"
+                >
+                  Edit vehicle details in Fleet →
+                </Link>
+              )}
+            </section>
+          )}
 
           <section className="rounded-lg border border-slate-200 bg-white p-4">
             <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-500">
@@ -423,6 +466,19 @@ export function AssetDetailPage() {
         />
       )}
       {showQr && <QrLabelModal asset={a} onClose={() => setShowQr(false)} />}
+      {showEdit && (
+        <AssetForm
+          initial={a}
+          categories={(categories.data ?? []).map((c) => ({ id: c.id, name: c.name }))}
+          locations={(locations.data ?? []).map((l) => ({ id: l.id, name: l.name }))}
+          center={campusCenter(buildings.data ?? [])}
+          onClose={() => setShowEdit(false)}
+          onSubmit={async (values) => {
+            await updateAsset.mutateAsync({ id, ...values });
+            setShowEdit(false);
+          }}
+        />
+      )}
     </div>
   );
 }
