@@ -33,7 +33,6 @@ const optionalNumber = z.preprocess(
   z.coerce.number().nonnegative('Must be ≥ 0').optional(),
 );
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const optionalGeoJson = z.any().nullable().optional();
 
 export const buildingFormSchema = z.object({
