@@ -5,6 +5,20 @@
 export const USER_ROLES = ['admin', 'technician', 'requester', 'trustee', 'vendor'] as const;
 export type UserRole = (typeof USER_ROLES)[number];
 
+/** Human-readable role labels for UI and emails (e.g. invite emails, §3/§7.5). */
+export const ROLE_LABELS: Record<UserRole, string> = {
+  admin: 'Administrator',
+  technician: 'Technician',
+  requester: 'Requester',
+  trustee: 'Trustee',
+  vendor: 'Vendor',
+};
+
+/** Display label for a role, falling back to the raw value if unrecognized. */
+export function roleLabel(role: string): string {
+  return (ROLE_LABELS as Record<string, string>)[role] ?? role;
+}
+
 /** Asset criticality (plan §4.1). */
 export const CRITICALITIES = ['low', 'medium', 'high'] as const;
 export type Criticality = (typeof CRITICALITIES)[number];

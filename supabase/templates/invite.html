@@ -1,0 +1,87 @@
+<!--
+  Invite email template (issue #56).
+
+  Replaces Supabase's bare default invite ("You have been invited") with a
+  branded message that tells the recipient WHAT the app is, WHICH facility they
+  are joining, WHO invited them, and WHAT role they'll have.
+
+  Wired via supabase/config.toml -> [auth.email.template.invite].
+
+  Template data:
+    {{ .ConfirmationURL }}   accept-invite link (GoTrue)
+    {{ .Email }}             invitee email (GoTrue)
+    {{ .Data.* }}            raw_user_meta_data set by the invite-user edge
+                             function: app_name, app_full_name, facility_name,
+                             role_label, invited_by, logo_url.
+  The .Data.* fields are guarded so a missing value never renders "<no value>".
+-->
+<table width="100%" cellpadding="0" cellspacing="0" role="presentation"
+       style="background:#f1f5f9;margin:0;padding:24px 0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <tr>
+    <td align="center">
+      <table width="480" cellpadding="0" cellspacing="0" role="presentation"
+             style="background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;max-width:480px;width:100%;">
+        <!-- Header / brand bar -->
+        <tr>
+          <td style="background:#1d4ed8;padding:20px 28px;">
+            {{ if .Data.logo_url }}
+              <img src="{{ .Data.logo_url }}" alt="" height="32"
+                   style="height:32px;display:block;margin-bottom:8px;border:0;" />
+            {{ end }}
+            <div style="color:#ffffff;font-size:18px;font-weight:700;letter-spacing:0.3px;">
+              {{ if .Data.app_full_name }}{{ .Data.app_full_name }}{{ else }}CMC — Church Maintenance Coordinator{{ end }}
+            </div>
+          </td>
+        </tr>
+
+        <!-- Body -->
+        <tr>
+          <td style="padding:28px;">
+            <h1 style="margin:0 0 16px;font-size:20px;color:#0f172a;">You've been invited</h1>
+
+            <p style="margin:0 0 16px;font-size:15px;line-height:1.55;color:#334155;">
+              {{ if .Data.invited_by }}<strong>{{ .Data.invited_by }}</strong> has invited you{{ else }}You've been invited{{ end }}
+              to help maintain{{ if .Data.facility_name }} <strong>{{ .Data.facility_name }}</strong>{{ end }}
+              {{ if .Data.role_label }}as a <strong>{{ .Data.role_label }}</strong>{{ end }}
+              in {{ if .Data.app_name }}{{ .Data.app_name }}{{ else }}CMC{{ end }}, the facilities
+              maintenance system{{ if .Data.facility_name }} for {{ .Data.facility_name }}{{ end }}.
+            </p>
+
+            <p style="margin:0 0 24px;font-size:15px;line-height:1.55;color:#334155;">
+              CMC tracks work orders, assets, preventive maintenance, vendors, and a campus map —
+              so the team always knows what needs doing and where things are.
+            </p>
+
+            <!-- CTA -->
+            <table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 24px;">
+              <tr>
+                <td style="border-radius:8px;background:#1d4ed8;">
+                  <a href="{{ .ConfirmationURL }}"
+                     style="display:inline-block;padding:12px 24px;font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:8px;">
+                    Accept your invitation
+                  </a>
+                </td>
+              </tr>
+            </table>
+
+            <p style="margin:0 0 8px;font-size:13px;line-height:1.5;color:#64748b;">
+              Or paste this link into your browser:
+            </p>
+            <p style="margin:0 0 8px;font-size:13px;line-height:1.5;word-break:break-all;">
+              <a href="{{ .ConfirmationURL }}" style="color:#1d4ed8;">{{ .ConfirmationURL }}</a>
+            </p>
+          </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+          <td style="padding:16px 28px;border-top:1px solid #e2e8f0;background:#f8fafc;">
+            <p style="margin:0;font-size:12px;line-height:1.5;color:#94a3b8;">
+              This invitation was sent to {{ .Email }}. If you weren't expecting it, you can ignore this email.
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
