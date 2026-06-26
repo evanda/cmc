@@ -62,7 +62,24 @@ jobs:
 
       - name: Deploy Edge Functions
         if: ${{ github.event_name == 'push' || inputs.deploy_functions }}
-        run: supabase functions deploy invite-user --project-ref "$SUPABASE_PROJECT_REF"
+        # --use-api bundles server-side; the native (eszip) bundler can choke on
+        # transitive deps of the floating @supabase/supabase-js@2 import (#56).
+        run: supabase functions deploy invite-user --project-ref "$SUPABASE_PROJECT_REF" --use-api
+
+      # Push the branded invite email template (#56) to hosted Auth. `db push`
+      # never touches auth config, so without this the prod invite stays the
+      # default. PATCH is partial — only the mailer_* fields change, so this is
+      # safe to run on every backend deploy (unlike the site_url block below).
+      # Subject mirrors supabase/config.toml [auth.email.template.invite].
+      - name: Push invite email template
+        if: ${{ github.event_name == 'push' || inputs.deploy_functions }}
+        run: |
+          BODY=$(jq -Rs . < supabase/templates/invite.html)
+          curl -fsS -X PATCH \
+            "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/config/auth" \
+            -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"mailer_subjects_invite\":\"You're invited to {{ .Data.facility_name }} on CMC\",\"mailer_templates_invite_content\":$BODY}"
 
       # --- Auth config for #39 (manual runs only, when an app_url is given) ---
       # invite-user reads SITE_URL to build the /accept-invite redirect; Auth
