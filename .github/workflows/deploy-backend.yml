@@ -75,11 +75,22 @@ jobs:
         if: ${{ github.event_name == 'push' || inputs.deploy_functions }}
         run: |
           BODY=$(jq -Rs . < supabase/templates/invite.html)
-          curl -fsS -X PATCH \
+          code=$(curl -sS -o /tmp/auth_resp.json -w "%{http_code}" -X PATCH \
             "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/config/auth" \
             -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
             -H "Content-Type: application/json" \
-            -d "{\"mailer_subjects_invite\":\"You're invited to {{ .Data.facility_name }} on CMC\",\"mailer_templates_invite_content\":$BODY}"
+            -d "{\"mailer_subjects_invite\":\"You're invited to {{ .Data.facility_name }} on CMC\",\"mailer_templates_invite_content\":$BODY}")
+          if [ "$code" = "200" ]; then
+            echo "Invite email template pushed."
+          elif [ "$code" = "400" ] && grep -q "not available for free tier" /tmp/auth_resp.json; then
+            # Free tier + default email provider can't customize templates. Don't
+            # fail the deploy — branded invites just need custom SMTP (or a paid
+            # plan) on the project first; the metadata the function attaches is
+            # harmless until then.
+            echo "::warning::Invite email template not applied — project is on the free tier with the default email provider. Configure custom SMTP (or upgrade) to enable the branded invite."
+          else
+            echo "Unexpected response ($code) from Auth config PATCH:"; cat /tmp/auth_resp.json; exit 1
+          fi
 
       # --- Auth config for #39 (manual runs only, when an app_url is given) ---
       # invite-user reads SITE_URL to build the /accept-invite redirect; Auth
