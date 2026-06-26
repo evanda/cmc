@@ -106,7 +106,11 @@ export function AssetDetailPage() {
   // Split work into what's still open vs. the completed/closed history log.
   const allWos = workOrders.data ?? [];
   const openWos = allWos.filter((w) => ACTIVE_WORK_ORDER_STATUSES.includes(w.status));
-  const historyWos = allWos.filter((w) => !ACTIVE_WORK_ORDER_STATUSES.includes(w.status));
+  const historyWos = allWos
+    .filter((w) => !ACTIVE_WORK_ORDER_STATUSES.includes(w.status))
+    .sort((x, y) =>
+      (y.completed_date ?? y.created_at).localeCompare(x.completed_date ?? x.created_at),
+    );
   const assetPms = (pms.data ?? []).filter((s) => s.asset_id === id && s.active);
   const vehicle = vehicles.data?.find((v) => v.asset_id === id);
   const profilePhoto = photos.data?.find((p) => p.is_primary) ?? photos.data?.[0];
@@ -122,19 +126,6 @@ export function AssetDetailPage() {
           ← Assets
         </Link>
         <div className="mt-1 flex items-center gap-3">
-          {profilePhoto && (
-            <button
-              onClick={() => setShowPhotos(true)}
-              className="shrink-0"
-              title="View photos"
-            >
-              <img
-                src={profilePhoto.url}
-                alt=""
-                className="h-12 w-12 rounded-md border border-slate-200 object-cover"
-              />
-            </button>
-          )}
           <h1 className="text-2xl font-semibold text-slate-800">{a.name}</h1>
           <span className={`rounded px-2 py-0.5 text-xs ${critStyle[a.criticality]}`}>
             {a.criticality}
@@ -164,14 +155,32 @@ export function AssetDetailPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Specs + contact */}
-        <div className="space-y-4 lg:col-span-1">
-          <section className="rounded-lg border border-slate-200 bg-white p-4">
-            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
-              Details
-            </h2>
-            <dl className="space-y-1.5 text-sm">
+      {/* Details (+ photo + contact) beside asset-specifics; full width if none. */}
+      <div className={`grid grid-cols-1 gap-6 ${vehicle ? 'lg:grid-cols-2' : ''}`}>
+        <section className="rounded-lg border border-slate-200 bg-white p-4">
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
+            Details
+          </h2>
+          <div className="flex gap-4">
+            <button
+              onClick={() => setShowPhotos(true)}
+              className="shrink-0"
+              title={profilePhoto ? 'View photos' : 'Add a photo'}
+            >
+              {profilePhoto ? (
+                <img
+                  src={profilePhoto.url}
+                  alt=""
+                  className="h-20 w-20 rounded-md border border-slate-200 object-cover"
+                />
+              ) : (
+                <div className="flex h-20 w-20 flex-col items-center justify-center rounded-md border border-dashed border-slate-300 text-center text-[10px] leading-tight text-slate-400">
+                  <span className="text-base">📷</span>
+                  Photos
+                </div>
+              )}
+            </button>
+            <dl className="flex-1 space-y-1.5 text-sm">
               <Row label="Category" value={catName ?? '—'} />
               <Row label="Location" value={locName ?? 'Unplaced'} />
               <Row label="Make / Model" value={[a.make, a.model].filter(Boolean).join(' ') || '—'} />
@@ -180,10 +189,7 @@ export function AssetDetailPage() {
                 <Row
                   label="Map location"
                   value={
-                    <Link
-                      to={`/map?asset=${id}`}
-                      className="text-blue-600 hover:underline"
-                    >
+                    <Link to={`/map?asset=${id}`} className="text-blue-600 hover:underline">
                       {linkedPoi
                         ? `${linkedPoi.label}${linkedPoi.level != null ? ` · level ${linkedPoi.level}` : ''}`
                         : `${a.geometry_geojson!.coordinates[1].toFixed(5)}, ${a.geometry_geojson!.coordinates[0].toFixed(5)}${a.level != null ? ` · level ${a.level}` : ''}`}
@@ -193,142 +199,141 @@ export function AssetDetailPage() {
                 />
               )}
             </dl>
-            {a.notes && <p className="mt-3 text-sm text-slate-600">{a.notes}</p>}
-          </section>
-
-          {vehicle && (
-            <section className="rounded-lg border border-slate-200 bg-white p-4">
-              <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
-                Vehicle
-              </h2>
-              <dl className="space-y-1.5 text-sm">
-                <Row
-                  label="Year / Make / Model"
-                  value={[vehicle.year, vehicle.make, vehicle.model].filter(Boolean).join(' ') || '—'}
-                />
-                <Row label="VIN" value={vehicle.vin ?? '—'} />
-                <Row label="Plate" value={vehicle.plate ?? '—'} />
-                {vehicle.fuel_type && <Row label="Fuel" value={vehicle.fuel_type} />}
-                {vehicle.capacity != null && <Row label="Capacity" value={String(vehicle.capacity)} />}
-                <Row label="Registration" value={<ExpiryBadge date={vehicle.registration_expiry} />} />
-                <Row label="Insurance" value={<ExpiryBadge date={vehicle.insurance_expiry} />} />
-                <Row label="Inspection" value={<ExpiryBadge date={vehicle.inspection_expiry} />} />
-              </dl>
-              {canEdit && (
-                <Link
-                  to="/assets?tab=Fleet"
-                  className="mt-3 inline-block text-xs text-blue-600 hover:underline"
-                >
-                  Edit vehicle details in Fleet →
-                </Link>
-              )}
-            </section>
-          )}
-
-          <section className="rounded-lg border border-slate-200 bg-white p-4">
-            <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-500">
+          </div>
+          {a.notes && <p className="mt-3 text-sm text-slate-600">{a.notes}</p>}
+          <div className="mt-4 border-t border-slate-100 pt-3">
+            <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
               Point of contact
-            </h2>
+            </h3>
             {contactEmail ? (
               <div className="text-sm">
-                {contactName && <div className="font-medium text-slate-800">{contactName}</div>}
+                {contactName && <span className="font-medium text-slate-800">{contactName} · </span>}
                 <a className="text-blue-600 hover:underline" href={`mailto:${contactEmail}`}>
                   {contactEmail}
                 </a>
                 {!a.contact_email && (
-                  <div className="mt-1 text-xs text-slate-400">Org maintenance contact (default)</div>
+                  <div className="mt-0.5 text-xs text-slate-400">Org maintenance contact (default)</div>
                 )}
               </div>
             ) : (
               <p className="text-sm text-slate-400">No contact set.</p>
             )}
+          </div>
+        </section>
+
+        {vehicle && (
+          <section className="rounded-lg border border-slate-200 bg-white p-4">
+            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
+              Vehicle
+            </h2>
+            <dl className="space-y-1.5 text-sm">
+              <Row
+                label="Year / Make / Model"
+                value={[vehicle.year, vehicle.make, vehicle.model].filter(Boolean).join(' ') || '—'}
+              />
+              <Row label="VIN" value={vehicle.vin ?? '—'} />
+              <Row label="Plate" value={vehicle.plate ?? '—'} />
+              {vehicle.fuel_type && <Row label="Fuel" value={vehicle.fuel_type} />}
+              {vehicle.capacity != null && <Row label="Capacity" value={String(vehicle.capacity)} />}
+              <Row label="Registration" value={<ExpiryBadge date={vehicle.registration_expiry} />} />
+              <Row label="Insurance" value={<ExpiryBadge date={vehicle.insurance_expiry} />} />
+              <Row label="Inspection" value={<ExpiryBadge date={vehicle.inspection_expiry} />} />
+            </dl>
+            {canEdit && (
+              <Link
+                to="/assets?tab=Fleet"
+                className="mt-3 inline-block text-xs text-blue-600 hover:underline"
+              >
+                Edit vehicle details in Fleet →
+              </Link>
+            )}
           </section>
+        )}
+      </div>
+
+      {/* Open work + maintenance — what's outstanding, side by side. */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div className="rounded-lg border border-slate-200 bg-white p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+              Open work orders
+            </h2>
+            {canFileWo && (
+              <Button variant="ghost" onClick={() => navigate(`/work-orders?asset=${id}`)}>
+                + New
+              </Button>
+            )}
+          </div>
+          {openWos.length > 0 ? (
+            <ul className="divide-y divide-slate-100 text-sm">
+              {openWos.map((w) => {
+                const overdue = !!w.due_date && w.due_date < todayStr;
+                return (
+                  <li key={w.id}>
+                    <button
+                      onClick={() => setViewWo(w)}
+                      className="flex w-full items-center justify-between gap-2 py-2 text-left hover:bg-slate-50"
+                    >
+                      <span className="min-w-0">
+                        <span className="font-medium text-slate-800">{w.title}</span>
+                        <span className="ml-2 text-xs text-slate-400">{w.type}</span>
+                      </span>
+                      <span className="flex shrink-0 items-center gap-2">
+                        {w.due_date && (
+                          <span
+                            className={`rounded px-2 py-0.5 text-xs ${
+                              overdue ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-500'
+                            }`}
+                          >
+                            due {w.due_date}
+                          </span>
+                        )}
+                        <span className="rounded bg-blue-100 px-2 py-0.5 text-xs text-blue-700">
+                          {w.status}
+                        </span>
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <p className="text-sm text-slate-400">No open work orders.</p>
+          )}
         </div>
 
-        {/* Open work + maintenance — the operational info, kept beside Details */}
-        <div className="space-y-4 lg:col-span-2">
-          <div className="rounded-lg border border-slate-200 bg-white p-4">
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-                Open work orders
-              </h2>
-              {canFileWo && (
-                <Button variant="ghost" onClick={() => navigate(`/work-orders?asset=${id}`)}>
-                  + New
-                </Button>
-              )}
-            </div>
-            {openWos.length > 0 ? (
-              <ul className="divide-y divide-slate-100 text-sm">
-                {openWos.map((w) => {
-                  const overdue = !!w.due_date && w.due_date < todayStr;
-                  return (
-                    <li key={w.id}>
+        <div className="rounded-lg border border-slate-200 bg-white p-4">
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
+            Maintenance schedules
+          </h2>
+          {assetPms.length > 0 ? (
+            <ul className="divide-y divide-slate-100 text-sm">
+              {assetPms.map((s) => {
+                const row = (
+                  <>
+                    <span className="font-medium text-slate-800">{s.name}</span>
+                    <PmDueBadge schedule={s} />
+                  </>
+                );
+                return (
+                  <li key={s.id}>
+                    {canEdit ? (
                       <button
-                        onClick={() => setViewWo(w)}
+                        onClick={() => setEditPm(s)}
                         className="flex w-full items-center justify-between gap-2 py-2 text-left hover:bg-slate-50"
                       >
-                        <span className="min-w-0">
-                          <span className="font-medium text-slate-800">{w.title}</span>
-                          <span className="ml-2 text-xs text-slate-400">{w.type}</span>
-                        </span>
-                        <span className="flex shrink-0 items-center gap-2">
-                          {w.due_date && (
-                            <span
-                              className={`rounded px-2 py-0.5 text-xs ${
-                                overdue ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-500'
-                              }`}
-                            >
-                              due {w.due_date}
-                            </span>
-                          )}
-                          <span className="rounded bg-blue-100 px-2 py-0.5 text-xs text-blue-700">
-                            {w.status}
-                          </span>
-                        </span>
+                        {row}
                       </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            ) : (
-              <p className="text-sm text-slate-400">No open work orders.</p>
-            )}
-          </div>
-
-          <div className="rounded-lg border border-slate-200 bg-white p-4">
-            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
-              Maintenance schedules
-            </h2>
-            {assetPms.length > 0 ? (
-              <ul className="divide-y divide-slate-100 text-sm">
-                {assetPms.map((s) => {
-                  const row = (
-                    <>
-                      <span className="font-medium text-slate-800">{s.name}</span>
-                      <PmDueBadge schedule={s} />
-                    </>
-                  );
-                  return (
-                    <li key={s.id}>
-                      {canEdit ? (
-                        <button
-                          onClick={() => setEditPm(s)}
-                          className="flex w-full items-center justify-between gap-2 py-2 text-left hover:bg-slate-50"
-                        >
-                          {row}
-                        </button>
-                      ) : (
-                        <div className="flex items-center justify-between gap-2 py-2">{row}</div>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
-            ) : (
-              <p className="text-sm text-slate-400">No maintenance schedules for this asset.</p>
-            )}
-          </div>
+                    ) : (
+                      <div className="flex items-center justify-between gap-2 py-2">{row}</div>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <p className="text-sm text-slate-400">No maintenance schedules for this asset.</p>
+          )}
         </div>
       </div>
 
