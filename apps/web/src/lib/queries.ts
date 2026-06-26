@@ -442,11 +442,31 @@ export function useCreatePmSchedule() {
   });
 }
 
+export function useUpdatePmSchedule() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, input }: { id: string; input: import('@cmc/shared').PmScheduleForm }) =>
+      ds.updatePmSchedule(id, input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['pm_schedules'] }),
+  });
+}
+
 export function useDeletePmSchedule() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => ds.deletePmSchedule(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['pm_schedules'] }),
+  });
+}
+
+export function useRunPmJob() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => ds.runPmJob(),
+    onSuccess: () => {
+      invalidateWorkOrders(qc);
+      qc.invalidateQueries({ queryKey: ['pm_schedules'] });
+    },
   });
 }
 

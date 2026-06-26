@@ -3,6 +3,7 @@ import {
   advanceAnchor,
   meterUnitsRemaining,
   nextDueDate,
+  pmScheduleStatus,
   shouldGenerateWorkOrder,
   upcomingDueDate,
   type PmTrigger,
@@ -61,6 +62,41 @@ describe('upcomingDueDate', () => {
     expect(
       upcomingDueDate(calendar, new Date('2026-08-01T00:00:00Z'), today)?.toISOString(),
     ).toBe('2026-11-01T00:00:00.000Z');
+  });
+});
+
+describe('pmScheduleStatus', () => {
+  const today = new Date('2026-06-23T00:00:00Z');
+
+  it('flags a stale calendar cycle as overdue (does NOT roll forward like upcomingDueDate)', () => {
+    // quarterly from 2026-01-01 → first cycle due 2026-04-01, which is past today.
+    const r = pmScheduleStatus(calendar, new Date('2026-01-01T00:00:00Z'), today, 7);
+    expect(r.state).toBe('overdue');
+    expect(r.dueDate?.toISOString()).toBe('2026-04-01T00:00:00.000Z');
+  });
+
+  it('flags due-within-lead-time as soon', () => {
+    // anchor 2026-03-25 → due 2026-06-25, two days out, lead time 7.
+    const r = pmScheduleStatus(calendar, new Date('2026-03-25T00:00:00Z'), today, 7);
+    expect(r.state).toBe('soon');
+  });
+
+  it('flags a future due outside the lead window as ok', () => {
+    // anchor 2026-06-01 → due 2026-09-01, far out.
+    expect(pmScheduleStatus(calendar, new Date('2026-06-01T00:00:00Z'), today, 7).state).toBe('ok');
+  });
+
+  it('fixed_date in the past this year is overdue', () => {
+    // April 15 already passed relative to today (June 23).
+    const r = pmScheduleStatus(fixed, new Date('2026-01-01T00:00:00Z'), today, 7);
+    expect(r.state).toBe('overdue');
+    expect(r.dueDate?.toISOString()).toBe('2026-04-15T00:00:00.000Z');
+  });
+
+  it('meter triggers report ok with no date', () => {
+    const r = pmScheduleStatus(meter, new Date('2026-01-01T00:00:00Z'), today, 7);
+    expect(r.state).toBe('ok');
+    expect(r.dueDate).toBeNull();
   });
 });
 

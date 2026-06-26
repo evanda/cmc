@@ -108,7 +108,10 @@ export interface DataSource {
   // Preventive maintenance (plan §4.3).
   listPmSchedules(): Promise<PmSchedule[]>;
   createPmSchedule(input: PmScheduleForm): Promise<PmSchedule>;
+  updatePmSchedule(id: string, input: PmScheduleForm): Promise<PmSchedule>;
   deletePmSchedule(id: string): Promise<void>;
+  /** Run the PM engine now (staff only); returns how many WOs it generated. */
+  runPmJob(): Promise<{ generated: number; skipped: number }>;
   // Spatial POIs — map markers linked to assets (plan §5.4).
   listPois(): Promise<Poi[]>;
   // Fleet / vehicles (plan §4.4).
@@ -745,6 +748,15 @@ const supabaseDataSource: DataSource = {
     unwrap<PmSchedule>(
       await supabase.from('pm_schedules').insert(pmSchedulePatch(input)).select().single(),
     ),
+  updatePmSchedule: async (id, input) =>
+    unwrap<PmSchedule>(
+      await supabase
+        .from('pm_schedules')
+        .update(pmSchedulePatch(input))
+        .eq('id', id)
+        .select()
+        .single(),
+    ),
   deletePmSchedule: async (id) => {
     unwrap(
       await supabase
@@ -754,6 +766,12 @@ const supabaseDataSource: DataSource = {
         .select()
         .single(),
     );
+  },
+  runPmJob: async () => {
+    const result = unwrap<{ generated: number; skipped: number }>(
+      await supabase.rpc('pm_generate_now'),
+    );
+    return { generated: result.generated ?? 0, skipped: result.skipped ?? 0 };
   },
 
   listPois: async () =>

@@ -4,7 +4,7 @@ import { ExpiryBoardPage } from './ExpiryBoardPage';
 import {
   capitalForecast,
   capitalForecastTotal,
-  upcomingDueDate,
+  pmScheduleStatus,
   type WorkOrder,
 } from '@cmc/shared';
 import {
@@ -37,7 +37,7 @@ function Bar({ value, max, label, amount }: { value: number; max: number; label:
   );
 }
 
-const TABS = ['Spend & Forecast', 'PM Status', 'Expiry'] as const;
+const TABS = ['Spend & Forecast', 'Preventive Maintenance', 'Expiry'] as const;
 type Tab = (typeof TABS)[number];
 
 function TabBar({ tab, setTab }: { tab: Tab; setTab: (t: Tab) => void }) {
@@ -68,8 +68,11 @@ export function ReportsPage() {
   const [tab, setTab] = useState<Tab>(initialTab);
   const { data: org } = useOrgSettings();
   const currency = org?.currency ?? 'USD';
-  const money = (n: number) =>
-    new Intl.NumberFormat('en-US', { style: 'currency', currency, maximumFractionDigits: 0 }).format(n);
+  const fmt = useMemo(
+    () => new Intl.NumberFormat('en-US', { style: 'currency', currency, maximumFractionDigits: 0 }),
+    [currency],
+  );
+  const money = (n: number) => fmt.format(n);
 
   const assets = useAssets();
   const categories = useAssetCategories();
@@ -123,7 +126,8 @@ export function ReportsPage() {
     let soon = 0;
     let ok = 0;
     for (const s of pms.data ?? []) {
-      const due = upcomingDueDate(
+      if (!s.active) continue;
+      const { state } = pmScheduleStatus(
         {
           type: s.trigger_type,
           intervalValue: s.interval_value,
@@ -134,14 +138,10 @@ export function ReportsPage() {
         },
         new Date(s.anchor_date),
         TODAY,
+        s.lead_time_days,
       );
-      if (!due) {
-        ok++;
-        continue;
-      }
-      const days = Math.ceil((due.getTime() - TODAY.getTime()) / 86_400_000);
-      if (days < 0) overdue++;
-      else if (days <= s.lead_time_days) soon++;
+      if (state === 'overdue') overdue++;
+      else if (state === 'soon') soon++;
       else ok++;
     }
     return { overdue, soon, ok };
@@ -225,9 +225,9 @@ export function ReportsPage() {
         </>
       )}
 
-      {tab === 'PM Status' && (
+      {tab === 'Preventive Maintenance' && (
         <section className="rounded-lg border border-slate-200 bg-white p-5">
-          <h2 className="mb-1 text-lg font-semibold text-slate-800">PM status</h2>
+          <h2 className="mb-1 text-lg font-semibold text-slate-800">Preventive maintenance</h2>
           <p className="mb-4 text-sm text-slate-500">
             Schedule health from the engine. (True on-time compliance % needs the daily job&apos;s
             completion history — issue #18.)

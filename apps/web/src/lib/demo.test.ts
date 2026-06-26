@@ -31,6 +31,68 @@ describe('demo data source — seed', () => {
   });
 });
 
+describe('demo data source — runPmJob', () => {
+  it('generates preventive work orders for due schedules and is idempotent per cycle', async () => {
+    const first = await ds.runPmJob();
+    expect(first.generated).toBeGreaterThan(0);
+    const pmWos = (await ds.listAllWorkOrders()).filter((w) => w.source_pm_id);
+    expect(pmWos.length).toBeGreaterThanOrEqual(first.generated);
+    expect(pmWos.every((w) => w.type === 'preventive')).toBe(true);
+
+    // A second run skips schedules that now have an open WO (no duplicates).
+    const second = await ds.runPmJob();
+    expect(second.generated).toBe(0);
+    expect(second.skipped).toBeGreaterThanOrEqual(first.generated);
+  });
+});
+
+describe('demo data source — updatePmSchedule', () => {
+  it('updates name, trigger, and compliance flag of an existing schedule', async () => {
+    const schedules = await ds.listPmSchedules();
+    const target = schedules[0];
+    if (!target) return;
+
+    const updated = await ds.updatePmSchedule(target.id, {
+      name: 'Updated HVAC filter swap',
+      asset_id: null,
+      trigger_type: 'calendar',
+      interval_value: 6,
+      interval_unit: 'month',
+      anchor_date: target.anchor_date,
+      lead_time_days: 7,
+      assignee_user_id: null,
+      is_compliance: true,
+      category: 'HVAC',
+    });
+
+    expect(updated.name).toBe('Updated HVAC filter swap');
+    expect(updated.interval_value).toBe(6);
+    expect(updated.lead_time_days).toBe(7);
+    expect(updated.is_compliance).toBe(true);
+    expect(updated.category).toBe('HVAC');
+
+    // Verify the change is reflected in the list.
+    const listed = await ds.listPmSchedules();
+    expect(listed.find((s) => s.id === target.id)?.name).toBe('Updated HVAC filter swap');
+  });
+
+  it('throws when given an unknown id', async () => {
+    await expect(
+      ds.updatePmSchedule('00000000-0000-0000-0000-000000000000', {
+        name: 'Ghost',
+        asset_id: null,
+        trigger_type: 'calendar',
+        interval_value: 1,
+        interval_unit: 'month',
+        anchor_date: '2025-01-01',
+        lead_time_days: 14,
+        assignee_user_id: null,
+        is_compliance: false,
+      }),
+    ).rejects.toThrow('Schedule not found');
+  });
+});
+
 describe('demo data source — updateOrgSettings', () => {
   it('updates the facility name and address', async () => {
     const updated = await ds.updateOrgSettings({

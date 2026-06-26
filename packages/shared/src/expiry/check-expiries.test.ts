@@ -11,7 +11,12 @@ function d(offsetDays: number): string {
 
 const noVendors = [] as { id: string; name: string; coi_expiry: string | null; contract_expiry: string | null }[];
 const noAssets = [] as { id: string; name: string; warranty_expiry: string | null }[];
-const noContracts = [] as { id: string; description: string; end_date: string | null }[];
+const noContracts = [] as {
+  id: string;
+  description: string;
+  end_date: string | null;
+  vendor_id: string | null;
+}[];
 
 describe('checkExpiries', () => {
   it('includes items expiring within the window', () => {
@@ -50,7 +55,7 @@ describe('checkExpiries', () => {
       {
         assets: [{ id: 'a1', name: 'HVAC', warranty_expiry: null }],
         vendors: [{ id: 'v1', name: 'ACME', coi_expiry: null, contract_expiry: null }],
-        serviceContracts: [{ id: 'c1', description: 'Lawn', end_date: null }],
+        serviceContracts: [{ id: 'c1', description: 'Lawn', end_date: null, vendor_id: 'v1' }],
       },
       60,
       TODAY,
@@ -63,7 +68,7 @@ describe('checkExpiries', () => {
       {
         assets: [{ id: 'a1', name: 'Boiler', warranty_expiry: d(10) }],
         vendors: [{ id: 'v1', name: 'ACME Plumbing', coi_expiry: d(20), contract_expiry: d(5) }],
-        serviceContracts: [{ id: 'c1', description: 'Pest Control', end_date: d(45) }],
+        serviceContracts: [{ id: 'c1', description: 'Pest Control', end_date: d(45), vendor_id: 'v1' }],
       },
       60,
       TODAY,
@@ -73,6 +78,10 @@ describe('checkExpiries', () => {
     expect(result.vendorContracts).toHaveLength(1);
     expect(result.serviceContracts).toHaveLength(1);
     expect(result.all).toHaveLength(4);
+    // Deep links point at the specific vendor, not the generic list.
+    expect(result.vendorCois[0].link).toBe('/vendors?vendor=v1');
+    expect(result.vendorContracts[0].link).toBe('/vendors?vendor=v1');
+    expect(result.serviceContracts[0].link).toBe('/vendors?vendor=v1');
   });
 
   it('labels vendor contract entries with "— contract" suffix', () => {
@@ -93,7 +102,7 @@ describe('checkExpiries', () => {
       {
         assets: [{ id: 'a1', name: 'Boiler', warranty_expiry: d(30) }],
         vendors: [{ id: 'v1', name: 'ACME', coi_expiry: d(-5), contract_expiry: null }],
-        serviceContracts: [{ id: 'c1', description: 'Pest', end_date: d(10) }],
+        serviceContracts: [{ id: 'c1', description: 'Pest', end_date: d(10), vendor_id: 'v1' }],
       },
       60,
       TODAY,
@@ -139,6 +148,7 @@ describe('checkExpiries', () => {
         vehicles: [
           {
             id: 'v1',
+            asset_id: 'as1',
             name: 'Bus 1',
             registration_expiry: d(20),
             insurance_expiry: null,
@@ -152,7 +162,7 @@ describe('checkExpiries', () => {
     expect(result.vehicleReg).toHaveLength(1);
     expect(result.vehicleReg[0].name).toBe('Bus 1 — registration');
     expect(result.vehicleReg[0].kind).toBe('vehicle_reg');
-    expect(result.vehicleReg[0].link).toBe('/fleet');
+    expect(result.vehicleReg[0].link).toBe('/assets/as1');
     expect(result.vehicleReg[0].daysUntil).toBe(20);
   });
 
@@ -165,6 +175,7 @@ describe('checkExpiries', () => {
         vehicles: [
           {
             id: 'v1',
+            asset_id: 'as2',
             name: 'Bus 2',
             registration_expiry: d(10),
             insurance_expiry: d(30),
@@ -191,6 +202,7 @@ describe('checkExpiries', () => {
         vehicles: [
           {
             id: 'v1',
+            asset_id: 'as3',
             name: 'Bus 3',
             registration_expiry: d(90),
             insurance_expiry: null,
@@ -213,6 +225,7 @@ describe('checkExpiries', () => {
         vehicles: [
           {
             id: 'v1',
+            asset_id: 'as1',
             name: 'Bus 1',
             registration_expiry: d(5),
             insurance_expiry: d(25),

@@ -62,7 +62,35 @@ jobs:
 
       - name: Deploy Edge Functions
         if: ${{ github.event_name == 'push' || inputs.deploy_functions }}
-        run: supabase functions deploy invite-user --project-ref "$SUPABASE_PROJECT_REF"
+        # --use-api bundles server-side; the native (eszip) bundler can choke on
+        # transitive deps of the floating @supabase/supabase-js@2 import (#56).
+        run: supabase functions deploy invite-user --project-ref "$SUPABASE_PROJECT_REF" --use-api
+
+      # Push the branded invite email template (#56) to hosted Auth. `db push`
+      # never touches auth config, so without this the prod invite stays the
+      # default. PATCH is partial — only the mailer_* fields change, so this is
+      # safe to run on every backend deploy (unlike the site_url block below).
+      # Subject mirrors supabase/config.toml [auth.email.template.invite].
+      - name: Push invite email template
+        if: ${{ github.event_name == 'push' || inputs.deploy_functions }}
+        run: |
+          BODY=$(jq -Rs . < supabase/templates/invite.html)
+          code=$(curl -sS -o /tmp/auth_resp.json -w "%{http_code}" -X PATCH \
+            "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/config/auth" \
+            -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"mailer_subjects_invite\":\"You're invited to {{ .Data.facility_name }} on CMC\",\"mailer_templates_invite_content\":$BODY}")
+          if [ "$code" = "200" ]; then
+            echo "Invite email template pushed."
+          elif [ "$code" = "400" ] && grep -q "not available for free tier" /tmp/auth_resp.json; then
+            # Free tier + default email provider can't customize templates. Don't
+            # fail the deploy — branded invites just need custom SMTP (or a paid
+            # plan) on the project first; the metadata the function attaches is
+            # harmless until then.
+            echo "::warning::Invite email template not applied — project is on the free tier with the default email provider. Configure custom SMTP (or upgrade) to enable the branded invite."
+          else
+            echo "Unexpected response ($code) from Auth config PATCH:"; cat /tmp/auth_resp.json; exit 1
+          fi
 
       # --- Auth config for #39 (manual runs only, when an app_url is given) ---
       # invite-user reads SITE_URL to build the /accept-invite redirect; Auth

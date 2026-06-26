@@ -83,7 +83,8 @@ export function LocationPicker({
       mapRef.current = null;
       markerRef.current = null;
     };
-  }, []); // mount-only — value/center used as initial state only
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // mount-only — value/center seed the map once; refs track live values
 
   function handleLevelChange(l: number) {
     setActiveLevel(l);

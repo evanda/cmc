@@ -1,9 +1,12 @@
 import React, { useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
+  ACTIVE_WORK_ORDER_STATUSES,
   WORK_ORDER_TYPES,
+  pmScheduleStatus,
   workLogFormSchema,
   type Criticality,
+  type PmSchedule,
   type User,
   type WorkOrder,
   type WorkOrderPhotoKind,
@@ -11,23 +14,30 @@ import {
 import { ds } from '../lib/datasource';
 import { WorkOrderModal } from './WorkOrderModal';
 import { QrLabelModal } from './QrLabelModal';
+import { AssetForm, campusCenter } from './AssetsPage';
+import { PmForm } from './PmSchedulesPage';
 import {
   useAddAssetPhoto,
   useAsset,
   useAssetCategories,
   useAssetPhotos,
+  useAssets,
+  useBuildings,
   useCreateWorkOrder,
   useDeleteAssetPhoto,
   useLocations,
   useOrgSettings,
+  usePmSchedules,
   usePois,
   useSetPrimaryPhoto,
+  useUpdateAsset,
   useUsers,
+  useVehicles,
   useVendors,
   useWorkOrders,
 } from '../lib/queries';
 import { useAuth } from '../auth/AuthProvider';
-import { Button, EmptyState, Field, Modal, inputClass } from '../components/ui';
+import { Button, EmptyState, ExpiryBadge, Field, Modal, inputClass } from '../components/ui';
 
 const critStyle: Record<Criticality, string> = {
   low: 'bg-slate-100 text-slate-600',
@@ -56,13 +66,18 @@ export function AssetDetailPage() {
   const currency = org?.currency ?? 'USD';
 
   const asset = useAsset(id);
+  const assetList = useAssets();
   const categories = useAssetCategories();
   const locations = useLocations();
+  const buildings = useBuildings();
   const { data: allPois } = usePois();
   const linkedPoi = allPois?.find((p) => p.linked_asset_id === id);
   const users = useUsers();
   const photos = useAssetPhotos(id);
   const workOrders = useWorkOrders(id);
+  const pms = usePmSchedules();
+  const vehicles = useVehicles();
+  const updateAsset = useUpdateAsset();
 
   const addPhoto = useAddAssetPhoto(id);
   const setPrimary = useSetPrimaryPhoto(id);
@@ -71,6 +86,9 @@ export function AssetDetailPage() {
   const [showLog, setShowLog] = useState(false);
   const [viewWo, setViewWo] = useState<WorkOrder | null>(null);
   const [showQr, setShowQr] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
+  const [showPhotos, setShowPhotos] = useState(false);
+  const [editPm, setEditPm] = useState<PmSchedule | null>(null);
 
   const userName = (uid: string | null) =>
     uid ? (users.data?.find((u) => u.id === uid)?.name ?? '—') : null;
@@ -84,6 +102,19 @@ export function AssetDetailPage() {
   if (asset.isLoading) return <p className="text-sm text-slate-500">Loading…</p>;
   if (!asset.data) return <EmptyState>Asset not found.</EmptyState>;
   const a = asset.data;
+
+  // Split work into what's still open vs. the completed/closed history log.
+  const allWos = workOrders.data ?? [];
+  const openWos = allWos.filter((w) => ACTIVE_WORK_ORDER_STATUSES.includes(w.status));
+  const historyWos = allWos
+    .filter((w) => !ACTIVE_WORK_ORDER_STATUSES.includes(w.status))
+    .sort((x, y) =>
+      (y.completed_date ?? y.created_at).localeCompare(x.completed_date ?? x.created_at),
+    );
+  const assetPms = (pms.data ?? []).filter((s) => s.asset_id === id && s.active);
+  const vehicle = vehicles.data?.find((v) => v.asset_id === id);
+  const profilePhoto = photos.data?.find((p) => p.is_primary) ?? photos.data?.[0];
+  const todayStr = new Date().toISOString().slice(0, 10);
 
   const contactEmail = a.contact_email ?? org?.maintenance_contact_email ?? null;
   const contactName = a.contact_name ?? (a.contact_email ? null : 'Maintenance team');
@@ -106,22 +137,50 @@ export function AssetDetailPage() {
           >
             {a.status}
           </span>
-          {canEdit && (
-            <Button variant="ghost" onClick={() => setShowQr(true)} className="ml-auto">
-              QR label
+          <div className="ml-auto flex gap-2">
+            <Button variant="ghost" onClick={() => setShowPhotos(true)}>
+              Photos{photos.data?.length ? ` (${photos.data.length})` : ''}
             </Button>
-          )}
+            {canEdit && (
+              <Button variant="ghost" onClick={() => setShowEdit(true)}>
+                Edit
+              </Button>
+            )}
+            {canEdit && (
+              <Button variant="ghost" onClick={() => setShowQr(true)}>
+                QR label
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Specs + contact */}
-        <div className="space-y-4 lg:col-span-1">
-          <section className="rounded-lg border border-slate-200 bg-white p-4">
-            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
-              Details
-            </h2>
-            <dl className="space-y-1.5 text-sm">
+      {/* Details (+ photo + contact) beside asset-specifics; full width if none. */}
+      <div className={`grid grid-cols-1 gap-6 ${vehicle ? 'lg:grid-cols-2' : ''}`}>
+        <section className="rounded-lg border border-slate-200 bg-white p-4">
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
+            Details
+          </h2>
+          <div className="flex gap-4">
+            <button
+              onClick={() => setShowPhotos(true)}
+              className="shrink-0"
+              title={profilePhoto ? 'View photos' : 'Add a photo'}
+            >
+              {profilePhoto ? (
+                <img
+                  src={profilePhoto.url}
+                  alt=""
+                  className="h-20 w-20 rounded-md border border-slate-200 object-cover"
+                />
+              ) : (
+                <div className="flex h-20 w-20 flex-col items-center justify-center rounded-md border border-dashed border-slate-300 text-center text-[10px] leading-tight text-slate-400">
+                  <span className="text-base">📷</span>
+                  Photos
+                </div>
+              )}
+            </button>
+            <dl className="flex-1 space-y-1.5 text-sm">
               <Row label="Category" value={catName ?? '—'} />
               <Row label="Location" value={locName ?? 'Unplaced'} />
               <Row label="Make / Model" value={[a.make, a.model].filter(Boolean).join(' ') || '—'} />
@@ -130,10 +189,7 @@ export function AssetDetailPage() {
                 <Row
                   label="Map location"
                   value={
-                    <Link
-                      to={`/map?asset=${id}`}
-                      className="text-blue-600 hover:underline"
-                    >
+                    <Link to={`/map?asset=${id}`} className="text-blue-600 hover:underline">
                       {linkedPoi
                         ? `${linkedPoi.label}${linkedPoi.level != null ? ` · level ${linkedPoi.level}` : ''}`
                         : `${a.geometry_geojson!.coordinates[1].toFixed(5)}, ${a.geometry_geojson!.coordinates[0].toFixed(5)}${a.level != null ? ` · level ${a.level}` : ''}`}
@@ -143,94 +199,142 @@ export function AssetDetailPage() {
                 />
               )}
             </dl>
-            {a.notes && <p className="mt-3 text-sm text-slate-600">{a.notes}</p>}
-          </section>
-
-          <section className="rounded-lg border border-slate-200 bg-white p-4">
-            <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-500">
+          </div>
+          {a.notes && <p className="mt-3 text-sm text-slate-600">{a.notes}</p>}
+          <div className="mt-4 border-t border-slate-100 pt-3">
+            <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
               Point of contact
-            </h2>
+            </h3>
             {contactEmail ? (
               <div className="text-sm">
-                {contactName && <div className="font-medium text-slate-800">{contactName}</div>}
+                {contactName && <span className="font-medium text-slate-800">{contactName} · </span>}
                 <a className="text-blue-600 hover:underline" href={`mailto:${contactEmail}`}>
                   {contactEmail}
                 </a>
                 {!a.contact_email && (
-                  <div className="mt-1 text-xs text-slate-400">Org maintenance contact (default)</div>
+                  <div className="mt-0.5 text-xs text-slate-400">Org maintenance contact (default)</div>
                 )}
               </div>
             ) : (
               <p className="text-sm text-slate-400">No contact set.</p>
             )}
-          </section>
-        </div>
+          </div>
+        </section>
 
-        {/* Photos */}
-        <section className="rounded-lg border border-slate-200 bg-white p-4 lg:col-span-2">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Photos</h2>
+        {vehicle && (
+          <section className="rounded-lg border border-slate-200 bg-white p-4">
+            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
+              Vehicle
+            </h2>
+            <dl className="space-y-1.5 text-sm">
+              <Row
+                label="Year / Make / Model"
+                value={[vehicle.year, vehicle.make, vehicle.model].filter(Boolean).join(' ') || '—'}
+              />
+              <Row label="VIN" value={vehicle.vin ?? '—'} />
+              <Row label="Plate" value={vehicle.plate ?? '—'} />
+              {vehicle.fuel_type && <Row label="Fuel" value={vehicle.fuel_type} />}
+              {vehicle.capacity != null && <Row label="Capacity" value={String(vehicle.capacity)} />}
+              <Row label="Registration" value={<ExpiryBadge date={vehicle.registration_expiry} />} />
+              <Row label="Insurance" value={<ExpiryBadge date={vehicle.insurance_expiry} />} />
+              <Row label="Inspection" value={<ExpiryBadge date={vehicle.inspection_expiry} />} />
+            </dl>
             {canEdit && (
-              <>
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (f) addPhoto.mutate(f);
-                    e.target.value = '';
-                  }}
-                />
-                <Button variant="ghost" onClick={() => fileRef.current?.click()}>
-                  + Add photo
-                </Button>
-              </>
+              <Link
+                to="/assets?tab=Fleet"
+                className="mt-3 inline-block text-xs text-blue-600 hover:underline"
+              >
+                Edit vehicle details in Fleet →
+              </Link>
+            )}
+          </section>
+        )}
+      </div>
+
+      {/* Open work + maintenance — what's outstanding, side by side. */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div className="rounded-lg border border-slate-200 bg-white p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+              Open work orders
+            </h2>
+            {canFileWo && (
+              <Button variant="ghost" onClick={() => navigate(`/work-orders?asset=${id}`)}>
+                + New
+              </Button>
             )}
           </div>
-          {photos.data && photos.data.length > 0 ? (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-              {photos.data.map((p) => (
-                <figure key={p.id} className="overflow-hidden rounded border border-slate-200">
-                  <img src={p.url} alt={p.caption ?? ''} className="h-32 w-full object-cover" />
-                  <figcaption className="flex items-center justify-between px-2 py-1 text-xs">
-                    <span className="flex items-center gap-1 text-slate-500">
-                      {p.is_primary && (
-                        <span className="rounded bg-blue-100 px-1 text-[10px] text-blue-700">
-                          primary
-                        </span>
-                      )}
-                      <span className="truncate">{p.caption}</span>
-                    </span>
-                    {canEdit && (
-                      <span className="flex gap-1">
-                        {!p.is_primary && (
-                          <button
-                            className="text-slate-400 hover:text-blue-600"
-                            onClick={() => setPrimary.mutate(p.id)}
-                            title="Set as primary"
-                          >
-                            ★
-                          </button>
-                        )}
-                        <button
-                          className="text-slate-400 hover:text-red-600"
-                          onClick={() => deletePhoto.mutate(p.id)}
-                          title="Delete"
-                        >
-                          ✕
-                        </button>
+          {openWos.length > 0 ? (
+            <ul className="divide-y divide-slate-100 text-sm">
+              {openWos.map((w) => {
+                const overdue = !!w.due_date && w.due_date < todayStr;
+                return (
+                  <li key={w.id}>
+                    <button
+                      onClick={() => setViewWo(w)}
+                      className="flex w-full items-center justify-between gap-2 py-2 text-left hover:bg-slate-50"
+                    >
+                      <span className="min-w-0">
+                        <span className="font-medium text-slate-800">{w.title}</span>
+                        <span className="ml-2 text-xs text-slate-400">{w.type}</span>
                       </span>
-                    )}
-                  </figcaption>
-                </figure>
-              ))}
-            </div>
+                      <span className="flex shrink-0 items-center gap-2">
+                        {w.due_date && (
+                          <span
+                            className={`rounded px-2 py-0.5 text-xs ${
+                              overdue ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-500'
+                            }`}
+                          >
+                            due {w.due_date}
+                          </span>
+                        )}
+                        <span className="rounded bg-blue-100 px-2 py-0.5 text-xs text-blue-700">
+                          {w.status}
+                        </span>
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
           ) : (
-            <p className="text-sm text-slate-400">No photos yet.</p>
+            <p className="text-sm text-slate-400">No open work orders.</p>
           )}
-        </section>
+        </div>
+
+        <div className="rounded-lg border border-slate-200 bg-white p-4">
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
+            Maintenance schedules
+          </h2>
+          {assetPms.length > 0 ? (
+            <ul className="divide-y divide-slate-100 text-sm">
+              {assetPms.map((s) => {
+                const row = (
+                  <>
+                    <span className="font-medium text-slate-800">{s.name}</span>
+                    <PmDueBadge schedule={s} />
+                  </>
+                );
+                return (
+                  <li key={s.id}>
+                    {canEdit ? (
+                      <button
+                        onClick={() => setEditPm(s)}
+                        className="flex w-full items-center justify-between gap-2 py-2 text-left hover:bg-slate-50"
+                      >
+                        {row}
+                      </button>
+                    ) : (
+                      <div className="flex items-center justify-between gap-2 py-2">{row}</div>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <p className="text-sm text-slate-400">No maintenance schedules for this asset.</p>
+          )}
+        </div>
       </div>
 
       {/* Work history */}
@@ -238,15 +342,10 @@ export function AssetDetailPage() {
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-slate-800">Work history</h2>
           <div className="flex gap-2">
-            {canFileWo && (
-              <Button variant="ghost" onClick={() => navigate(`/work-orders?asset=${id}`)}>
-                + New work order
-              </Button>
-            )}
             {canEdit && <Button onClick={() => setShowLog(true)}>+ Log work</Button>}
           </div>
         </div>
-        {workOrders.data && workOrders.data.length > 0 ? (
+        {historyWos.length > 0 ? (
           <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
             <table className="w-full text-sm">
               <thead className="border-b border-slate-200 bg-slate-50 text-left text-xs uppercase text-slate-500">
@@ -261,8 +360,8 @@ export function AssetDetailPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {/* Status icon + row shading — keep in sync with WorkOrderViews list table */}
-                {workOrders.data.map((w) => {
+                {/* Completed / closed / cancelled work — open items live above. */}
+                {historyWos.map((w) => {
                   const done = w.status === 'completed' || w.status === 'closed';
                   return (
                   <tr
@@ -320,7 +419,7 @@ export function AssetDetailPage() {
             </table>
           </div>
         ) : (
-          <EmptyState>No work logged yet. {canEdit && 'Log the first entry.'}</EmptyState>
+          <EmptyState>No completed work yet. {canEdit && 'Log the first entry.'}</EmptyState>
         )}
       </section>
 
@@ -341,7 +440,123 @@ export function AssetDetailPage() {
         />
       )}
       {showQr && <QrLabelModal asset={a} onClose={() => setShowQr(false)} />}
+      {showEdit && (
+        <AssetForm
+          initial={a}
+          categories={(categories.data ?? []).map((c) => ({ id: c.id, name: c.name }))}
+          locations={(locations.data ?? []).map((l) => ({ id: l.id, name: l.name }))}
+          center={campusCenter(buildings.data ?? [])}
+          onClose={() => setShowEdit(false)}
+          onSubmit={async (values) => {
+            await updateAsset.mutateAsync({ id, ...values });
+            setShowEdit(false);
+          }}
+        />
+      )}
+      {editPm && (
+        <PmForm
+          assets={(assetList.data ?? []).map((x) => ({ id: x.id, name: x.name }))}
+          initial={editPm}
+          onClose={() => setEditPm(null)}
+        />
+      )}
+      {showPhotos && (
+        <Modal title="Photos" onClose={() => setShowPhotos(false)}>
+          {canEdit && (
+            <div className="mb-3 flex justify-end">
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) addPhoto.mutate(f);
+                  e.target.value = '';
+                }}
+              />
+              <Button variant="ghost" onClick={() => fileRef.current?.click()}>
+                + Add photo
+              </Button>
+            </div>
+          )}
+          {photos.data && photos.data.length > 0 ? (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {photos.data.map((p) => (
+                <figure key={p.id} className="overflow-hidden rounded border border-slate-200">
+                  <img src={p.url} alt={p.caption ?? ''} className="h-32 w-full object-cover" />
+                  <figcaption className="flex items-center justify-between px-2 py-1 text-xs">
+                    <span className="flex items-center gap-1 text-slate-500">
+                      {p.is_primary && (
+                        <span className="rounded bg-blue-100 px-1 text-[10px] text-blue-700">
+                          primary
+                        </span>
+                      )}
+                      <span className="truncate">{p.caption}</span>
+                    </span>
+                    {canEdit && (
+                      <span className="flex gap-1">
+                        {!p.is_primary && (
+                          <button
+                            className="text-slate-400 hover:text-blue-600"
+                            onClick={() => setPrimary.mutate(p.id)}
+                            title="Set as primary"
+                          >
+                            ★
+                          </button>
+                        )}
+                        <button
+                          className="text-slate-400 hover:text-red-600"
+                          onClick={() => deletePhoto.mutate(p.id)}
+                          title="Delete"
+                        >
+                          ✕
+                        </button>
+                      </span>
+                    )}
+                  </figcaption>
+                </figure>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-slate-400">
+              No photos yet.{canEdit && ' Use “+ Add photo” above.'}
+            </p>
+          )}
+        </Modal>
+      )}
     </div>
+  );
+}
+
+function PmDueBadge({ schedule: s }: { schedule: PmSchedule }) {
+  const { state, dueDate } = pmScheduleStatus(
+    {
+      type: s.trigger_type,
+      intervalValue: s.interval_value,
+      intervalUnit: s.interval_unit,
+      meterThreshold: s.meter_threshold,
+      fixedMonth: s.fixed_month,
+      fixedDay: s.fixed_day,
+    },
+    new Date(s.anchor_date),
+    new Date(),
+    s.lead_time_days,
+  );
+  if (!dueDate) {
+    return <span className="rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-500">meter-based</span>;
+  }
+  const cls =
+    state === 'overdue'
+      ? 'bg-red-100 text-red-700'
+      : state === 'soon'
+        ? 'bg-amber-100 text-amber-700'
+        : 'bg-slate-100 text-slate-500';
+  const label = state === 'overdue' ? 'overdue' : 'due';
+  return (
+    <span className={`shrink-0 rounded px-2 py-0.5 text-xs ${cls}`}>
+      {label} {dueDate.toISOString().slice(0, 10)}
+    </span>
   );
 }
 

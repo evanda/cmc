@@ -81,6 +81,12 @@ Keep only the pairs that actually changed visually.
 
   - If no UI surfaces exist yet, skip and note this.
 
+## 7b. Send screenshots to the user
+After capturing, ALWAYS call SendUserFile with the before and after image
+paths — even if they look similar. Do this before the final report so the
+images arrive in the session alongside the notification. If no UI surfaces
+exist (early phases), note that explicitly instead.
+
 ## 8. Commit, push, and update the PR (on 'claude-async')
 
 ### 8a. Commit

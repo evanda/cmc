@@ -29,3 +29,12 @@ enable_signup = true
 [auth.email]
 enable_signup = true
 enable_confirmations = false
+
+# Branded invite email (issue #56). The default Supabase invite says nothing
+# about the app, facility, or inviter; this template renders all three from the
+# invitee's metadata (set by the invite-user edge function). Apply to hosted
+# with `supabase config push` (or paste the rendered template into the
+# dashboard's Auth → Email Templates → Invite user).
+[auth.email.template.invite]
+subject = "You're invited to {{ .Data.facility_name }} on CMC"
+content_path = "./supabase/templates/invite.html"
