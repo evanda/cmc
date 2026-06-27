@@ -3,6 +3,8 @@ import { useAuth } from './auth/AuthProvider';
 import { useOrgSettings } from './lib/queries';
 import { Layout } from './components/Layout';
 import { LoginPage } from './pages/LoginPage';
+import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
+import { UpdatePasswordPage } from './pages/UpdatePasswordPage';
 import { SetupWizardPage } from './pages/SetupWizardPage';
 import { AcceptInvitePage } from './pages/AcceptInvitePage';
 import { DashboardPage } from './pages/DashboardPage';
@@ -47,6 +49,18 @@ export function App() {
     <Routes>
       {/* /accept-invite is accessible before the invite session is established */}
       <Route path="accept-invite" element={<AcceptInvitePage />} />
+
+      {/* Public password-reset request page. */}
+      <Route path="forgot-password" element={<ForgotPasswordPage />} />
+
+      {/*
+        The recovery link redirects here. It must resolve regardless of session
+        state: supabase-js exchanges the recovery token in the URL hash for a
+        session, and the page itself gates on that session (loading → form, or an
+        "expired link" message). Registered before the !session branch so the hash
+        exchange isn't intercepted by the login fallback route.
+      */}
+      <Route path="account/update-password" element={<UpdatePasswordPage />} />
 
       {!session ? (
         <Route path="*" element={<LoginPage />} />

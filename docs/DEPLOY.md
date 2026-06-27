@@ -127,6 +127,9 @@ env) and the first-run setup wizard (issue #14, in progress).
 - Hard-refresh `/map` — no 404 (SPA rewrite working).
 - An admin **invite** email links to `<prod>/accept-invite` and the invitee can
   set a password (needs §3 done).
+- **Forgot password** from the login page emails a reset link to
+  `<prod>/account/update-password`, and following it lets you set a new password
+  (covered by the `<vercel-url>/**` allow-list entry in §3).
 - The deployed JS bundle contains the **anon** key only — `grep` it for
   `service_role` and find nothing.
 

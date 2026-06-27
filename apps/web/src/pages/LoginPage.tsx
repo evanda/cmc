@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { isSupabaseConfigured } from '../lib/supabase';
 import { Button, Field, inputClass } from '../components/ui';
@@ -55,6 +56,12 @@ export function LoginPage() {
           <Button type="submit" disabled={busy || !isSupabaseConfigured}>
             {busy ? 'Signing in…' : 'Sign in'}
           </Button>
+          <Link
+            to="/forgot-password"
+            className="block text-center text-sm text-sky-600 hover:underline"
+          >
+            Forgot password?
+          </Link>
         </form>
       </div>
     </div>
