@@ -71,7 +71,7 @@ export function WorkOrderModal({
 
   return (
     <Modal title={wo.title} onClose={onClose}>
-      <div className="max-h-[72vh] space-y-4 overflow-y-auto pr-1 text-sm">
+      <div className="space-y-4 text-sm">
         {canEdit ? (
           <div className="rounded border border-slate-200 bg-slate-50 p-3">
             <div className="grid grid-cols-3 gap-2">
