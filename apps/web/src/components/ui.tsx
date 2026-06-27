@@ -55,11 +55,13 @@ export function Modal({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md rounded-lg bg-white p-5 shadow-xl"
+        className="flex max-h-[90vh] w-full max-w-md flex-col rounded-lg bg-white shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="mb-4 text-lg font-semibold text-slate-800">{title}</h2>
-        {children}
+        <h2 className="shrink-0 border-b border-slate-100 px-5 py-4 text-lg font-semibold text-slate-800">
+          {title}
+        </h2>
+        <div className="overflow-y-auto p-5">{children}</div>
       </div>
     </div>
   );
