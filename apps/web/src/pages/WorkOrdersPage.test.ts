@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { WORK_ORDER_STATUSES } from '@cmc/shared';
-import { columns, columnDropStatus, resolveDropStatus } from './WorkOrdersPage';
+import { WORK_ORDER_STATUSES, type WorkOrder } from '@cmc/shared';
+import { columns, columnDropStatus, filterByBuilding, resolveDropStatus } from './WorkOrdersPage';
 
 // Unit tests for the pure board-DnD logic. These don't render any component or
 // touch @dnd-kit — they test the data declarations and the resolveDropStatus
@@ -35,6 +35,41 @@ describe('kanban board column config', () => {
         seen.add(s);
       }
     }
+  });
+});
+
+// Minimal WorkOrder stub with only the fields filterByBuilding inspects.
+function wo(id: string, location_id: string | null): WorkOrder {
+  return { id, location_id, status: 'open', priority: 'medium' } as unknown as WorkOrder;
+}
+
+describe('filterByBuilding', () => {
+  const orders = [
+    wo('a', 'loc1'),
+    wo('b', 'loc2'),
+    wo('c', null),
+    wo('d', 'loc3'),
+  ];
+
+  it('returns all orders when buildingLocationIds is null (no filter)', () => {
+    expect(filterByBuilding(orders, null)).toHaveLength(4);
+  });
+
+  it('returns only orders whose location_id is in the set', () => {
+    const ids = new Set(['loc1', 'loc3']);
+    const result = filterByBuilding(orders, ids);
+    expect(result.map((w) => w.id)).toEqual(['a', 'd']);
+  });
+
+  it('excludes orders with null location_id even if the set is non-empty', () => {
+    const ids = new Set(['loc1']);
+    const result = filterByBuilding(orders, ids);
+    expect(result.map((w) => w.id)).toEqual(['a']);
+  });
+
+  it('returns empty array when no orders match', () => {
+    const ids = new Set(['loc99']);
+    expect(filterByBuilding(orders, ids)).toHaveLength(0);
   });
 });
 

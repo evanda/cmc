@@ -63,6 +63,21 @@ export const columnDropStatus: Record<string, WorkOrderStatus> = {
 };
 
 /**
+ * Pure helper: applies the building filter to a list of work orders.
+ * Returns the original list when `buildingLocationIds` is null (no filter).
+ * Exported for unit testing without rendering.
+ */
+export function filterByBuilding(
+  workOrders: WorkOrder[],
+  buildingLocationIds: Set<string> | null,
+): WorkOrder[] {
+  if (!buildingLocationIds) return workOrders;
+  return workOrders.filter(
+    (w) => w.location_id != null && buildingLocationIds.has(w.location_id),
+  );
+}
+
+/**
  * Pure helper: resolves the status a card should move TO when dropped on
  * `columnLabel`. Returns `null` when the card is already in that column
  * (no-op). Used in handleDragEnd and directly testable without rendering.
@@ -340,9 +355,7 @@ export function WorkOrdersPage() {
           )}
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
             {columns.map((col) => {
-              const colItems = (workOrders.data ?? []).filter((w) =>
-                col.statuses.includes(w.status),
-              );
+              const colItems = items.filter((w) => col.statuses.includes(w.status));
               return (
                 <DroppableColumn key={col.label} col={col} count={colItems.length}>
                   {colItems.map((w) => (
