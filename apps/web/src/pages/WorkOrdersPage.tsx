@@ -289,9 +289,7 @@ export function WorkOrdersPage() {
     );
   }, [buildingParam, locations.data]);
 
-  const items = (workOrders.data ?? []).filter(
-    (w) => !buildingLocationIds || (w.location_id != null && buildingLocationIds.has(w.location_id)),
-  );
+  const items = filterByBuilding(workOrders.data ?? [], buildingLocationIds);
 
   // ── Kanban drag-and-drop ──────────────────────────────────────────────────
   const updateWo = useUpdateWorkOrder();
