@@ -432,7 +432,9 @@ export const demoDataSource: DataSource = {
     const w = workOrders.find((x) => x.id === woId)!;
     w.status = patch.status;
     w.priority = patch.priority;
-    w.assignee_user_id = patch.assignee_user_id ?? null;
+    // Key-presence guard: omitting assignee_user_id (e.g. a drag patch) must
+    // not null the field; an explicit null MUST still clear it.
+    if ('assignee_user_id' in patch) w.assignee_user_id = patch.assignee_user_id ?? null;
     if (patch.location_id !== undefined) w.location_id = patch.location_id ?? null;
     if (patch.vendor_id !== undefined) w.vendor_id = patch.vendor_id ?? null;
     if (patch.completion_notes !== undefined) w.completion_notes = patch.completion_notes ?? null;

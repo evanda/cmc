@@ -621,7 +621,7 @@ function LogWorkModal({
   return (
     <Modal title="Log work" onClose={onClose}>
       <form
-        className="max-h-[70vh] space-y-3 overflow-y-auto pr-1"
+        className="space-y-3"
         onSubmit={async (e) => {
           e.preventDefault();
           const parsed = workLogFormSchema.safeParse({

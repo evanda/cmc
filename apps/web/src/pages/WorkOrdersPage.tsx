@@ -1,6 +1,19 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
+  DndContext,
+  DragOverlay,
+  KeyboardSensor,
+  PointerSensor,
+  useDraggable,
+  useDroppable,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  type DragStartEvent,
+} from '@dnd-kit/core';
+import { CSS } from '@dnd-kit/utilities';
+import {
   WORK_ORDER_PRIORITIES,
   WORK_ORDER_TYPES,
   workOrderFormSchema,
@@ -15,6 +28,7 @@ import {
   useCreateWorkOrderFromForm,
   useLocations,
   useOrgSettings,
+  useUpdateWorkOrder,
   useUsers,
   useVendors,
 } from '../lib/queries';
@@ -33,12 +47,132 @@ const priorityStyle: Record<WorkOrderPriority, string> = {
 };
 
 // Board columns; each gathers one or more underlying statuses.
-const columns: { label: string; statuses: WorkOrderStatus[] }[] = [
+export const columns: { label: string; statuses: WorkOrderStatus[] }[] = [
   { label: 'Open', statuses: ['requested', 'open'] },
   { label: 'In progress', statuses: ['in_progress'] },
   { label: 'On hold', statuses: ['on_hold'] },
   { label: 'Completed', statuses: ['completed', 'closed'] },
 ];
+
+// Canonical drop-target status per column label (what dragging INTO that column sets).
+export const columnDropStatus: Record<string, WorkOrderStatus> = {
+  Open: 'open',
+  'In progress': 'in_progress',
+  'On hold': 'on_hold',
+  Completed: 'completed',
+};
+
+/**
+ * Pure helper: resolves the status a card should move TO when dropped on
+ * `columnLabel`. Returns `null` when the card is already in that column
+ * (no-op). Used in handleDragEnd and directly testable without rendering.
+ */
+export function resolveDropStatus(
+  columnLabel: string,
+  currentStatus: WorkOrderStatus,
+): WorkOrderStatus | null {
+  const target = columnDropStatus[columnLabel] as WorkOrderStatus | undefined;
+  if (!target) return null; // unknown column
+  const col = columns.find((c) => c.label === columnLabel);
+  if (!col) return null;
+  // If the card already belongs to this column, dropping is a no-op.
+  if (col.statuses.includes(currentStatus)) return null;
+  return target;
+}
+
+// ── Draggable card ────────────────────────────────────────────────────────────
+function DraggableCard({
+  wo,
+  canDrag,
+  assetName,
+  userName,
+  onClick,
+}: {
+  wo: WorkOrder;
+  canDrag: boolean;
+  assetName: (id: string | null) => string | null;
+  userName: (id: string | null) => string | null;
+  onClick: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: wo.id,
+    data: { workOrder: wo },
+    disabled: !canDrag,
+  });
+
+  const style = transform
+    ? { transform: CSS.Translate.toString(transform) }
+    : undefined;
+
+  return (
+    <button
+      ref={setNodeRef}
+      style={style}
+      onClick={onClick}
+      {...attributes}
+      {...listeners}
+      className={`block w-full rounded-lg border border-slate-200 bg-white p-3 text-left shadow-sm transition hover:border-slate-400 ${
+        canDrag ? 'cursor-grab active:cursor-grabbing' : ''
+      } ${isDragging ? 'opacity-40 ring-2 ring-blue-300' : ''}`}
+    >
+      <CardContent wo={wo} assetName={assetName} userName={userName} />
+    </button>
+  );
+}
+
+// ── Card content (shared between DraggableCard and DragOverlay) ───────────────
+function CardContent({
+  wo,
+  assetName,
+  userName,
+}: {
+  wo: WorkOrder;
+  assetName: (id: string | null) => string | null;
+  userName: (id: string | null) => string | null;
+}) {
+  return (
+    <>
+      <div className="flex items-start justify-between gap-2">
+        <span className="font-medium text-slate-800">{wo.title}</span>
+        <span className={`shrink-0 rounded px-1.5 py-0.5 text-[11px] ${priorityStyle[wo.priority]}`}>
+          {wo.priority}
+        </span>
+      </div>
+      <div className="mt-1 text-xs text-slate-500">{assetName(wo.linked_asset_id) ?? 'No asset'}</div>
+      <div className="mt-1 flex items-center justify-between text-xs text-slate-400">
+        <span>{userName(wo.assignee_user_id) ?? 'Unassigned'}</span>
+        {wo.due_date && <span>due {wo.due_date}</span>}
+      </div>
+    </>
+  );
+}
+
+// ── Droppable column ──────────────────────────────────────────────────────────
+function DroppableColumn({
+  col,
+  children,
+  count,
+}: {
+  col: (typeof columns)[number];
+  children: React.ReactNode;
+  count: number;
+}) {
+  const { setNodeRef, isOver } = useDroppable({ id: col.label });
+  return (
+    <div
+      ref={setNodeRef}
+      className={`rounded-lg p-2 transition-colors ${
+        isOver ? 'bg-blue-100/80 ring-2 ring-blue-300' : 'bg-slate-100/70'
+      }`}
+    >
+      <div className="mb-2 flex items-center justify-between px-1 text-sm font-semibold text-slate-600">
+        <span>{col.label}</span>
+        <span className="rounded-full bg-white px-2 text-xs text-slate-500">{count}</span>
+      </div>
+      <div className="space-y-2">{children}</div>
+    </div>
+  );
+}
 
 export function WorkOrdersPage() {
   const { role } = useAuth();
@@ -108,6 +242,46 @@ export function WorkOrdersPage() {
     (w) => !buildingLocationIds || (w.location_id != null && buildingLocationIds.has(w.location_id)),
   );
 
+  // ── Kanban drag-and-drop ──────────────────────────────────────────────────
+  const updateWo = useUpdateWorkOrder();
+  const [activeWo, setActiveWo] = useState<WorkOrder | null>(null);
+  const [dndError, setDndError] = useState<string | null>(null);
+
+  // PointerSensor: 5 px activation distance so a click still fires onClick.
+  // KeyboardSensor: arrow-key navigation between droppable columns for a11y.
+  // Both respect canEdit — useDraggable's `disabled` prop blocks activation.
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor),
+  );
+
+  function handleDragStart(event: DragStartEvent) {
+    const wo = (event.active.data.current as { workOrder: WorkOrder } | undefined)?.workOrder;
+    if (wo) setActiveWo(wo);
+    setDndError(null);
+  }
+
+  function handleDragEnd(event: DragEndEvent) {
+    setActiveWo(null);
+    const { active, over } = event;
+    if (!over) return;
+
+    const wo = (active.data.current as { workOrder: WorkOrder } | undefined)?.workOrder;
+    if (!wo) return;
+
+    const targetStatus = resolveDropStatus(over.id as string, wo.status);
+    if (!targetStatus) return; // same column or unknown → no-op
+
+    updateWo.mutate(
+      // WorkOrderUpdate requires priority alongside status; pass through unchanged.
+      { id: wo.id, patch: { status: targetStatus, priority: wo.priority } },
+      {
+        onError: (err) =>
+          setDndError((err as Error).message || 'Failed to update status. Please try again.'),
+      },
+    );
+  }
+
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
@@ -130,7 +304,10 @@ export function WorkOrdersPage() {
             {(['board', 'list', 'calendar'] as View[]).map((v) => (
               <button
                 key={v}
-                onClick={() => setView(v)}
+                onClick={() => {
+                  setView(v);
+                  setDndError(null); // clear stale error banner when switching tabs
+                }}
                 className={`rounded px-2.5 py-1 capitalize ${
                   view === v ? 'bg-slate-800 text-white' : 'text-slate-600 hover:bg-slate-100'
                 }`}
@@ -155,49 +332,44 @@ export function WorkOrdersPage() {
           onOpen={setOpen}
         />
       ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {columns.map((col) => {
-            const items = (workOrders.data ?? []).filter((w) => col.statuses.includes(w.status));
-            return (
-              <div key={col.label} className="rounded-lg bg-slate-100/70 p-2">
-                <div className="mb-2 flex items-center justify-between px-1 text-sm font-semibold text-slate-600">
-                  <span>{col.label}</span>
-                  <span className="rounded-full bg-white px-2 text-xs text-slate-500">
-                    {items.length}
-                  </span>
-                </div>
-                <div className="space-y-2">
-                  {items.map((w) => (
-                    <button
+        <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+          {dndError && (
+            <div className="mb-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              {dndError}
+            </div>
+          )}
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {columns.map((col) => {
+              const colItems = (workOrders.data ?? []).filter((w) =>
+                col.statuses.includes(w.status),
+              );
+              return (
+                <DroppableColumn key={col.label} col={col} count={colItems.length}>
+                  {colItems.map((w) => (
+                    <DraggableCard
                       key={w.id}
+                      wo={w}
+                      canDrag={canEdit}
+                      assetName={assetName}
+                      userName={userName}
                       onClick={() => setOpen(w)}
-                      className="block w-full rounded-lg border border-slate-200 bg-white p-3 text-left shadow-sm transition hover:border-slate-400"
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <span className="font-medium text-slate-800">{w.title}</span>
-                        <span
-                          className={`shrink-0 rounded px-1.5 py-0.5 text-[11px] ${priorityStyle[w.priority]}`}
-                        >
-                          {w.priority}
-                        </span>
-                      </div>
-                      <div className="mt-1 text-xs text-slate-500">
-                        {assetName(w.linked_asset_id) ?? 'No asset'}
-                      </div>
-                      <div className="mt-1 flex items-center justify-between text-xs text-slate-400">
-                        <span>{userName(w.assignee_user_id) ?? 'Unassigned'}</span>
-                        {w.due_date && <span>due {w.due_date}</span>}
-                      </div>
-                    </button>
+                    />
                   ))}
-                  {items.length === 0 && (
+                  {colItems.length === 0 && (
                     <p className="px-1 py-4 text-center text-xs text-slate-400">None</p>
                   )}
-                </div>
+                </DroppableColumn>
+              );
+            })}
+          </div>
+          <DragOverlay>
+            {activeWo && (
+              <div className="rounded-lg border border-blue-300 bg-white p-3 text-left shadow-lg ring-2 ring-blue-400 opacity-90">
+                <CardContent wo={activeWo} assetName={assetName} userName={userName} />
               </div>
-            );
-          })}
-        </div>
+            )}
+          </DragOverlay>
+        </DndContext>
       )}
 
       {open && (
