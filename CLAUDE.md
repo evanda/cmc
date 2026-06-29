@@ -61,3 +61,16 @@ Hooks wired in `.claude/settings.json`:
 Monorepo scaffold; Supabase project + schema (§6); auth + roles (RLS);
 single-row `org_settings`/`facilities`; buildings / floors / locations CRUD;
 seedable **facility fixtures** + a `reset && seed <name>` dev workflow (plan §7.6).
+
+<!-- BEGIN swarm (managed by agent-swarm installer; edits between markers may be overwritten) -->
+## Swarm
+
+The dev swarm is **available but dormant** in this repo. Summon it explicitly:
+
+- `/swarm:start <issue#-or-description>` — triage, route, and run the lane.
+- `/swarm:express <description>` — force the Express lane for a known-trivial fix.
+- `/swarm:retro` — retrospective on recent work.
+
+Repo-specific overrides live in `constitution.delta.md`. Nothing swarm-related
+fires until you type a `/swarm:*` command — *no `/swarm:` typed = no swarm.*
+<!-- END swarm -->

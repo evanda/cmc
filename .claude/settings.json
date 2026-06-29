@@ -1,6 +1,13 @@
 {
   "permissions": {
-    "allow": ["Bash(*)", "Read(*)", "Write(*)", "Edit(*)", "Glob(*)", "Grep(*)"]
+    "allow": [
+      "Bash(*)",
+      "Read(*)",
+      "Write(*)",
+      "Edit(*)",
+      "Glob(*)",
+      "Grep(*)"
+    ]
   },
   "hooks": {
     "PreToolUse": [
@@ -42,5 +49,17 @@
         ]
       }
     ]
+  },
+  "extraKnownMarketplaces": {
+    "swarm": {
+      "source": {
+        "source": "github",
+        "repo": "evanda/agent-swarm",
+        "ref": "v0.1.1"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "swarm@swarm": true
   }
 }
