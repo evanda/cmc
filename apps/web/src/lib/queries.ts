@@ -9,6 +9,7 @@ import type {
   ServiceContractForm,
   VendorForm,
   WorkLogForm,
+  WorkOrder,
   WorkOrderForm,
   WorkOrderPhotoKind,
   WorkOrderUpdate,
@@ -352,7 +353,25 @@ export function useUpdateWorkOrder() {
   return useMutation({
     mutationFn: ({ id, patch }: { id: string; patch: WorkOrderUpdate }) =>
       ds.updateWorkOrder(id, patch),
-    onSuccess: () => invalidateWorkOrders(qc),
+    // Optimistic update for the board view: instantly moves the card, rolls
+    // back on error, and refetches on settle so server truth wins.
+    onMutate: async ({ id, patch }) => {
+      await qc.cancelQueries({ queryKey: ['all_work_orders'] });
+      const previous = qc.getQueryData<WorkOrder[]>(['all_work_orders']);
+      if (previous) {
+        qc.setQueryData<WorkOrder[]>(['all_work_orders'], (prev) =>
+          prev?.map((wo) => (wo.id === id ? { ...wo, ...patch } : wo)) ?? prev,
+        );
+      }
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      const ctx = context as { previous?: WorkOrder[] } | undefined;
+      if (ctx?.previous) {
+        qc.setQueryData(['all_work_orders'], ctx.previous);
+      }
+    },
+    onSettled: () => invalidateWorkOrders(qc),
   });
 }
 
