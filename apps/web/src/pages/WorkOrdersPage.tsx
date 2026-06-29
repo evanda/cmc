@@ -46,7 +46,7 @@ const priorityStyle: Record<WorkOrderPriority, string> = {
 };
 
 // Board columns; each gathers one or more underlying statuses.
-const columns: { label: string; statuses: WorkOrderStatus[] }[] = [
+export const columns: { label: string; statuses: WorkOrderStatus[] }[] = [
   { label: 'Open', statuses: ['requested', 'open'] },
   { label: 'In progress', statuses: ['in_progress'] },
   { label: 'On hold', statuses: ['on_hold'] },
@@ -54,12 +54,30 @@ const columns: { label: string; statuses: WorkOrderStatus[] }[] = [
 ];
 
 // Canonical drop-target status per column label (what dragging INTO that column sets).
-const columnDropStatus: Record<string, WorkOrderStatus> = {
+export const columnDropStatus: Record<string, WorkOrderStatus> = {
   Open: 'open',
   'In progress': 'in_progress',
   'On hold': 'on_hold',
   Completed: 'completed',
 };
+
+/**
+ * Pure helper: resolves the status a card should move TO when dropped on
+ * `columnLabel`. Returns `null` when the card is already in that column
+ * (no-op). Used in handleDragEnd and directly testable without rendering.
+ */
+export function resolveDropStatus(
+  columnLabel: string,
+  currentStatus: WorkOrderStatus,
+): WorkOrderStatus | null {
+  const target = columnDropStatus[columnLabel] as WorkOrderStatus | undefined;
+  if (!target) return null; // unknown column
+  const col = columns.find((c) => c.label === columnLabel);
+  if (!col) return null;
+  // If the card already belongs to this column, dropping is a no-op.
+  if (col.statuses.includes(currentStatus)) return null;
+  return target;
+}
 
 // ── Draggable card ────────────────────────────────────────────────────────────
 function DraggableCard({
@@ -247,8 +265,8 @@ export function WorkOrdersPage() {
     const wo = (active.data.current as { workOrder: WorkOrder } | undefined)?.workOrder;
     if (!wo) return;
 
-    const targetStatus = columnDropStatus[over.id as string];
-    if (!targetStatus || targetStatus === wo.status) return; // same column or unknown → no-op
+    const targetStatus = resolveDropStatus(over.id as string, wo.status);
+    if (!targetStatus) return; // same column or unknown → no-op
 
     updateWo.mutate(
       // WorkOrderUpdate requires priority alongside status; pass through unchanged.
