@@ -15,7 +15,6 @@ import {
   useCreateWorkOrderFromForm,
   useLocations,
   useOrgSettings,
-  useUpdateWorkOrder,
   useUsers,
   useVendors,
 } from '../lib/queries';
@@ -34,12 +33,11 @@ const priorityStyle: Record<WorkOrderPriority, string> = {
 };
 
 // Board columns; each gathers one or more underlying statuses.
-// Exported so the shape can be verified in tests.
-export const columns: { label: string; statuses: WorkOrderStatus[]; dropStatus: WorkOrderStatus }[] = [
-  { label: 'Open', statuses: ['requested', 'open'], dropStatus: 'open' },
-  { label: 'In progress', statuses: ['in_progress'], dropStatus: 'in_progress' },
-  { label: 'On hold', statuses: ['on_hold'], dropStatus: 'on_hold' },
-  { label: 'Completed', statuses: ['completed', 'closed'], dropStatus: 'completed' },
+const columns: { label: string; statuses: WorkOrderStatus[] }[] = [
+  { label: 'Open', statuses: ['requested', 'open'] },
+  { label: 'In progress', statuses: ['in_progress'] },
+  { label: 'On hold', statuses: ['on_hold'] },
+  { label: 'Completed', statuses: ['completed', 'closed'] },
 ];
 
 export function WorkOrdersPage() {
@@ -51,12 +49,9 @@ export function WorkOrdersPage() {
   const assets = useAssets();
   const users = useUsers();
   const locations = useLocations();
-  const updateWo = useUpdateWorkOrder();
   const [open, setOpen] = useState<WorkOrder | null>(null);
   const [showNew, setShowNew] = useState(false);
   const [view, setView] = useState<View>('board');
-  const [draggingId, setDraggingId] = useState<string | null>(null);
-  const [overCol, setOverCol] = useState<string | null>(null);
 
   // Deep link from the map: /work-orders?asset=<id> opens the New WO modal
   // pre-linked to that asset (plan §5.4, #37). Only staff can create WOs.
@@ -162,92 +157,40 @@ export function WorkOrdersPage() {
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           {columns.map((col) => {
-            const colItems = items.filter((w) => col.statuses.includes(w.status));
-            const isDropTarget = overCol === col.label && draggingId != null;
+            const items = (workOrders.data ?? []).filter((w) => col.statuses.includes(w.status));
             return (
-              <div
-                key={col.label}
-                className={`rounded-lg p-2 transition-colors ${
-                  isDropTarget
-                    ? 'bg-blue-50 ring-2 ring-inset ring-blue-400'
-                    : 'bg-slate-100/70'
-                }`}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  e.dataTransfer.dropEffect = 'move';
-                  if (overCol !== col.label) setOverCol(col.label);
-                }}
-                onDragLeave={(e) => {
-                  if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-                    setOverCol(null);
-                  }
-                }}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  const id = e.dataTransfer.getData('wo-id');
-                  if (id && canEdit) {
-                    const wo = (workOrders.data ?? []).find((w) => w.id === id);
-                    if (wo && !col.statuses.includes(wo.status)) {
-                      updateWo.mutate({
-                        id,
-                        patch: { status: col.dropStatus, priority: wo.priority },
-                      });
-                    }
-                  }
-                  setDraggingId(null);
-                  setOverCol(null);
-                }}
-              >
+              <div key={col.label} className="rounded-lg bg-slate-100/70 p-2">
                 <div className="mb-2 flex items-center justify-between px-1 text-sm font-semibold text-slate-600">
                   <span>{col.label}</span>
                   <span className="rounded-full bg-white px-2 text-xs text-slate-500">
-                    {colItems.length}
+                    {items.length}
                   </span>
                 </div>
                 <div className="space-y-2">
-                  {colItems.map((w) => {
-                    const isBeingDragged = draggingId === w.id;
-                    return (
-                      <button
-                        key={w.id}
-                        draggable={canEdit}
-                        onDragStart={(e) => {
-                          setDraggingId(w.id);
-                          e.dataTransfer.effectAllowed = 'move';
-                          e.dataTransfer.setData('wo-id', w.id);
-                        }}
-                        onDragEnd={() => {
-                          setDraggingId(null);
-                          setOverCol(null);
-                        }}
-                        onClick={() => setOpen(w)}
-                        className={`block w-full rounded-lg border border-slate-200 bg-white p-3 text-left shadow-sm transition hover:border-slate-400 ${
-                          isBeingDragged
-                            ? 'opacity-40'
-                            : canEdit
-                              ? 'cursor-grab active:cursor-grabbing'
-                              : ''
-                        }`}
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <span className="font-medium text-slate-800">{w.title}</span>
-                          <span
-                            className={`shrink-0 rounded px-1.5 py-0.5 text-[11px] ${priorityStyle[w.priority]}`}
-                          >
-                            {w.priority}
-                          </span>
-                        </div>
-                        <div className="mt-1 text-xs text-slate-500">
-                          {assetName(w.linked_asset_id) ?? 'No asset'}
-                        </div>
-                        <div className="mt-1 flex items-center justify-between text-xs text-slate-400">
-                          <span>{userName(w.assignee_user_id) ?? 'Unassigned'}</span>
-                          {w.due_date && <span>due {w.due_date}</span>}
-                        </div>
-                      </button>
-                    );
-                  })}
-                  {colItems.length === 0 && (
+                  {items.map((w) => (
+                    <button
+                      key={w.id}
+                      onClick={() => setOpen(w)}
+                      className="block w-full rounded-lg border border-slate-200 bg-white p-3 text-left shadow-sm transition hover:border-slate-400"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <span className="font-medium text-slate-800">{w.title}</span>
+                        <span
+                          className={`shrink-0 rounded px-1.5 py-0.5 text-[11px] ${priorityStyle[w.priority]}`}
+                        >
+                          {w.priority}
+                        </span>
+                      </div>
+                      <div className="mt-1 text-xs text-slate-500">
+                        {assetName(w.linked_asset_id) ?? 'No asset'}
+                      </div>
+                      <div className="mt-1 flex items-center justify-between text-xs text-slate-400">
+                        <span>{userName(w.assignee_user_id) ?? 'Unassigned'}</span>
+                        {w.due_date && <span>due {w.due_date}</span>}
+                      </div>
+                    </button>
+                  ))}
+                  {items.length === 0 && (
                     <p className="px-1 py-4 text-center text-xs text-slate-400">None</p>
                   )}
                 </div>
