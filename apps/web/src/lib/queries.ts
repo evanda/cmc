@@ -371,7 +371,13 @@ export function useUpdateWorkOrder() {
         qc.setQueryData(['all_work_orders'], ctx.previous);
       }
     },
-    onSettled: () => invalidateWorkOrders(qc),
+    // Cancel any in-flight queries before invalidating so a second rapid drag
+    // (whose optimistic patch is still in-cache) isn't clobbered by the first
+    // drag's settle refetch arriving mid-flight.
+    onSettled: async () => {
+      await qc.cancelQueries({ queryKey: ['all_work_orders'] });
+      invalidateWorkOrders(qc);
+    },
   });
 }
 

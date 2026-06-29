@@ -208,7 +208,10 @@ function workOrderUpdatePatch(patch: WorkOrderUpdate) {
   return {
     status: patch.status,
     priority: patch.priority,
-    assignee_user_id: patch.assignee_user_id ?? null,
+    // Use key-presence guard so a partial drag patch (status+priority only)
+    // does NOT clobber fields that were intentionally omitted. An explicit
+    // `null` value still clears the field (present-key semantics).
+    ...('assignee_user_id' in patch ? { assignee_user_id: patch.assignee_user_id ?? null } : {}),
     ...(patch.status === 'completed' ? { completed_date: new Date().toISOString().slice(0, 10) } : {}),
     ...(patch.completion_notes !== undefined ? { completion_notes: patch.completion_notes ?? null } : {}),
     ...(patch.labor_hours !== undefined ? { labor_hours: patch.labor_hours ?? null } : {}),

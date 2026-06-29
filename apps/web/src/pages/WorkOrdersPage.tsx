@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import {
   DndContext,
   DragOverlay,
+  KeyboardSensor,
   PointerSensor,
   useDraggable,
   useDroppable,
@@ -246,9 +247,12 @@ export function WorkOrdersPage() {
   const [activeWo, setActiveWo] = useState<WorkOrder | null>(null);
   const [dndError, setDndError] = useState<string | null>(null);
 
-  // PointerSensor with 5 px activation distance so a click still fires.
+  // PointerSensor: 5 px activation distance so a click still fires onClick.
+  // KeyboardSensor: arrow-key navigation between droppable columns for a11y.
+  // Both respect canEdit — useDraggable's `disabled` prop blocks activation.
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor),
   );
 
   function handleDragStart(event: DragStartEvent) {
@@ -273,7 +277,7 @@ export function WorkOrdersPage() {
       { id: wo.id, patch: { status: targetStatus, priority: wo.priority } },
       {
         onError: (err) =>
-          setDndError((err as Error).message ?? 'Failed to update status. Please try again.'),
+          setDndError((err as Error).message || 'Failed to update status. Please try again.'),
       },
     );
   }
@@ -300,7 +304,10 @@ export function WorkOrdersPage() {
             {(['board', 'list', 'calendar'] as View[]).map((v) => (
               <button
                 key={v}
-                onClick={() => setView(v)}
+                onClick={() => {
+                  setView(v);
+                  setDndError(null); // clear stale error banner when switching tabs
+                }}
                 className={`rounded px-2.5 py-1 capitalize ${
                   view === v ? 'bg-slate-800 text-white' : 'text-slate-600 hover:bg-slate-100'
                 }`}

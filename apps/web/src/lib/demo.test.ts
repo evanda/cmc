@@ -526,4 +526,50 @@ describe('demo data source — updateWorkOrder location & vendor (#48)', () => {
     });
     expect(updated.location_id).toBe(locId);
   });
+
+  // Regression: a kanban drag patch (status+priority only) must not null
+  // assignee_user_id, vendor_id, or cost fields that were omitted from the patch.
+  it('partial drag patch (status+priority only) does not null assignee_user_id', async () => {
+    const users = await ds.listUsers();
+    const userId = users[0]?.id;
+    if (!userId) return; // no users seeded — skip
+
+    const wo = await ds.createWorkOrderFromForm({
+      title: 'Drag-patch regression',
+      type: 'reactive',
+      priority: 'medium',
+      status: 'open',
+      assignee_user_id: userId,
+    });
+    expect(wo.assignee_user_id).toBe(userId);
+
+    // Simulate a board drag: only status and priority in the patch.
+    const dragged = await ds.updateWorkOrder(wo.id, {
+      status: 'in_progress',
+      priority: wo.priority,
+      // assignee_user_id intentionally omitted — must not be nulled
+    });
+    expect(dragged.status).toBe('in_progress');
+    expect(dragged.assignee_user_id).toBe(userId); // must survive the drag
+  });
+
+  it('explicit assignee_user_id: null still clears the assignee', async () => {
+    const users = await ds.listUsers();
+    const userId = users[0]?.id;
+    if (!userId) return;
+
+    const wo = await ds.createWorkOrderFromForm({
+      title: 'Clear-assignee test',
+      type: 'reactive',
+      priority: 'medium',
+      status: 'open',
+      assignee_user_id: userId,
+    });
+    const cleared = await ds.updateWorkOrder(wo.id, {
+      status: wo.status,
+      priority: wo.priority,
+      assignee_user_id: null, // explicit null must still clear
+    });
+    expect(cleared.assignee_user_id).toBeNull();
+  });
 });
