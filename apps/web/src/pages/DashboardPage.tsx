@@ -137,15 +137,13 @@ export function DashboardPage() {
     );
     if (state === 'overdue') {
       pmOverdue++;
-      const days = dueDate ? Math.floor((now.getTime() - dueDate.getTime()) / 86_400_000) : 0;
-      // Its open WO if one exists, else the linked asset, else the PM report.
-      const woId = openWoByPm.get(s.id);
-      const link = woId
-        ? `/work-orders?wo=${woId}`
-        : s.asset_id
-          ? `/assets/${s.asset_id}`
-          : '/reports?tab=Preventive Maintenance';
-      overduePms.push({ id: s.id, name: s.name, days, link });
+      // Once a WO has been spawned for this cycle, it's the actionable row —
+      // showing the schedule too would just duplicate the same overdue item.
+      if (!openWoByPm.has(s.id)) {
+        const days = dueDate ? Math.floor((now.getTime() - dueDate.getTime()) / 86_400_000) : 0;
+        const link = s.asset_id ? `/assets/${s.asset_id}` : '/reports?tab=Preventive Maintenance';
+        overduePms.push({ id: s.id, name: s.name, days, link });
+      }
     } else if (state === 'soon') {
       pmSoon++;
     } else {

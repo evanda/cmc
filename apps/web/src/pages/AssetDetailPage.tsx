@@ -434,6 +434,8 @@ export function AssetDetailPage() {
         <WorkOrderModal
           wo={viewWo}
           users={users.data ?? []}
+          assets={(assetList.data ?? []).map((a) => ({ id: a.id, name: a.name }))}
+          pmSchedules={(pms.data ?? []).map((s) => ({ id: s.id, name: s.name }))}
           currency={currency}
           canEdit={canEdit}
           onClose={() => setViewWo(null)}
