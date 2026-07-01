@@ -235,10 +235,12 @@ export function PmSchedulesPage() {
 export function PmForm({
   assets,
   initial,
+  initialAssetId,
   onClose,
 }: {
   assets: { id: string; name: string }[];
   initial?: PmSchedule;
+  initialAssetId?: string;
   onClose: () => void;
 }) {
   const create = useCreatePmSchedule();
@@ -246,7 +248,7 @@ export function PmForm({
   const users = useUsers();
   const [f, setF] = useState({
     name: initial?.name ?? '',
-    asset_id: initial?.asset_id ?? '',
+    asset_id: initial?.asset_id ?? initialAssetId ?? '',
     trigger_type: initial?.trigger_type ?? 'calendar',
     interval_value: initial?.interval_value != null ? String(initial.interval_value) : '3',
     interval_unit: initial?.interval_unit ?? 'month',

@@ -5,6 +5,7 @@ import {
   columnDropStatus,
   columnKeyboardCoordinateGetter,
   filterByBuilding,
+  isOverdue,
   resolveDropStatus,
 } from './WorkOrdersPage';
 
@@ -76,6 +77,37 @@ describe('filterByBuilding', () => {
   it('returns empty array when no orders match', () => {
     const ids = new Set(['loc99']);
     expect(filterByBuilding(orders, ids)).toHaveLength(0);
+  });
+});
+
+// Minimal WorkOrder stub with only the fields isOverdue inspects.
+function woDue(status: WorkOrder['status'], due_date: string | null): WorkOrder {
+  return { id: 'x', status, due_date, priority: 'medium' } as unknown as WorkOrder;
+}
+
+describe('isOverdue', () => {
+  it('is true for an active status with a due_date in the past', () => {
+    expect(isOverdue(woDue('open', '2026-01-01'), '2026-02-01')).toBe(true);
+  });
+
+  it('is false for a due_date in the future', () => {
+    expect(isOverdue(woDue('open', '2026-03-01'), '2026-02-01')).toBe(false);
+  });
+
+  it('is false for a due_date equal to today', () => {
+    expect(isOverdue(woDue('open', '2026-02-01'), '2026-02-01')).toBe(false);
+  });
+
+  it('is false with no due_date', () => {
+    expect(isOverdue(woDue('open', null), '2026-02-01')).toBe(false);
+  });
+
+  it('is false for a completed status even if past due', () => {
+    expect(isOverdue(woDue('completed', '2026-01-01'), '2026-02-01')).toBe(false);
+  });
+
+  it('is false for a cancelled status even if past due', () => {
+    expect(isOverdue(woDue('cancelled', '2026-01-01'), '2026-02-01')).toBe(false);
   });
 });
 

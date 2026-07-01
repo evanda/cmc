@@ -16,6 +16,7 @@ import {
 } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import {
+  ACTIVE_WORK_ORDER_STATUSES,
   WORK_ORDER_PRIORITIES,
   WORK_ORDER_TYPES,
   workOrderFormSchema,
@@ -115,6 +116,16 @@ export function filterByBuilding(
 }
 
 /**
+ * Pure helper: whether a work order is overdue (active status + due date passed).
+ * `today` is the caller's ISO date string (YYYY-MM-DD), injectable for tests.
+ */
+export function isOverdue(wo: WorkOrder, today: string): boolean {
+  return (
+    ACTIVE_WORK_ORDER_STATUSES.includes(wo.status) && !!wo.due_date && wo.due_date < today
+  );
+}
+
+/**
  * Pure helper: resolves the status a card should move TO when dropped on
  * `columnLabel`. Returns `null` when the card is already in that column
  * (no-op). Used in handleDragEnd and directly testable without rendering.
@@ -155,6 +166,7 @@ function DraggableCard({
   const style = transform
     ? { transform: CSS.Translate.toString(transform) }
     : undefined;
+  const overdue = isOverdue(wo, new Date().toISOString().slice(0, 10));
 
   return (
     <button
@@ -163,9 +175,11 @@ function DraggableCard({
       onClick={onClick}
       {...attributes}
       {...listeners}
-      className={`block w-full rounded-lg border border-slate-200 bg-white p-3 text-left shadow-sm transition hover:border-slate-400 ${
-        canDrag ? 'cursor-grab active:cursor-grabbing' : ''
-      } ${isDragging ? 'opacity-40 ring-2 ring-blue-300' : ''}`}
+      className={`block w-full rounded-lg border bg-white p-3 text-left shadow-sm transition hover:border-slate-400 ${
+        overdue ? 'border-l-4 border-l-red-400 border-slate-200' : 'border-slate-200'
+      } ${canDrag ? 'cursor-grab active:cursor-grabbing' : ''} ${
+        isDragging ? 'opacity-40 ring-2 ring-blue-300' : ''
+      }`}
     >
       <CardContent wo={wo} assetName={assetName} userName={userName} />
     </button>
@@ -182,6 +196,7 @@ function CardContent({
   assetName: (id: string | null) => string | null;
   userName: (id: string | null) => string | null;
 }) {
+  const overdue = isOverdue(wo, new Date().toISOString().slice(0, 10));
   return (
     <>
       <div className="flex items-start justify-between gap-2">
@@ -193,7 +208,18 @@ function CardContent({
       <div className="mt-1 text-xs text-slate-500">{assetName(wo.linked_asset_id) ?? 'No asset'}</div>
       <div className="mt-1 flex items-center justify-between text-xs text-slate-400">
         <span>{userName(wo.assignee_user_id) ?? 'Unassigned'}</span>
-        {wo.due_date && <span>due {wo.due_date}</span>}
+        {wo.due_date && (
+          <span
+            className={
+              overdue
+                ? 'rounded bg-red-100 px-1.5 py-0.5 font-medium text-red-700'
+                : undefined
+            }
+          >
+            {overdue ? 'overdue ' : 'due '}
+            {wo.due_date}
+          </span>
+        )}
       </div>
     </>
   );
