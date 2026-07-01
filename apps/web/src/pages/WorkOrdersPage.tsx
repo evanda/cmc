@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import {
   DndContext,
   DragOverlay,
+  KeyboardCode,
   KeyboardSensor,
   PointerSensor,
   useDraggable,
@@ -11,6 +12,7 @@ import {
   useSensors,
   type DragEndEvent,
   type DragStartEvent,
+  type KeyboardCoordinateGetter,
 } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import {
@@ -46,6 +48,40 @@ const priorityStyle: Record<WorkOrderPriority, string> = {
   urgent: 'bg-red-100 text-red-700',
 };
 
+// Column-aware keyboard coordinate getter for @dnd-kit KeyboardSensor.
+// ArrowLeft/Right jumps the drag overlay directly to the adjacent column center
+// so keyboard users move card→column instead of nudging by pixels.
+// ArrowUp/Down returns undefined (no-op; cards are not sortable within a column).
+// Exported for unit testing.
+export const columnKeyboardCoordinateGetter: KeyboardCoordinateGetter = (
+  event,
+  { currentCoordinates, context: { droppableContainers } },
+) => {
+  if (event.code !== KeyboardCode.Right && event.code !== KeyboardCode.Left) return;
+  event.preventDefault();
+
+  const colRects = columns.flatMap((col) => {
+    const rect = droppableContainers.get(col.label)?.rect?.current;
+    return rect ? [{ label: col.label, rect }] : [];
+  });
+  if (colRects.length === 0) return;
+
+  let currentIdx = colRects.findIndex(
+    ({ rect }) => currentCoordinates.x >= rect.left && currentCoordinates.x <= rect.right,
+  );
+  if (currentIdx === -1) currentIdx = 0;
+
+  const targetIdx =
+    event.code === KeyboardCode.Right
+      ? Math.min(currentIdx + 1, colRects.length - 1)
+      : Math.max(currentIdx - 1, 0);
+
+  if (targetIdx === currentIdx) return;
+
+  const { rect } = colRects[targetIdx];
+  return { x: rect.left + rect.width / 2, y: currentCoordinates.y };
+};
+
 // Board columns; each gathers one or more underlying statuses.
 export const columns: { label: string; statuses: WorkOrderStatus[] }[] = [
   { label: 'Open', statuses: ['requested', 'open'] },
@@ -61,6 +97,21 @@ export const columnDropStatus: Record<string, WorkOrderStatus> = {
   'On hold': 'on_hold',
   Completed: 'completed',
 };
+
+/**
+ * Pure helper: applies the building filter to a list of work orders.
+ * Returns the original list when `buildingLocationIds` is null (no filter).
+ * Exported for unit testing without rendering.
+ */
+export function filterByBuilding(
+  workOrders: WorkOrder[],
+  buildingLocationIds: Set<string> | null,
+): WorkOrder[] {
+  if (!buildingLocationIds) return workOrders;
+  return workOrders.filter(
+    (w) => w.location_id != null && buildingLocationIds.has(w.location_id),
+  );
+}
 
 /**
  * Pure helper: resolves the status a card should move TO when dropped on
@@ -238,9 +289,7 @@ export function WorkOrdersPage() {
     );
   }, [buildingParam, locations.data]);
 
-  const items = (workOrders.data ?? []).filter(
-    (w) => !buildingLocationIds || (w.location_id != null && buildingLocationIds.has(w.location_id)),
-  );
+  const items = filterByBuilding(workOrders.data ?? [], buildingLocationIds);
 
   // ── Kanban drag-and-drop ──────────────────────────────────────────────────
   const updateWo = useUpdateWorkOrder();
@@ -248,11 +297,12 @@ export function WorkOrdersPage() {
   const [dndError, setDndError] = useState<string | null>(null);
 
   // PointerSensor: 5 px activation distance so a click still fires onClick.
-  // KeyboardSensor: arrow-key navigation between droppable columns for a11y.
+  // KeyboardSensor: columnKeyboardCoordinateGetter makes ArrowLeft/Right jump
+  // between columns directly instead of nudging the overlay by pixels.
   // Both respect canEdit — useDraggable's `disabled` prop blocks activation.
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(KeyboardSensor),
+    useSensor(KeyboardSensor, { coordinateGetter: columnKeyboardCoordinateGetter }),
   );
 
   function handleDragStart(event: DragStartEvent) {
@@ -340,9 +390,7 @@ export function WorkOrdersPage() {
           )}
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
             {columns.map((col) => {
-              const colItems = (workOrders.data ?? []).filter((w) =>
-                col.statuses.includes(w.status),
-              );
+              const colItems = items.filter((w) => col.statuses.includes(w.status));
               return (
                 <DroppableColumn key={col.label} col={col} count={colItems.length}>
                   {colItems.map((w) => (
