@@ -89,6 +89,7 @@ export function AssetDetailPage() {
   const [showEdit, setShowEdit] = useState(false);
   const [showPhotos, setShowPhotos] = useState(false);
   const [editPm, setEditPm] = useState<PmSchedule | null>(null);
+  const [showNewPm, setShowNewPm] = useState(false);
 
   const userName = (uid: string | null) =>
     uid ? (users.data?.find((u) => u.id === uid)?.name ?? '—') : null;
@@ -303,9 +304,19 @@ export function AssetDetailPage() {
         </div>
 
         <div className="rounded-lg border border-slate-200 bg-white p-4">
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
-            Maintenance schedules
-          </h2>
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+              Maintenance schedules
+            </h2>
+            {canEdit && (
+              <button
+                onClick={() => setShowNewPm(true)}
+                className="text-xs text-blue-600 hover:underline"
+              >
+                + New schedule
+              </button>
+            )}
+          </div>
           {assetPms.length > 0 ? (
             <ul className="divide-y divide-slate-100 text-sm">
               {assetPms.map((s) => {
@@ -434,6 +445,8 @@ export function AssetDetailPage() {
         <WorkOrderModal
           wo={viewWo}
           users={users.data ?? []}
+          assets={(assetList.data ?? []).map((a) => ({ id: a.id, name: a.name }))}
+          pmSchedules={(pms.data ?? []).map((s) => ({ id: s.id, name: s.name }))}
           currency={currency}
           canEdit={canEdit}
           onClose={() => setViewWo(null)}
@@ -458,6 +471,13 @@ export function AssetDetailPage() {
           assets={(assetList.data ?? []).map((x) => ({ id: x.id, name: x.name }))}
           initial={editPm}
           onClose={() => setEditPm(null)}
+        />
+      )}
+      {showNewPm && (
+        <PmForm
+          assets={(assetList.data ?? []).map((x) => ({ id: x.id, name: x.name }))}
+          initialAssetId={id}
+          onClose={() => setShowNewPm(false)}
         />
       )}
       {showPhotos && (

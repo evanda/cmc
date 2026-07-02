@@ -16,6 +16,7 @@ import {
 } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import {
+  ACTIVE_WORK_ORDER_STATUSES,
   WORK_ORDER_PRIORITIES,
   WORK_ORDER_TYPES,
   workOrderFormSchema,
@@ -30,6 +31,7 @@ import {
   useCreateWorkOrderFromForm,
   useLocations,
   useOrgSettings,
+  usePmSchedules,
   useUpdateWorkOrder,
   useUsers,
   useVendors,
@@ -114,6 +116,16 @@ export function filterByBuilding(
 }
 
 /**
+ * Pure helper: whether a work order is overdue (active status + due date passed).
+ * `today` is the caller's ISO date string (YYYY-MM-DD), injectable for tests.
+ */
+export function isOverdue(wo: WorkOrder, today: string): boolean {
+  return (
+    ACTIVE_WORK_ORDER_STATUSES.includes(wo.status) && !!wo.due_date && wo.due_date < today
+  );
+}
+
+/**
  * Pure helper: resolves the status a card should move TO when dropped on
  * `columnLabel`. Returns `null` when the card is already in that column
  * (no-op). Used in handleDragEnd and directly testable without rendering.
@@ -154,6 +166,7 @@ function DraggableCard({
   const style = transform
     ? { transform: CSS.Translate.toString(transform) }
     : undefined;
+  const overdue = isOverdue(wo, new Date().toISOString().slice(0, 10));
 
   return (
     <button
@@ -162,9 +175,11 @@ function DraggableCard({
       onClick={onClick}
       {...attributes}
       {...listeners}
-      className={`block w-full rounded-lg border border-slate-200 bg-white p-3 text-left shadow-sm transition hover:border-slate-400 ${
-        canDrag ? 'cursor-grab active:cursor-grabbing' : ''
-      } ${isDragging ? 'opacity-40 ring-2 ring-blue-300' : ''}`}
+      className={`block w-full rounded-lg border bg-white p-3 text-left shadow-sm transition hover:border-slate-400 ${
+        overdue ? 'border-l-4 border-l-red-400 border-slate-200' : 'border-slate-200'
+      } ${canDrag ? 'cursor-grab active:cursor-grabbing' : ''} ${
+        isDragging ? 'opacity-40 ring-2 ring-blue-300' : ''
+      }`}
     >
       <CardContent wo={wo} assetName={assetName} userName={userName} />
     </button>
@@ -181,6 +196,7 @@ function CardContent({
   assetName: (id: string | null) => string | null;
   userName: (id: string | null) => string | null;
 }) {
+  const overdue = isOverdue(wo, new Date().toISOString().slice(0, 10));
   return (
     <>
       <div className="flex items-start justify-between gap-2">
@@ -192,7 +208,18 @@ function CardContent({
       <div className="mt-1 text-xs text-slate-500">{assetName(wo.linked_asset_id) ?? 'No asset'}</div>
       <div className="mt-1 flex items-center justify-between text-xs text-slate-400">
         <span>{userName(wo.assignee_user_id) ?? 'Unassigned'}</span>
-        {wo.due_date && <span>due {wo.due_date}</span>}
+        {wo.due_date && (
+          <span
+            className={
+              overdue
+                ? 'rounded bg-red-100 px-1.5 py-0.5 font-medium text-red-700'
+                : undefined
+            }
+          >
+            {overdue ? 'overdue ' : 'due '}
+            {wo.due_date}
+          </span>
+        )}
       </div>
     </>
   );
@@ -234,6 +261,7 @@ export function WorkOrdersPage() {
   const assets = useAssets();
   const users = useUsers();
   const locations = useLocations();
+  const pmSchedules = usePmSchedules();
   const [open, setOpen] = useState<WorkOrder | null>(null);
   const [showNew, setShowNew] = useState(false);
   const [view, setView] = useState<View>('board');
@@ -245,6 +273,11 @@ export function WorkOrdersPage() {
   // Building filter: /work-orders?building=<id> from the map building card (plan §5.4, #5).
   const buildingParam = searchParams.get('building');
   const buildingNameParam = searchParams.get('buildingName');
+  // Schedule filter: /work-orders?source_pm=<id> from a PM schedule's "N work orders" link.
+  const sourcePmParam = searchParams.get('source_pm');
+  const sourcePmName = sourcePmParam
+    ? (pmSchedules.data?.find((s) => s.id === sourcePmParam)?.name ?? sourcePmParam)
+    : null;
   useEffect(() => {
     if (assetParam && canEdit) setShowNew(true);
   }, [assetParam, canEdit]);
@@ -289,7 +322,9 @@ export function WorkOrdersPage() {
     );
   }, [buildingParam, locations.data]);
 
-  const items = filterByBuilding(workOrders.data ?? [], buildingLocationIds);
+  const items = filterByBuilding(workOrders.data ?? [], buildingLocationIds).filter(
+    (w) => !sourcePmParam || w.source_pm_id === sourcePmParam,
+  );
 
   // ── Kanban drag-and-drop ──────────────────────────────────────────────────
   const updateWo = useUpdateWorkOrder();
@@ -340,6 +375,17 @@ export function WorkOrdersPage() {
           {buildingParam && (
             <div className="mt-1 flex items-center gap-2 text-sm text-slate-500">
               <span>Building: {buildingNameParam ?? buildingParam}</span>
+              <button
+                onClick={() => setSearchParams({}, { replace: true })}
+                className="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-500 hover:bg-slate-200"
+              >
+                Clear filter ×
+              </button>
+            </div>
+          )}
+          {sourcePmParam && (
+            <div className="mt-1 flex items-center gap-2 text-sm text-slate-500">
+              <span>Schedule: {sourcePmName}</span>
               <button
                 onClick={() => setSearchParams({}, { replace: true })}
                 className="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-500 hover:bg-slate-200"
@@ -424,6 +470,8 @@ export function WorkOrdersPage() {
         <WorkOrderModal
           wo={open}
           users={users.data ?? []}
+          assets={(assets.data ?? []).map((a) => ({ id: a.id, name: a.name }))}
+          pmSchedules={(pmSchedules.data ?? []).map((s) => ({ id: s.id, name: s.name }))}
           currency={currency}
           canEdit={canEdit}
           onClose={closeOpen}
